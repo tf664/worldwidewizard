@@ -1,25 +1,9 @@
 <script>
-	import WizardCard from '$lib/WizardCard.svelte';
-
 	let count = $state(0);
-
-	import { fade } from 'svelte/transition';
-	let visible = true;
 </script>
 
-<h1>Digga leck mal dick Eier</h1>
-
-<p>
-	<a
-		class="text-blue-600 underline hover:text-blue-800"
-		href="https://youtu.be/xvFZjo5PgG0?si=q6YFLd1lnzocaw_O"
-		target="_blank">Click here</a
-	> to read the documentation
-</p>
-
-{#if visible}
-	<p transition:fade>Hello world</p>
-{/if}
+<h1 class="text-3xl font-bold mb-4">Welcome to Wizard</h1>
+<p class="text-gray-700">This is a simple card game app built with SvelteKit and Tailwind CSS.</p>
 
 <button
 	onclick={() => count++}
@@ -27,6 +11,3 @@
 >
 	clicks: {count}
 </button>
-
-<br /> <br />
-<WizardCard name="Magier" />
