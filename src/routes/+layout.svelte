@@ -5,7 +5,7 @@
 
 <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
 	<nav class="max-w-4xl mx-auto flex items-center justify-between p-4">
-		<h1 class="font-extrabold text-xl tracking-wide">Wizard Game</h1>
+		<a href="/" class="font-extrabold text-xl tracking-wide">Wizard Game</a>
 		<div class="space-x-6 text-sm font-semibold uppercase">
 			<a href="/" class="hover:underline hover:text-yellow-300">Home</a>
 			<a href="/about" class="hover:underline hover:text-yellow-300">About</a>
