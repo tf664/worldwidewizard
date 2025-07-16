@@ -18,7 +18,8 @@
 	<slot />
 </main>
 
+<div>
 <footer class="max-w-4xl mx-auto mt-16 px-6 py-4 border-t text-center text-gray-500 text-xs">
-	<br> <br>
 	&copy; 2025 Wizard Game. All rights reserved.
 </footer>
+</div>

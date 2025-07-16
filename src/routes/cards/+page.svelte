@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Card from '$lib/components/Card.svelte';
+	import Card from '$lib/game/Card.svelte';
 
 	const cards = [
 		{ name: 'Magier', description: 'Kann die Zukunft voraussagen.' },
