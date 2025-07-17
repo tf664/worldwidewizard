@@ -14,7 +14,7 @@
 	</nav>
 </header>
 
-<main class="max-w-4xl mx-auto mt-8 px-6">
+<main class="w-full max-w-screen-xl mx-auto mt-6 px-4">
 	<slot />
 </main>
 
