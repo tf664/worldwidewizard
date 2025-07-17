@@ -126,38 +126,74 @@
 </script>
 
 <h1 class="text-2xl font-semibold mb-4">Card Overview</h1>
+<div class="min-h-screen bg-indigo-50 p-8">
+	<header class="mb-8">
+		<h1 class="text-4xl font-extrabold text-indigo-700 tracking-wide drop-shadow-md">Card Section</h1>
+	</header>
 
-<div class="grid grid-cols-2 gap-4">
-	{#each cardsBlue as card}
-		<div class="bg-white shadow rounded p-4 text-center">
-			<CardImage src={card.image} alt={card.name} className="w-32 h-auto mx-auto mb-2" />
-			<p class="text-lg font-semibold">{card.name}</p>
-		</div>
-	{/each}
-</div>
+	<main class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+		<!-- Card group: Blue -->
+		<section class="mb-10">
+			<h2 class="text-3xl font-semibold text-indigo-800 mb-6 border-b-2 border-indigo-300 pb-2">Blue Cards</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+				{#each cardsBlue as card}
+					<div
+						class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105 hover:shadow-xl"
+						title={card.name}
+					>
+						<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+						<p class="text-lg font-medium text-indigo-900">{card.name}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
 
-<div class="grid grid-cols-2 gap-4">
-	{#each cardsRed as card}
-		<div class="bg-white shadow rounded p-4 text-center">
-			<CardImage src={card.image} alt={card.name} className="w-32 h-auto mx-auto mb-2" />
-			<p class="text-lg font-semibold">{card.name}</p>
-		</div>
-	{/each}
-</div>
+		<!-- Card group: Red -->
+		<section class="mb-10">
+			<h2 class="text-3xl font-semibold text-red-700 mb-6 border-b-2 border-red-300 pb-2">Red Cards</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+				{#each cardsRed as card}
+					<div
+						class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105 hover:shadow-xl"
+						title={card.name}
+					>
+						<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+						<p class="text-lg font-medium text-red-900">{card.name}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
 
-<div class="grid grid-cols-2 gap-4">
-	{#each cardsGreen as card}
-		<div class="bg-white shadow rounded p-4 text-center">
-			<CardImage src={card.image} alt={card.name} className="w-32 h-auto mx-auto mb-2" />
-			<p class="text-lg font-semibold">{card.name}</p>
-		</div>
-	{/each}
-</div>
-<br />
-<br />
-<div class="grid grid-cols-2 gap-4">
-	{#each cardsYellow as card}
-		<CardImage src={card.image} alt={card.name} className="w-32 h-auto mx-auto mb-2" />
-		<p class="text-lg font-semibold">{card.name}</p>
-	{/each}
+		<!-- Card group: Green -->
+		<section class="mb-10">
+			<h2 class="text-3xl font-semibold text-green-700 mb-6 border-b-2 border-green-300 pb-2">Green Cards</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+				{#each cardsGreen as card}
+					<div
+						class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105 hover:shadow-xl"
+						title={card.name}
+					>
+						<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+						<p class="text-lg font-medium text-green-900">{card.name}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
+
+		<!-- Card group: Yellow -->
+		<section class="mb-10">
+			<h2 class="text-3xl font-semibold text-yellow-600 mb-6 border-b-2 border-yellow-300 pb-2">Yellow Cards</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+				{#each cardsYellow as card}
+					<div
+						class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105 hover:shadow-xl"
+						title={card.name}
+					>
+						<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+						<p class="text-lg font-medium text-yellow-900">{card.name}</p>
+					</div>
+				{/each}
+			</div>
+		</section>
+	</main>
 </div>
