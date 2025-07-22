@@ -1,31 +1,35 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { createDeck } from '$lib/game/cards';
-	import { createPlayers } from '$lib/game/player';
-
-	let players = [];
-	let deck = [];
-
-	onMount(() => {
-		const names = JSON.parse(localStorage.getItem('players') || '[]');
-		players = createPlayers(names);
-		deck = createDeck();
-
-		// Deal 1 card for round 1
-		for (let player of players) {
-			player.hand = [deck.pop()];
-		}
-	});
+    import type { GameState } from './gameLogic.js';
+    import { initializeGame, dealCards, determineTrumpSuit } from './gameLogic.js';
+    import PlayerPanel from './PlayerPanel.svelte';
+    import PlayArea from './PlayArea.svelte';
+    import ScoreBoard from './ScoreBoard.svelte';
+    
+    // Initialize game state directly instead of expecting it as a prop
+    let gameState: GameState = initializeGame(['Alice', 'Bob', 'Charlie']);
+    dealCards(gameState);
+    determineTrumpSuit(gameState);
 </script>
 
-<div class="p-6">
-	<h2 class="text-2xl font-bold mb-4">Round 1</h2>
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-		{#each players as player}
-			<div class="bg-white p-4 shadow rounded">
-				<h3 class="font-semibold">{player.name}</h3>
-				<p>Card: {player.hand[0]?.rank} {player.hand[0]?.suit}</p>
-			</div>
-		{/each}
-	</div>
+<div class="grid grid-cols-12 grid-rows-12 h-screen bg-green-800">
+    <!-- Player positions around the table -->
+    <div class="col-span-12 row-span-3">
+        <PlayerPanel player={gameState.players[0]} position="top" />
+    </div>
+    
+    <div class="col-span-3 row-span-6">
+        <PlayerPanel player={gameState.players[1]} position="left" />
+    </div>
+    
+    <div class="col-span-6 row-span-6 flex items-center justify-center">
+        <PlayArea {gameState} />
+    </div>
+    
+    <div class="col-span-3 row-span-6">
+        <PlayerPanel player={gameState.players[2]} position="right" />
+    </div>
+    
+    <div class="col-span-12 row-span-3">
+        <ScoreBoard players={gameState.players} />
+    </div>
 </div>

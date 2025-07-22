@@ -8,6 +8,7 @@
 		<a href="/" class="font-extrabold text-xl tracking-wide">Wizard Game</a>
 		<div class="space-x-6 text-sm font-semibold uppercase">
 			<a href="/" class="hover:underline hover:text-yellow-300">Home</a>
+			<a href="/howtoplay" class="hover:underline hover:text-yellow-300">How to play</a>
 			<a href="/about" class="hover:underline hover:text-yellow-300">About</a>
 			<a href="/cards" class="hover:underline hover:text-yellow-300">Cards</a>
 		</div>
