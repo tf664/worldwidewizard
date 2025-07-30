@@ -18,7 +18,7 @@ svelte, @sveltejs/kit, vite
 ---
 
 ## Building
-nce you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Installed dependencies with `npm install`, start a development server:
 
 To start up the dev server use:
 ```bash
