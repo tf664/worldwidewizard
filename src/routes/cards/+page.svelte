@@ -183,28 +183,28 @@
 		image: toWebp(`/rcs/cards/${card.name.toLowerCase().replace(/ /g, '_')}.jpg`)
 	}));
 
-	export const zoro = [
-		{ id: 1, name: 'Zoro One', description: 'Der Zauberer', image: '/rcs/cards/zoro_one.jpg' },
-		{ id: 2, name: 'Zoro Two', description: 'Der Zauberer', image: '/rcs/cards/zoro_two.jpg' },
-		{ id: 3, name: 'Zoro Three', description: 'Die Hexe', image: '/rcs/cards/zoro_three.jpg' },
-		{ id: 4, name: 'Zoro Four', description: 'Die Hexe', image: '/rcs/cards/zoro_four.jpg' }
+	export const cardsZoro = [
+		{ id: 1, name: 'Zoro One', description: 'Der Zauberer', image: '/rcs/cards/wizard_one.jpg' },
+		{ id: 2, name: 'Zoro Two', description: 'Die Hexe', image: '/rcs/cards/wizard_two.jpg' },
+		{ id: 3, name: 'Zoro Three', description: 'Die Hexe', image: '/rcs/cards/wizard_three.jpg' },
+		{ id: 4, name: 'Zoro Four', description: 'Der Zauberer', image: '/rcs/cards/wizard_four.jpg' }
 	].map((card) => ({
 		...card,
 		image: toWebp(`/rcs/cards/${card.name.toLowerCase().replace(/ /g, '_')}.jpg`)
 	}));
 
-	export const fool = [
-		{ id: 1, name: 'Fool One Blue', description: 'Der Narr', image: '/rcs/cards/fool_one.jpg' },
-		{ id: 2, name: 'Fool Two Red', description: 'Die Närrin', image: '/rcs/cards/fool_two.jpg' },
+	export const cardsFool = [
+		{ id: 1, name: 'Fool One', description: 'Der Narr', image: '/rcs/cards/fool_one.jpg' },
+		{ id: 2, name: 'Fool Two', description: 'Die Närrin', image: '/rcs/cards/fool_two.jpg' },
 		{
 			id: 3,
-			name: 'Fool Three Green',
+			name: 'Fool Three',
 			description: 'Der Narr',
 			image: '/rcs/cards/fool_three.jpg'
 		},
 		{
 			id: 4,
-			name: 'Fool Four Yellow',
+			name: 'Fool Four',
 			description: 'Die Närrin',
 			image: '/rcs/cards/fool_four.jpg'
 		}
@@ -231,8 +231,8 @@
 		...cardsRed.map((c) => toWebp(c.image)),
 		...cardsGreen.map((c) => toWebp(c.image)),
 		...cardsYellow.map((c) => c.image),
-		...zoro.map((c) => c.image),
-		...fool.map((c) => c.image)
+		...cardsZoro.map((c) => c.image),
+		...cardsFool.map((c) => c.image)
 	];
 
 	onMount(() => {
@@ -254,17 +254,13 @@
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
-					<!-- Text container: fixed height to avoid layout shift -->
 					<div class="relative h-6 w-full">
-						<!-- Name: visible normally -->
 						<p
 							class="text-lg font-medium text-indigo-900 absolute inset-0 flex items-center justify-center
                					transition-opacity duration-300 group-hover:opacity-0"
 						>
 							{card.name}
 						</p>
-
-						<!-- Description: hidden normally, visible on hover -->
 						<p
 							class="text-lg font-semibold text-indigo-600 absolute inset-0 flex items-center justify-center
               				 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -373,6 +369,86 @@
 						</p>
 
 						<!-- Description: hidden normally, visible on hover -->
+						<p
+							class="text-lg font-semibold text-indigo-600 absolute inset-0 flex items-center justify-center
+              				 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+						>
+							{card.description}
+						</p>
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Card group: Wizard -->
+	<section class="mb-10">
+		<h2
+			class="relative text-3xl font-semibold mb-6 pb-2 text-transparent bg-clip-text
+	bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400
+	after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[1px]
+	after:bg-gradient-to-r after:from-pink-400 after:via-purple-400 after:to-blue-400"
+		>
+			Zoro Cards
+		</h2>
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+			{#each cardsZoro as card}
+				<div
+					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
+         				group cursor-pointer transition-transform transform hover:scale-105"
+				>
+					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+
+					<!-- Text container: fixed height to avoid layout shift -->
+					<div class="relative h-6 w-full">
+						<!-- Name: visible normally -->
+						<p
+							class="text-lg font-medium text-indigo-900 absolute inset-0 flex items-center justify-center
+               					transition-opacity duration-300 group-hover:opacity-0"
+						>
+							{card.name}
+						</p>
+
+						<!-- Description: hidden normally, visible on hover -->
+						<p
+							class="text-lg font-semibold text-indigo-600 absolute inset-0 flex items-center justify-center
+              				 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+						>
+							{card.description}
+						</p>
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- Card group: Fool -->
+	<section class="mb-10">
+		<h2
+			class="text-3xl font-semibold mb-6 pb-2 border-b-2
+	bg-gradient-to-r from-red-400 via-yellow-300 to-blue-500
+	text-transparent bg-clip-text border-transparent
+	relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[1px]
+	after:bg-gradient-to-r after:from-red-400 after:via-yellow-300 after:to-blue-500"
+		>
+			Fool Cards
+		</h2>
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+			{#each cardsFool as card}
+				<div
+					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
+         				group cursor-pointer transition-transform transform hover:scale-105"
+				>
+					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
+
+					<div class="relative h-6 w-full">
+						<p
+							class="text-lg font-medium text-indigo-900 absolute inset-0 flex items-center justify-center
+               					transition-opacity duration-300 group-hover:opacity-0"
+						>
+							{card.name}
+						</p>
+
 						<p
 							class="text-lg font-semibold text-indigo-600 absolute inset-0 flex items-center justify-center
               				 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
