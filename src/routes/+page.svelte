@@ -11,7 +11,7 @@
 
 <div class="mb-10 flex justify-center">
 	<button
-		on:click={() => count++}
+		onclick={() => count++}
 		class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
 	>
 		clicks: {count}
@@ -21,7 +21,7 @@
 <div class="h-screen flex flex-col justify-center items-center bg-indigo-100">
 	<h1 class="text-5xl font-bold text-indigo-700 mb-6">Wizard</h1>
 	<button
-		on:click={start}
+		onclick={start}
 		class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
 	>
 		Start Game

@@ -1,4 +1,4 @@
-import type { Card } from "./cards.ts";
+import type { Card } from "./cards.js";
 
 export interface Player {
     name: string;

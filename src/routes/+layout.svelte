@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	export let data;
 </script>
 
 <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
@@ -20,7 +19,7 @@
 </main>
 
 <div>
-<footer class="max-w-4xl mx-auto mt-16 px-6 py-4 border-t text-center text-gray-500 text-xs">
-	&copy; 2025 Wizard Game. All rights reserved.
-</footer>
+	<footer class="max-w-4xl mx-auto mt-16 px-6 py-4 border-t text-center text-gray-500 text-xs">
+		&copy; 2025 Wizard Game. All rights reserved.
+	</footer>
 </div>

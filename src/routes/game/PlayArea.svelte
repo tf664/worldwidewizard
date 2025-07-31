@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CardImage from '$lib/components/CardImage.svelte';
-	import type { GameState } from './gameLogic.js';
+	import type { GameState, TrickCard } from './gameLogic.js';
 	import type { Card } from './cards.js';
 
 	export let gameState: GameState;
@@ -12,8 +12,7 @@
 	}
 
 	function getCardColor(card: Card): string {
-		if (!card.suit) return 'bg-purple-600'; // Zoro/Fool
-
+		if (!card.suit) return 'bg-purple-600';
 		switch (card.suit) {
 			case 'red':
 				return 'bg-red-500';
@@ -26,11 +25,6 @@
 			default:
 				return 'bg-gray-500';
 		}
-	}
-
-	function getTrumpCardDisplay(): Card | null {
-		if (gameState.deck.length === 0) return null;
-		return gameState.deck[gameState.deck.length - 1];
 	}
 
 	function getCardImagePath(card: Card): string {
@@ -60,7 +54,7 @@
 						'twelve',
 						'thirteen'
 					][card.rank]
-				: String(card.rank).toLowerCase(); // Fix: Convert to string first
+				: String(card.rank).toLowerCase();
 
 		return `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
 	}
@@ -82,21 +76,17 @@
 	<div class="bg-green-700 rounded-xl p-6 min-w-64 min-h-32 flex items-center justify-center">
 		{#if gameState.currentTrick.length > 0}
 			<div class="flex space-x-2">
-				{#each gameState.currentTrick as card}
+				{#each gameState.currentTrick as trickCard}
 					<div class="relative w-12 h-16 rounded border-2 border-white overflow-hidden">
-						<!-- Use CardImage with fallback -->
 						<CardImage
-							src={getCardImagePath(card)}
-							alt={getCardDisplay(card)}
+							src={getCardImagePath(trickCard.card)}
+							alt={getCardDisplay(trickCard.card)}
 							className="w-full h-full object-cover"
 						/>
-						<!-- Fallback overlay with color and text -->
 						<div
-							class="absolute inset-0 {getCardColor(
-								card
-							)} rounded flex items-center justify-center text-white font-bold opacity-0 hover:opacity-100 transition-opacity"
+							class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-1 rounded"
 						>
-							{getCardDisplay(card)}
+							{gameState.players[trickCard.playerId].name}
 						</div>
 					</div>
 				{/each}
@@ -107,8 +97,8 @@
 	</div>
 
 	<!-- Trump Card Display -->
-	{#if getTrumpCardDisplay()}
-		{@const trumpCard = getTrumpCardDisplay()!}
+	{#if gameState.deck.length > 0}
+		{@const trumpCard = gameState.deck[gameState.deck.length - 1]}
 		<div class="flex items-center space-x-2">
 			<span class="text-white text-sm">Trump Card:</span>
 			<div class="relative w-10 h-14 rounded border border-white overflow-hidden">
@@ -117,14 +107,6 @@
 					alt={getCardDisplay(trumpCard)}
 					className="w-full h-full object-cover"
 				/>
-				<!-- Fallback overlay -->
-				<div
-					class="absolute inset-0 {getCardColor(
-						trumpCard
-					)} rounded flex items-center justify-center text-white text-xs font-bold opacity-0 hover:opacity-100 transition-opacity"
-				>
-					{getCardDisplay(trumpCard)}
-				</div>
 			</div>
 		</div>
 	{/if}
@@ -138,32 +120,4 @@
 			</p>
 		</div>
 	{/if}
-
-	<!-- Game Status Messages -->
-	{#if gameState.phase === 'bidding'}
-		<div class="bg-blue-600 text-white px-4 py-2 rounded-lg text-center">
-			<p class="text-sm font-semibold">Bidding Phase</p>
-			<p class="text-xs">Players are making their predictions</p>
-		</div>
-	{:else if gameState.phase === 'playing'}
-		<div class="bg-yellow-600 text-white px-4 py-2 rounded-lg text-center">
-			<p class="text-sm font-semibold">Playing Phase</p>
-			<p class="text-xs">Trick {gameState.currentTrick.length + 1} of {gameState.currentRound}</p>
-		</div>
-	{:else if gameState.phase === 'scoring'}
-		<div class="bg-green-600 text-white px-4 py-2 rounded-lg text-center">
-			<p class="text-sm font-semibold">Scoring Phase</p>
-			<p class="text-xs">Calculating round results</p>
-		</div>
-	{:else if gameState.phase === 'finished'}
-		<div class="bg-purple-600 text-white px-4 py-2 rounded-lg text-center">
-			<p class="text-sm font-semibold">Game Finished!</p>
-			<p class="text-xs">Final scores calculated</p>
-		</div>
-	{/if}
-
-	<!-- Deck Count -->
-	<div class="text-white text-xs opacity-75">
-		Cards remaining: {gameState.deck.length}
-	</div>
 </div>
