@@ -4,17 +4,15 @@
 	export let className: string = '';
 
 	const fallback = '/rcs/cards-optimized/_placeholder_.webp';
-	let errored = false;
-
-	// reactive source
-	$: imageSrc = errored ? fallback : src;
+	let imageSrc = src;
 
 	function handleError() {
-		errored = true;
+		imageSrc = fallback;
 	}
 </script>
 
-<img src={imageSrc}
+<img
+	src={imageSrc}
 	alt={alt}
 	class={className}
 	on:error={handleError}

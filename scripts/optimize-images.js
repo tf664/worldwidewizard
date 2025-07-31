@@ -22,8 +22,9 @@ fs.readdirSync(inputDir).forEach((file) => {
 	const outputPath = path.join(outputDir, `${baseName}.webp`);
 
 	sharp(inputPath)
-		.resize({ width })
-		.webp({ quality: 80 })
+		.resize({ width }) // Resize to specified width
+		.webp({ quality: 80 }) // Convert to WebP with quality 80
+		.rotate(180) // Rotate to correct orientation
 		.toFile(outputPath)
 		.then(() => console.log(`Converted: ${file} -> ${baseName}.webp`))
 		.catch((err) => console.error(`Failed to process ${file}`, err));
