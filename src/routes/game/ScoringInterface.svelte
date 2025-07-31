@@ -18,8 +18,8 @@
 	}
 </script>
 
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+<div class="fixed inset-0 flex items-center justify-center z-50">
+	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500">
 		<h2 class="text-2xl font-bold mb-4 text-center">Round {gameState.currentRound} Results</h2>
 
 		<div class="grid grid-cols-2 gap-4 mb-6">

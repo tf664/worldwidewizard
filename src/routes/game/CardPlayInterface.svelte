@@ -35,7 +35,7 @@
 
 	function getCardImagePath(card: Card): string {
 		if (card.rank === 'Zoro') {
-			return `/rcs/cards-optimized/zoro_${Math.floor(Math.random() * 4) + 1}.webp`;
+			return `/rcs/cards-optimized/wizard_${Math.floor(Math.random() * 4) + 1}.webp`;
 		}
 		if (card.rank === 'Fool') {
 			return `/rcs/cards-optimized/fool_${Math.floor(Math.random() * 4) + 1}.webp`;
@@ -66,10 +66,36 @@
 
 		return `/rcs/cards-optimized/unknown_unknown.webp`;
 	}
+
+	function getCardKey(card: Card, index: number): string {
+		return `${card.suit}-${card.rank}-${index}`;
+	}
+
+	function getCardColor(card: Card): string {
+		if (card.rank === 'Zoro') {
+			return 'bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400';
+		}
+		if (card.rank === 'Fool') {
+			return 'bg-gradient-to-r from-red-400 via-yellow-300 to-blue-500';
+		}
+
+		switch (card.suit) {
+			case 'red':
+				return 'bg-red-500';
+			case 'blue':
+				return 'bg-blue-600';
+			case 'green':
+				return 'bg-green-600';
+			case 'yellow':
+				return 'bg-yellow-500';
+			default:
+				return 'bg-gray-500';
+		}
+	}
 </script>
 
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+<div class="fixed inset-0 flex items-center justify-center z-50">
+	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500">
 		<h2 class="text-2xl font-bold mb-4 text-center">
 			{currentPlayer.name}'s Turn
 		</h2>
@@ -78,7 +104,7 @@
 		<div class="mb-6">
 			<h3 class="font-semibold mb-2">Cards played this trick:</h3>
 			<div class="flex gap-2 justify-center min-h-20 items-center bg-green-100 rounded p-4">
-				{#each gameState.currentTrick as trickCard}
+				{#each gameState.currentTrick as trickCard, trickIndex}
 					<div class="w-12 h-16 relative">
 						<CardImage
 							src={getCardImagePath(trickCard.card)}
@@ -100,25 +126,35 @@
 		<!-- Player's hand -->
 		<div class="mb-6">
 			<h3 class="font-semibold mb-2">Choose a card to play:</h3>
-			<div class="grid grid-cols-6 gap-2">
-				{#each currentPlayer.hand as card, index}
+			<div class="grid grid-cols-8 gap-2 justify-center">
+				{#each currentPlayer.hand as card, index (getCardKey(card, index))}
 					<button
-						class="relative w-16 h-24 rounded border-2 transition-all {validCards[index]
-							? 'border-green-500 hover:border-green-700 cursor-pointer'
+						class="relative w-16 h-24 rounded border-2 transition-all group {validCards[index]
+							? 'border-green-500 hover:border-green-700 cursor-pointer hover:scale-105'
 							: 'border-gray-300 opacity-50 cursor-not-allowed'}"
 						disabled={!validCards[index]}
-						on:click={() => onCardPlayed(gameState.currentPlayerIndex, index)}
+						onclick={() => onCardPlayed(gameState.currentPlayerIndex, index)}
 					>
+						<!-- Card Image -->
 						<CardImage
 							src={getCardImagePath(card)}
 							alt={getCardDisplay(card)}
-							className="w-full h-full object-cover rounded"
+							className="w-full h-full object-cover rounded transition-opacity duration-300 group-hover:opacity-0"
 						/>
+
+						<!-- Colored overlay with card value - hidden by default, visible on hover -->
 						<div
-							class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white font-bold rounded opacity-0 hover:opacity-100 transition-opacity"
+							class="absolute inset-0 {getCardColor(
+								card
+							)} rounded flex items-center justify-center text-white font-bold text-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
 						>
 							{getCardDisplay(card)}
 						</div>
+
+						<!-- Valid play indicator only -->
+						{#if validCards[index]}
+							<div class="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full"></div>
+						{/if}
 					</button>
 				{/each}
 			</div>

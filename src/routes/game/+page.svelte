@@ -1,12 +1,10 @@
 <script lang="ts">
 	import type { GameState } from './gameLogic.js';
 	import { initializeGame, startNewRound, processPrediction, playCard } from './gameLogic.js';
-	import PlayerPanel from './PlayerPanel.svelte';
-	import PlayArea from './PlayArea.svelte';
-	import ScoreBoard from './ScoreBoard.svelte';
+	import GameTable from './GameTable.svelte'; // New component
 	import BiddingInterface from './BiddingInterface.svelte';
 	import CardPlayInterface from './CardPlayInterface.svelte';
-	import ScoringInterface from './ScoringInterface.svelte'; // Add this import
+	import ScoringInterface from './ScoringInterface.svelte';
 	import GameControls from './GameControls.svelte';
 
 	let gameState: GameState = initializeGame(['Alice', 'Bob', 'Charlie', 'Diana']);
@@ -16,25 +14,22 @@
 
 	function handlePrediction(playerId: number, prediction: number) {
 		if (processPrediction(gameState, playerId, prediction)) {
-			gameState = { ...gameState }; // Trigger reactivity
+			gameState = { ...gameState };
 		}
 	}
 
 	function handleCardPlay(playerId: number, cardIndex: number) {
 		if (playCard(gameState, playerId, cardIndex)) {
-			gameState = { ...gameState }; // Trigger reactivity
+			gameState = { ...gameState };
 		}
 	}
 
 	function handleNextRound() {
 		if (gameState.phase === 'scoring') {
-			// Calculate scores for the completed round
 			gameState.players.forEach((player) => {
 				if (player.prediction === player.tricksWon) {
-					// Correct prediction: 20 points + tricks won
 					player.score += 20 + player.tricksWon;
 				} else {
-					// Wrong prediction: lose 10 points per difference
 					player.score -= Math.abs(player.prediction - player.tricksWon) * 10;
 				}
 			});
@@ -56,49 +51,17 @@
 	}
 
 	function handlePause() {
-		// TODO: Implement pause functionality
 		console.log('Game paused');
 	}
 
 	function handleUndo() {
-		// TODO: Implement undo functionality
 		console.log('Undo last move');
 	}
 </script>
 
-<!-- Game Table -->
-<div class="grid grid-cols-12 grid-rows-12 h-screen bg-green-800">
-	<!-- Top player -->
-	<div class="col-span-12 row-span-3">
-		<PlayerPanel player={gameState.players[0]} position="top" />
-	</div>
-
-	<!-- Left player -->
-	<div class="col-span-3 row-span-6">
-		<PlayerPanel player={gameState.players[1]} position="left" />
-	</div>
-
-	<!-- Center play area -->
-	<div class="col-span-6 row-span-6 flex items-center justify-center">
-		<PlayArea {gameState} />
-	</div>
-
-	<!-- Right player -->
-	<div class="col-span-3 row-span-6">
-		<PlayerPanel player={gameState.players[2]} position="right" />
-	</div>
-
-	<!-- Bottom player (if 4 players) -->
-	{#if gameState.players[3]}
-		<div class="col-span-12 row-span-3">
-			<PlayerPanel player={gameState.players[3]} position="bottom" />
-		</div>
-	{/if}
-
-	<!-- Scoreboard -->
-	<div class="col-span-12 row-span-3">
-		<ScoreBoard players={gameState.players} />
-	</div>
+<!-- Full screen game table -->
+<div class="h-screen bg-green-800 relative overflow-hidden">
+	<GameTable {gameState} />
 </div>
 
 <!-- Game Controls -->
@@ -116,7 +79,6 @@
 		<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center">
 			<h2 class="text-2xl font-bold mb-4">Game Finished!</h2>
 
-			<!-- Show final scores -->
 			<div class="mb-6">
 				<h3 class="font-bold mb-2">Final Scores:</h3>
 				{#each gameState.players.sort((a, b) => b.score - a.score) as player, index}
@@ -136,7 +98,7 @@
 
 			<button
 				class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold"
-				on:click={handleRestart}
+				onclick={handleRestart}
 			>
 				Play Again
 			</button>

@@ -1,6 +1,5 @@
 <script>
 		import '../../app.css';
-	export let data;
 </script>
 
 <div class="min-h-screen bg-indigo-50 p-8">
