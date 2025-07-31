@@ -87,7 +87,7 @@ export function determineTrumpSuit(gameState: GameState): void {
     const trumpCard = gameState.deck[gameState.deck.length - 1];
 
     if (trumpCard.rank === 'Zoro') {
-        // Wizard - player chooses trump (for now, random)
+        // Zoro - player chooses trump (for now, random)
         const suits: Suit[] = ['red', 'blue', 'green', 'yellow'];
         gameState.trumpSuit = suits[Math.floor(Math.random() * suits.length)];
     } else if (trumpCard.rank === 'Fool') {
@@ -166,10 +166,10 @@ export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): numb
 
     let winner = trick.cards[0];
 
-    // Check for Wizards first (highest priority)
-    const wizards = trick.cards.filter(c => c.card.rank === 'Zoro');
-    if (wizards.length > 0) {
-        return wizards[0].playerId;
+    // Check for Zoro first (highest priority)
+    const zoros = trick.cards.filter(c => c.card.rank === 'Zoro');
+    if (zoros.length > 0) {
+        return zoros[0].playerId;
     }
 
     // Remove Fools from consideration

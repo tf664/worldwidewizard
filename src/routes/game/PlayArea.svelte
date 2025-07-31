@@ -29,7 +29,7 @@
 
 	function getCardImagePath(card: Card): string {
 		if (card.rank === 'Zoro') {
-			return `/rcs/cards-optimized/wizard_${Math.floor(Math.random() * 4) + 1}.webp`;
+			return `/rcs/cards-optimized/zoro_${Math.floor(Math.random() * 4) + 1}.webp`;
 		}
 		if (card.rank === 'Fool') {
 			return `/rcs/cards-optimized/fool_${Math.floor(Math.random() * 4) + 1}.webp`;

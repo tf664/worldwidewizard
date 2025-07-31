@@ -184,10 +184,10 @@
 	}));
 
 	export const cardsZoro = [
-		{ id: 1, name: 'Zoro One', description: 'Der Zauberer', image: '/rcs/cards/wizard_one.jpg' },
-		{ id: 2, name: 'Zoro Two', description: 'Die Hexe', image: '/rcs/cards/wizard_two.jpg' },
-		{ id: 3, name: 'Zoro Three', description: 'Die Hexe', image: '/rcs/cards/wizard_three.jpg' },
-		{ id: 4, name: 'Zoro Four', description: 'Der Zauberer', image: '/rcs/cards/wizard_four.jpg' }
+		{ id: 1, name: 'Zoro One', description: 'Der Zauberer', image: '/rcs/cards/zoro_one.jpg' },
+		{ id: 2, name: 'Zoro Two', description: 'Die Hexe', image: '/rcs/cards/zoro_two.jpg' },
+		{ id: 3, name: 'Zoro Three', description: 'Die Hexe', image: '/rcs/cards/zoro_three.jpg' },
+		{ id: 4, name: 'Zoro Four', description: 'Der Zauberer', image: '/rcs/cards/zoro_four.jpg' }
 	].map((card) => ({
 		...card,
 		image: toWebp(`/rcs/cards/${card.name.toLowerCase().replace(/ /g, '_')}.jpg`)
@@ -381,7 +381,7 @@
 		</div>
 	</section>
 
-	<!-- Card group: Wizard -->
+	<!-- Card group: Zoro -->
 	<section class="mb-10">
 		<h2
 			class="relative text-3xl font-semibold mb-6 pb-2 text-transparent bg-clip-text

@@ -11,7 +11,7 @@ export function isValidCardPlay( // TODO allow special cards?h
     leadSuit: Suit | null,
     currentTrick: Card[]
 ): boolean {
-    // Wizard can always be played
+    // Zoro can always be played
     if (card.rank === 'Zoro' || card.rank === 'Fool') return true;
 
     // If no lead suit yet, any card is valid

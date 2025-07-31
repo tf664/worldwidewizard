@@ -2,7 +2,7 @@ export type Suit = 'red' | 'blue' | 'green' | 'yellow';
 export type Rank = number | 'Zoro' | 'Fool';
 
 export interface Card {
-    suit: Suit | null; // colour type / special (fool/wizard)
+    suit: Suit | null; // colour type / special (fool/zoro)
     rank: Rank;
     image: string; // URL or path to the card image
 }
@@ -22,9 +22,9 @@ export function createDeck(): Card[] {
         }
     }
 
-    // Wizard and Fool cards (no suit)
+    // Zoro and Fool cards (no suit)
     for (let i = 0; i < 4; i++) {
-        cards.push({ suit: null, rank: 'Zoro', image: `/rcs/cards-optimized/wizard_${i + 1}.webp` });  // Changed ${i} to ${i + 1}
+        cards.push({ suit: null, rank: 'Zoro', image: `/rcs/cards-optimized/zoro_${i + 1}.webp` });  // Changed ${i} to ${i + 1}
         cards.push({ suit: null, rank: 'Fool', image: `/rcs/cards-optimized/fool_${i + 1}.webp` });   // Changed ${i} to ${i + 1}
     }
 
