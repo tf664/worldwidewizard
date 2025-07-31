@@ -5,14 +5,14 @@ export function mustFollowSuit(playerHand: Card[], leadSuit: Suit | null): boole
     return playerHand.some(card => card.suit === leadSuit);
 }
 
-export function isValidCardPlay(
+export function isValidCardPlay( // TODO allow special cards?h
     card: Card, 
     playerHand: Card[], 
     leadSuit: Suit | null,
     currentTrick: Card[]
 ): boolean {
     // Wizard can always be played
-    if (card.rank === 'Wizard' || card.rank === 'Fool') return true;
+    if (card.rank === 'Zoro' || card.rank === 'Fool') return true;
 
     // If no lead suit yet, any card is valid
     if (!leadSuit || currentTrick.length === 0) return true;

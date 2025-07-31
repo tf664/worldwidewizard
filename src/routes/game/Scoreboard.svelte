@@ -13,7 +13,7 @@
 <div class="h-full bg-green-700 m-2 rounded-lg p-4">
     <h2 class="text-white text-xl font-bold mb-4 text-center">Scoreboard</h2>
     
-    <div class="grid grid-cols-{players.length} gap-4">
+    <div class="grid gap-4" style="grid-template-columns: repeat({players.length}, minmax(0, 1fr));">
         {#each players as player}
             {@const isLeader = player === getLeader()}
             <div class="bg-green-600 rounded p-3 text-white text-center {isLeader ? 'ring-2 ring-yellow-400' : ''}">

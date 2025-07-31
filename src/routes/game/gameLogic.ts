@@ -77,7 +77,7 @@ export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): numb
     let winner = trick.cards[0];
     
     // Check for Wizards first (highest priority)
-    const wizards = trick.cards.filter(c => c.card.rank === 'Wizard');
+    const wizards = trick.cards.filter(c => c.card.rank === 'Zoro');
     if (wizards.length > 0) {
         return wizards[0].playerId;
     }

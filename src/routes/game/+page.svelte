@@ -29,6 +29,13 @@
         <PlayerPanel player={gameState.players[2]} position="right" />
     </div>
     
+    <!-- Add bottom player if you have 4 players -->
+    {#if gameState.players[3]}
+        <div class="col-span-12 row-span-3">
+            <PlayerPanel player={gameState.players[3]} position="bottom" />
+        </div>
+    {/if}
+    
     <div class="col-span-12 row-span-3">
         <ScoreBoard players={gameState.players} />
     </div>

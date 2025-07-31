@@ -1,21 +1,21 @@
-import type { Card } from "./cards";
+import type { Card } from "./cards.ts";
 
 export interface Player {
-	name: string;
-	hand: Card[];
-	prediction: number;
-	tricksWon: number;
-	score: number;
-	id: number;
+    name: string;
+    hand: Card[];
+    prediction: number;
+    tricksWon: number;
+    score: number;
+    id: number;
 }
 
 export function createPlayers(names: string[]): Player[] {
-	return names.map((name, index) => ({
-		name,
-		hand: [],
-		prediction: 0,
-		tricksWon: 0,
-		score: 0,
-		id: index
-	}));
+    return names.map((name, index) => ({
+        name,
+        hand: [],
+        prediction: 0,
+        tricksWon: 0,
+        score: 0,
+        id: index
+    }));
 }
