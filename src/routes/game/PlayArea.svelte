@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CardImage from '$lib/components/CardImage.svelte';
     import type { GameState } from './gameLogic.js';
     import type { Card } from './cards.js';
     
@@ -57,14 +58,16 @@
     {#if getTrumpCardDisplay()}
         {@const trumpCard = getTrumpCardDisplay()}
         <div class="flex items-center space-x-2">
-            <span class="text-white text-sm">Trump Card:</span>
-            <img
-                src={trumpCard.image}
-                alt="Trump card"
-                class="w-10 h-14 rounded border border-white object-contain"
-            />
+        <span class="text-white text-sm">Trump Card:</span>
+            <CardImage
+	src={card.image}
+	alt="Card"
+	className="w-10 h-14 object-contain"
+/>
+
         </div>
     {/if}
+
 
 
     <!-- Current Player Indicator -->

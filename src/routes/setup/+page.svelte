@@ -1,6 +1,5 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { writable } from 'svelte/store';
 
 	let playerNames = ['', '', '', '', '', ''];
 	let playerCount = 3;
@@ -95,8 +94,7 @@
 			on:click={startGame}
 			disabled={!allNamesEntered}
 			class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-4 px-6 rounded-lg transition-colors duration-200 text-lg shadow-md hover:shadow-lg"
-		>
-			{#if allNamesEntered}
+		> {#if allNamesEntered}
 				Start Game
 			{:else}
 				Enter all player names to continue
@@ -105,7 +103,7 @@
 
 		<!-- Help text -->
 		<p class="text-center text-sm text-gray-500 mt-4">
-			You need {playerCount} players to start the game
+			You need 3 players to start the game
 		</p>
 	</div>
 </div>

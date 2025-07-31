@@ -11,6 +11,7 @@ export function createDeck(): Card[] {
     const suits: Suit[] = ['red', 'blue', 'green', 'yellow'];
     const cards: Card[] = [];
 
+    // Number cards
     for (let suit of suits) {
         for (let i = 1; i <= 13; i++) {
             cards.push({
@@ -21,6 +22,15 @@ export function createDeck(): Card[] {
         }
     }
 
+    // Wizard and Fool cards (no suit)
+    for (let i = 0; i < 4; i++) {
+        cards.push({ suit: null, rank: 'Wizard', image: `/rcs/cards-optimized/wizard_${i}.webp` });
+        cards.push({ suit: null, rank: 'Fool', image: `/rcs/cards-optimized/fool_${i}.webp` });
+    }
+
+    return shuffle(cards);
+}
+
     function numberToWord(num: number): string {
         const words = [
             'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
@@ -28,18 +38,6 @@ export function createDeck(): Card[] {
         ];
         return words[num];
     }
-
-    // Add 4 Wizard and 4 Fool cards
-    // TODO wizards and fools with the suit. 
-    // TODO If Fool: No suit
-    // TODO Wizard: suit can be chosen by first player of looking at their cards
-    for (let i = 0; i < 4; i++) {
-        cards.push({ suit: null, rank: 'Wizard', image: `static/rcs/cards-optimized/wizard_${i}.webp` });
-        cards.push({ suit: null, rank: 'Fool', image: `static/rcs/cards-optimized/fool_${i}.webp` });
-    }
-
-    return shuffle(cards);
-}
 
 function shuffle(deck: Card[]): Card[] {
     return [...deck].sort(() => Math.random() - 0.5);

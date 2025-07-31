@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CardImage from './CardImage.svelte';
+	import CardImage from '$lib/components/CardImage.svelte';
 	import { onMount } from 'svelte';
 
 	export const cardsBlue = [
