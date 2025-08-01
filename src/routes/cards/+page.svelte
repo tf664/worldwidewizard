@@ -195,11 +195,11 @@
 
 	export const cardsFool = [
 		{ id: 1, name: 'Fool One', description: 'Der Narr', image: '/rcs/cards/fool_one.jpg' },
-		{ id: 2, name: 'Fool Two', description: 'Die Närrin', image: '/rcs/cards/fool_two.jpg' },
+		{ id: 2, name: 'Fool Two', description: 'Der Narr', image: '/rcs/cards/fool_two.jpg' },
 		{
 			id: 3,
 			name: 'Fool Three',
-			description: 'Der Narr',
+			description: 'Die Närrin',
 			image: '/rcs/cards/fool_three.jpg'
 		},
 		{
