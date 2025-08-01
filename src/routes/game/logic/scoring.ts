@@ -1,4 +1,4 @@
-import type { Player } from './player.js';
+import type { Player } from '../types/player.js';
 
 export function calculateScore(player: Player): number {
     if (player.prediction === player.tricksWon) {

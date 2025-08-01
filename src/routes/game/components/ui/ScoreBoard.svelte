@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Player } from './player.js';
+	import type { Player } from '../../types/player.js';
 
 	export let players: Player[];
 

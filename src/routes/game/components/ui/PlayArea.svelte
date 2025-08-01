@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CardImage from '$lib/components/CardImage.svelte';
-	import type { GameState, TrickCard } from './gameLogic.js';
-	import type { Card } from './cards.js';
+	import type { GameState, TrickCard } from '../../logic/gameLogic.js';
+	import type { Card } from '../../logic/cards.js';
 
 	export let gameState: GameState;
 

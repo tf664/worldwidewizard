@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CardImage from '$lib/components/CardImage.svelte';
-	import type { Player } from './player.js';
-	import type { Card } from './cards.js';
+	import type { Player } from '../../types/player.js';
+	import type { Card } from '../../logic/cards.js';
 
 	export let player: Player;
 	export let position: 'top' | 'left' | 'right' | 'bottom';

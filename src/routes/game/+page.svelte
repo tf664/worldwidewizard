@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { GameState } from './gameLogic.js';
-	import { initializeGame, startNewRound, processPrediction, playCard } from './gameLogic.js';
-	import { onMount } from 'svelte';
-	import GameTable from './GameTable.svelte'; // New component
-	import BiddingInterface from './BiddingInterface.svelte';
-	import CardPlayInterface from './CardPlayInterface.svelte';
-	import ScoringInterface from './ScoringInterface.svelte';
-	import GameControls from './GameControls.svelte';
+    import type { GameState } from './logic/gameLogic.js';
+    import { initializeGame, startNewRound, processPrediction, playCard } from './logic/gameLogic.js';
+    import { onMount } from 'svelte';
+    import GameTable from './components/ui/GameTable.svelte';
+    import BiddingInterface from './components/interfaces/BiddingInterface.svelte';
+    import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
+    import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
+    import GameControls from './components/ui/GameControls.svelte';
 
 	let gameState: GameState;
 

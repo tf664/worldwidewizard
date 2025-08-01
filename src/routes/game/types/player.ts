@@ -1,4 +1,4 @@
-import type { Card } from "./cards.js";
+import type { Card } from "../logic/cards.js";
 
 export interface Player {
     name: string;

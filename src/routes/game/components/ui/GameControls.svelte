@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { GameState } from './gameLogic.js';
+	import type { GameState } from '../../logic/gameLogic.js';
 
 	export let gameState: GameState;
-	export let onRestart: () => void;
-	export let onPause: () => void;
-	export let onUndo: () => void;
+	export let onRestart: () => void; // TODO: needs function
+	export let onPause: () => void; // TODO: needs function
+	export let onUndo: () => void; // TODO: needs functionF
 </script>
 
 <div class="fixed top-2 right-2 bg-white rounded-lg shadow-lg p-4 w-64">

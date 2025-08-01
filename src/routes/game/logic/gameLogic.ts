@@ -1,6 +1,6 @@
 import type { Card, Suit } from './cards.js';
-import type { Player } from './player.js';
-import { createPlayers } from './player.js';
+import type { Player } from '../types/player.js';
+import { createPlayers } from '../types/player.js';
 import { createDeck } from './cards.js';
 import { isValidCardPlay } from './gameRules.js';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { GameState } from './gameLogic.js';
-	import type { Player } from './player.js';
+	import type { GameState } from '../../logic/gameLogic.js';
+	import type { Player } from '../../types/player.js';
 
 	export let gameState: GameState;
 	export let onNextRound: () => void;
@@ -42,7 +42,7 @@
 
 		<button
 			class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded w-full font-bold"
-			on:click={onNextRound}
+			onclick={onNextRound}
 		>
 			{gameState.currentRound < gameState.maxRounds ? 'Next Round' : 'Finish Game'}
 		</button>
