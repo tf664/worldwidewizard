@@ -29,10 +29,14 @@
 
 	function getCardImagePath(card: Card): string {
 		if (card.rank === 'Zoro') {
-			return `/rcs/cards-optimized/zoro_${Math.floor(Math.random() * 4) + 1}.webp`;
+			const zoroNumbers = ['one', 'two', 'three', 'four'];
+			const randomZoro = zoroNumbers[Math.floor(Math.random() * 4)];
+			return `/rcs/cards-optimized/zoro_${randomZoro}.webp`;
 		}
 		if (card.rank === 'Fool') {
-			return `/rcs/cards-optimized/fool_${Math.floor(Math.random() * 4) + 1}.webp`;
+			const foolNumbers = ['one', 'two', 'three', 'four'];
+			const randomFool = foolNumbers[Math.floor(Math.random() * 4)];
+			return `/rcs/cards-optimized/fool_${randomFool}.webp`;
 		}
 
 		const suitName = card.suit?.toLowerCase() || 'unknown';

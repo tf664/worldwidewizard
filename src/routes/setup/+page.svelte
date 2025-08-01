@@ -8,8 +8,14 @@
 	// Entered name validation
 	$: allNamesEntered = playerNames.slice(0, playerCount).every((name) => name.trim().length > 0);
 
+	$: allNamesUnique = (() => {
+		const activeNames = playerNames.slice(0, playerCount).map((name) => name.trim().toLowerCase());
+		const uniqueNames = new Set(activeNames);
+		return uniqueNames.size === activeNames.length && !activeNames.includes('');
+	})();
+
 	function startGame() {
-		if (!allNamesEntered) return;
+		if (!allNamesEntered || !allNamesUnique) return;
 
 		const names = playerNames.slice(0, playerCount).map((name) => name.trim());
 		localStorage.setItem('players', JSON.stringify(names));
@@ -92,19 +98,19 @@
 		<!-- Action button -->
 		<button
 			on:click={startGame}
-			disabled={!allNamesEntered}
+			disabled={!allNamesUnique || !allNamesEntered}
 			class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-4 px-6 rounded-lg transition-colors duration-200 text-lg shadow-md hover:shadow-lg"
-		> {#if allNamesEntered}
-				Start Game
-			{:else}
+			>{#if !allNamesEntered}
 				Enter all player names to continue
+			{:else if !allNamesUnique}
+				Ensure all names are unique
+			{:else}
+				Start Game
 			{/if}
 		</button>
 
 		<!-- Help text -->
-		<p class="text-center text-sm text-gray-500 mt-4">
-			You need 3 players to start the game
-		</p>
+		<p class="text-center text-sm text-gray-500 mt-4">You need 3 players to start the game</p>
 	</div>
 </div>
 

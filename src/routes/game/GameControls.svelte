@@ -7,7 +7,7 @@
 	export let onUndo: () => void;
 </script>
 
-<div class="fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4">
+<div class="fixed top-2 right-2 bg-white rounded-lg shadow-lg p-4 w-64">
 	<h3 class="font-bold mb-2">Game Controls</h3>
 
 	<div class="space-y-2">
