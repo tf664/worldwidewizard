@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<script>
-	let count = $state(0);
-=======
 <script lang="ts">
 	import { user } from '$lib/stores/user';
 
@@ -9,7 +5,6 @@
 	let name = '';
 	let username = '';
 	let savedMessage = '';
->>>>>>> TomTest
 
 	let start = () => {
 		window.location.href = '/setup';
