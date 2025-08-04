@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { user } from '$lib/stores/user';
+	import { goto } from '$app/navigation';
 
 	let count = 0;
 	let name = '';
@@ -7,7 +8,8 @@
 	let savedMessage = '';
 
 	let start = () => {
-		window.location.href = '/setup';
+		//window.location.href = '/setup';
+		goto('/setup');
 	};
 </script>
 
