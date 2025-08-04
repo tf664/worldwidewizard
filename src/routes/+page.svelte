@@ -1,5 +1,10 @@
-<script>
-let count = $state(0);
+<script lang="ts">
+	import { user } from '$lib/stores/user';
+
+	let count = 0;
+	let name = '';
+	let username = '';
+	let savedMessage = '';
 
 	let start = () => {
 		window.location.href = '/setup';

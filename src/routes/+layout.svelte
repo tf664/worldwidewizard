@@ -10,6 +10,7 @@
 			<a href="/" class="hover:underline hover:text-yellow-300">Home</a>
 			<a href="/about" class="hover:underline hover:text-yellow-300">About</a>
 			<a href="/cards" class="hover:underline hover:text-yellow-300">Cards</a>
+			<a href="/profile" class="hover:underline hover:text-yellow-300">Profile</a>
 		</div>
 	</nav>
 </header>
