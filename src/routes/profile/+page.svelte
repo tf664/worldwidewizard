@@ -4,6 +4,7 @@
 	let name = '';
 	let username = '';
 	let savedMessage = '';
+	let msg ='';
 
 	function login() {
 		if (name && username) {
@@ -23,6 +24,20 @@
 		name = '';
 		username = '';
 	}
+
+	function sendmsg(){
+		const text = msg;
+		socket.emit('message', text)
+	}
+
+
+	import io from 'socket.io-client'
+
+  	const socket = io('http://localhost:5173/profile')
+
+  	socket.on('eventFromServer', (message: any) => {
+    	console.log(message)
+  	})
 </script>
 
 {#if !$user}
@@ -46,6 +61,10 @@
 		<p class="text-sm text-gray-600 mb-4">@{$user.username}</p>
 		<button onclick={logout} class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 			Logout
+		</button>
+		<input bind:value={msg} placeholder="Message" class="w-full border p-2 rounded mb-2" />
+		<button onclick={sendmsg} class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+			Send Message
 		</button>
 	</div>
 {/if}

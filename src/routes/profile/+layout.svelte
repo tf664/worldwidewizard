@@ -1,5 +1,7 @@
 <script>
 		import '../../app.css';
+
+		
 </script>
 
 <div class="min-h-screen bg-indigo-50 p-8">
