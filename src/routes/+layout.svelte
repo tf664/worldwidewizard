@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { goto } from '$app/navigation';
+	import { injectAnalytics } from '@vercel/analytics/sveltekit' // Import Vercel Analytics
 </script>
 
 <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
