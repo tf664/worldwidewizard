@@ -7,6 +7,6 @@
 	<p class="text-gray-600">
 		This website is built with <strong>SvelteKit</strong> and styled using
 		<strong>Tailwind CSS</strong>. It provides an overview of the game cards and future plans to
-		include gameplay and scoring.
+		include gameplay and scoring. <strong> Das ist ein neuer Test</strong>
 	</p>
 </section>
