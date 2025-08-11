@@ -1,40 +1,107 @@
 <script lang="ts">
 	import CardImage from '$lib/components/CardImage.svelte';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+
+	interface Card {
+		id: number;
+		name: string;
+		description: string;
+		image: string;
+		suit: string;
+	}
 
 	export const cardsBlue = [
-		{ id: 1, name: 'Blue One', description: 'Die Diebin', image: '/rcs/cards/blue_one.jpg' },
-		{ id: 2, name: 'Blue Two', description: 'Der Knecht', image: '/rcs/cards/blue_two.jpg' },
-		{ id: 3, name: 'Blue Three', description: 'Die Fischerin', image: '/rcs/cards/blue_three.jpg' },
-		{ id: 4, name: 'Blue Four', description: 'Der Bauer', image: '/rcs/cards/blue_four.jpg' },
-		{ id: 5, name: 'Blue Five', description: 'Die Schmiedin', image: '/rcs/cards/blue_five.jpg' },
-		{ id: 6, name: 'Blue Six', description: 'Der Händler', image: '/rcs/cards/blue_six.jpg' },
+		{
+			id: 1,
+			name: 'Blue One',
+			description: 'Die Diebin',
+			image: '/rcs/cards/blue_one.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 2,
+			name: 'Blue Two',
+			description: 'Der Knecht',
+			image: '/rcs/cards/blue_two.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 3,
+			name: 'Blue Three',
+			description: 'Die Fischerin',
+			image: '/rcs/cards/blue_three.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 4,
+			name: 'Blue Four',
+			description: 'Der Bauer',
+			image: '/rcs/cards/blue_four.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 5,
+			name: 'Blue Five',
+			description: 'Die Schmiedin',
+			image: '/rcs/cards/blue_five.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 6,
+			name: 'Blue Six',
+			description: 'Der Händler',
+			image: '/rcs/cards/blue_six.jpg',
+			suit: 'blue'
+		},
 		{
 			id: 7,
 			name: 'Blue Seven',
 			description: 'Die Priesterin',
-			image: '/rcs/cards/blue_seven.jpg'
+			image: '/rcs/cards/blue_seven.jpg',
+			suit: 'blue'
 		},
-		{ id: 8, name: 'Blue Eight', description: 'Der Krieger', image: '/rcs/cards/blue_eight.jpg' },
-		{ id: 9, name: 'Blue Nine', description: 'Die Feldherrin', image: '/rcs/cards/blue_nine.jpg' },
+		{
+			id: 8,
+			name: 'Blue Eight',
+			description: 'Der Krieger',
+			image: '/rcs/cards/blue_eight.jpg',
+			suit: 'blue'
+		},
+		{
+			id: 9,
+			name: 'Blue Nine',
+			description: 'Die Feldherrin',
+			image: '/rcs/cards/blue_nine.jpg',
+			suit: 'blue'
+		},
 		{
 			id: 10,
 			name: 'Blue Ten',
 			description: 'Der Schatzmeister',
-			image: '/rcs/cards/blue_ten.jpg'
+			image: '/rcs/cards/blue_ten.jpg',
+			suit: 'blue'
 		},
 		{
 			id: 11,
 			name: 'Blue Eleven',
 			description: 'Die Prinzessin',
-			image: '/rcs/cards/blue_eleven.jpg'
+			image: '/rcs/cards/blue_eleven.jpg',
+			suit: 'blue'
 		},
-		{ id: 12, name: 'Blue Twelve', description: 'Der König', image: '/rcs/cards/blue_twelve.jpg' },
+		{
+			id: 12,
+			name: 'Blue Twelve',
+			description: 'Der König',
+			image: '/rcs/cards/blue_twelve.jpg',
+			suit: 'blue'
+		},
 		{
 			id: 13,
 			name: 'Blue Thirteen',
 			description: 'Die Standarte',
-			image: '/rcs/cards/blue_thirteen.jpg'
+			image: '/rcs/cards/blue_thirteen.jpg',
+			suit: 'blue'
 		}
 	].map((card) => ({
 		...card,
@@ -42,28 +109,96 @@
 	}));
 
 	export const cardsRed = [
-		{ id: 1, name: 'Red One', description: 'Der Dieb', image: '/rcs/cards/red_one.jpg' },
-		{ id: 2, name: 'Red Two', description: 'Die Magd', image: '/rcs/cards/red_two.jpg' },
-		{ id: 3, name: 'Red Three', description: 'Der Fischer', image: '/rcs/cards/red_three.jpg' },
-		{ id: 4, name: 'Red Four', description: 'Die Bäuerin', image: '/rcs/cards/red_four.jpg' },
-		{ id: 5, name: 'Red Five', description: 'Der Schmied', image: '/rcs/cards/red_five.jpg' },
-		{ id: 6, name: 'Red Six', description: 'Die Händlerin', image: '/rcs/cards/red_six.jpg' },
-		{ id: 7, name: 'Red Seven', description: 'Der Priester', image: '/rcs/cards/red_seven.jpg' },
-		{ id: 8, name: 'Red Eight', description: 'Die Kriegerin', image: '/rcs/cards/red_eight.jpg' },
-		{ id: 9, name: 'Red Nine', description: 'Der Feldherr', image: '/rcs/cards/red_nine.jpg' },
+		{
+			id: 1,
+			name: 'Red One',
+			description: 'Der Dieb',
+			image: '/rcs/cards/red_one.jpg',
+			suit: 'red'
+		},
+		{
+			id: 2,
+			name: 'Red Two',
+			description: 'Die Magd',
+			image: '/rcs/cards/red_two.jpg',
+			suit: 'red'
+		},
+		{
+			id: 3,
+			name: 'Red Three',
+			description: 'Der Fischer',
+			image: '/rcs/cards/red_three.jpg',
+			suit: 'red'
+		},
+		{
+			id: 4,
+			name: 'Red Four',
+			description: 'Die Bäuerin',
+			image: '/rcs/cards/red_four.jpg',
+			suit: 'red'
+		},
+		{
+			id: 5,
+			name: 'Red Five',
+			description: 'Der Schmied',
+			image: '/rcs/cards/red_five.jpg',
+			suit: 'red'
+		},
+		{
+			id: 6,
+			name: 'Red Six',
+			description: 'Die Händlerin',
+			image: '/rcs/cards/red_six.jpg',
+			suit: 'red'
+		},
+		{
+			id: 7,
+			name: 'Red Seven',
+			description: 'Der Priester',
+			image: '/rcs/cards/red_seven.jpg',
+			suit: 'red'
+		},
+		{
+			id: 8,
+			name: 'Red Eight',
+			description: 'Die Kriegerin',
+			image: '/rcs/cards/red_eight.jpg',
+			suit: 'red'
+		},
+		{
+			id: 9,
+			name: 'Red Nine',
+			description: 'Der Feldherr',
+			image: '/rcs/cards/red_nine.jpg',
+			suit: 'red'
+		},
 		{
 			id: 10,
 			name: 'Red Ten',
 			description: 'Die Schatzmeisterin',
-			image: '/rcs/cards/red_ten.jpg'
+			image: '/rcs/cards/red_ten.jpg',
+			suit: 'red'
 		},
-		{ id: 11, name: 'Red Eleven', description: 'Der Prinz', image: '/rcs/cards/red_eleven.jpg' },
-		{ id: 12, name: 'Red Twelve', description: 'Die Königin', image: '/rcs/cards/red_twelve.jpg' },
+		{
+			id: 11,
+			name: 'Red Eleven',
+			description: 'Der Prinz',
+			image: '/rcs/cards/red_eleven.jpg',
+			suit: 'red'
+		},
+		{
+			id: 12,
+			name: 'Red Twelve',
+			description: 'Die Königin',
+			image: '/rcs/cards/red_twelve.jpg',
+			suit: 'red'
+		},
 		{
 			id: 13,
 			name: 'Red Thirteen',
 			description: 'Die Standarte',
-			image: '/rcs/cards/red_thirteen.jpg'
+			image: '/rcs/cards/red_thirteen.jpg',
+			suit: 'red'
 		}
 	].map((card) => ({
 		...card,
@@ -71,48 +206,96 @@
 	}));
 
 	export const cardsGreen = [
-		{ id: 1, name: 'Green One', description: 'Der Dieb', image: '/rcs/cards/green_one.jpg' },
-		{ id: 2, name: 'Green Two', description: 'Die Magd', image: '/rcs/cards/green_two.jpg' },
-		{ id: 3, name: 'Green Three', description: 'Der Fischer', image: '/rcs/cards/green_three.jpg' },
-		{ id: 4, name: 'Green Four', description: 'Die Bäuerin', image: '/rcs/cards/green_four.jpg' },
-		{ id: 5, name: 'Green Five', description: 'Der Schmied', image: '/rcs/cards/green_five.jpg' },
-		{ id: 6, name: 'Green Six', description: 'Die Händlerin', image: '/rcs/cards/green_six.jpg' },
+		{
+			id: 1,
+			name: 'Green One',
+			description: 'Der Dieb',
+			image: '/rcs/cards/green_one.jpg',
+			suit: 'green'
+		},
+		{
+			id: 2,
+			name: 'Green Two',
+			description: 'Die Magd',
+			image: '/rcs/cards/green_two.jpg',
+			suit: 'green'
+		},
+		{
+			id: 3,
+			name: 'Green Three',
+			description: 'Der Fischer',
+			image: '/rcs/cards/green_three.jpg',
+			suit: 'green'
+		},
+		{
+			id: 4,
+			name: 'Green Four',
+			description: 'Die Bäuerin',
+			image: '/rcs/cards/green_four.jpg',
+			suit: 'green'
+		},
+		{
+			id: 5,
+			name: 'Green Five',
+			description: 'Der Schmied',
+			image: '/rcs/cards/green_five.jpg',
+			suit: 'green'
+		},
+		{
+			id: 6,
+			name: 'Green Six',
+			description: 'Die Händlerin',
+			image: '/rcs/cards/green_six.jpg',
+			suit: 'green'
+		},
 		{
 			id: 7,
 			name: 'Green Seven',
 			description: 'Der Priester',
-			image: '/rcs/cards/green_seven.jpg'
+			image: '/rcs/cards/green_seven.jpg',
+			suit: 'green'
 		},
 		{
 			id: 8,
 			name: 'Green Eight',
 			description: 'Die Kriegerin',
-			image: '/rcs/cards/green_eight.jpg'
+			image: '/rcs/cards/green_eight.jpg',
+			suit: 'green'
 		},
-		{ id: 9, name: 'Green Nine', description: 'Der Feldherr', image: '/rcs/cards/green_nine.jpg' },
+		{
+			id: 9,
+			name: 'Green Nine',
+			description: 'Der Feldherr',
+			image: '/rcs/cards/green_nine.jpg',
+			suit: 'green'
+		},
 		{
 			id: 10,
 			name: 'Green Ten',
 			description: 'Die Schatzmeisterin',
-			image: '/rcs/cards/green_ten.jpg'
+			image: '/rcs/cards/green_ten.jpg',
+			suit: 'green'
 		},
 		{
 			id: 11,
 			name: 'Green Eleven',
 			description: 'Der Prinz',
-			image: '/rcs/cards/green_eleven.jpg'
+			image: '/rcs/cards/green_eleven.jpg',
+			suit: 'green'
 		},
 		{
 			id: 12,
 			name: 'Green Twelve',
 			description: 'Die Königin',
-			image: '/rcs/cards/green_twelve.jpg'
+			image: '/rcs/cards/green_twelve.jpg',
+			suit: 'green'
 		},
 		{
 			id: 13,
 			name: 'Green Thirteen',
 			description: 'Die Standarte',
-			image: '/rcs/cards/green_thirteen.jpg'
+			image: '/rcs/cards/green_thirteen.jpg',
+			suit: 'green'
 		}
 	].map((card) => ({
 		...card,
@@ -120,63 +303,96 @@
 	}));
 
 	export const cardsYellow = [
-		{ id: 1, name: 'Yellow One', description: 'Die Diebin', image: '/rcs/cards/yellow_one.jpg' },
-		{ id: 2, name: 'Yellow Two', description: 'Der Knecht', image: '/rcs/cards/yellow_two.jpg' },
+		{
+			id: 1,
+			name: 'Yellow One',
+			description: 'Die Diebin',
+			image: '/rcs/cards/yellow_one.jpg',
+			suit: 'yellow'
+		},
+		{
+			id: 2,
+			name: 'Yellow Two',
+			description: 'Der Knecht',
+			image: '/rcs/cards/yellow_two.jpg',
+			suit: 'yellow'
+		},
 		{
 			id: 3,
 			name: 'Yellow Three',
 			description: 'Die Fischerin',
-			image: '/rcs/cards/yellow_three.jpg'
+			image: '/rcs/cards/yellow_three.jpg',
+			suit: 'yellow'
 		},
-		{ id: 4, name: 'Yellow Four', description: 'Der Bauer', image: '/rcs/cards/yellow_four.jpg' },
+		{
+			id: 4,
+			name: 'Yellow Four',
+			description: 'Der Bauer',
+			image: '/rcs/cards/yellow_four.jpg',
+			suit: 'yellow'
+		},
 		{
 			id: 5,
 			name: 'Yellow Five',
 			description: 'Die Schmiedin',
-			image: '/rcs/cards/yellow_five.jpg'
+			image: '/rcs/cards/yellow_five.jpg',
+			suit: 'yellow'
 		},
-		{ id: 6, name: 'Yellow Six', description: 'Der Händler', image: '/rcs/cards/yellow_six.jpg' },
+		{
+			id: 6,
+			name: 'Yellow Six',
+			description: 'Der Händler',
+			image: '/rcs/cards/yellow_six.jpg',
+			suit: 'yellow'
+		},
 		{
 			id: 7,
 			name: 'Yellow Seven',
 			description: 'Die Priesterin',
-			image: '/rcs/cards/yellow_seven.jpg'
+			image: '/rcs/cards/yellow_seven.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 8,
 			name: 'Yellow Eight',
 			description: 'Der Krieger',
-			image: '/rcs/cards/yellow_eight.jpg'
+			image: '/rcs/cards/yellow_eight.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 9,
 			name: 'Yellow Nine',
 			description: 'Die Feldherrin',
-			image: '/rcs/cards/yellow_nine.jpg'
+			image: '/rcs/cards/yellow_nine.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 10,
 			name: 'Yellow Ten',
 			description: 'Der Schatzmeister',
-			image: '/rcs/cards/yellow_ten.jpg'
+			image: '/rcs/cards/yellow_ten.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 11,
 			name: 'Yellow Eleven',
 			description: 'Die Prinzessin',
-			image: '/rcs/cards/yellow_eleven.jpg'
+			image: '/rcs/cards/yellow_eleven.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 12,
 			name: 'Yellow Twelve',
 			description: 'Der König',
-			image: '/rcs/cards/yellow_twelve.jpg'
+			image: '/rcs/cards/yellow_twelve.jpg',
+			suit: 'yellow'
 		},
 		{
 			id: 13,
 			name: 'Yellow Thirteen',
 			description: 'Die Standarte',
-			image: '/rcs/cards/yellow_thirteen.jpg'
+			image: '/rcs/cards/yellow_thirteen.jpg',
+			suit: 'yellow'
 		}
 	].map((card) => ({
 		...card,
@@ -184,29 +400,67 @@
 	}));
 
 	export const cardsZoro = [
-		{ id: 1, name: 'Zoro One', description: 'Der Zauberer', image: '/rcs/cards/zoro_one.jpg' },
-		{ id: 2, name: 'Zoro Two', description: 'Die Hexe', image: '/rcs/cards/zoro_two.jpg' },
-		{ id: 3, name: 'Zoro Three', description: 'Die Hexe', image: '/rcs/cards/zoro_three.jpg' },
-		{ id: 4, name: 'Zoro Four', description: 'Der Zauberer', image: '/rcs/cards/zoro_four.jpg' }
+		{
+			id: 1,
+			name: 'Zoro One',
+			description: 'Der Zauberer',
+			image: '/rcs/cards/zoro_one.jpg',
+			suit: 'zoro'
+		},
+		{
+			id: 2,
+			name: 'Zoro Two',
+			description: 'Die Hexe',
+			image: '/rcs/cards/zoro_two.jpg',
+			suit: 'zoro'
+		},
+		{
+			id: 3,
+			name: 'Zoro Three',
+			description: 'Die Hexe',
+			image: '/rcs/cards/zoro_three.jpg',
+			suit: 'zoro'
+		},
+		{
+			id: 4,
+			name: 'Zoro Four',
+			description: 'Der Zauberer',
+			image: '/rcs/cards/zoro_four.jpg',
+			suit: 'zoro'
+		}
 	].map((card) => ({
 		...card,
 		image: toWebp(`/rcs/cards/${card.name.toLowerCase().replace(/ /g, '_')}.jpg`)
 	}));
 
 	export const cardsFool = [
-		{ id: 1, name: 'Fool One', description: 'Der Narr', image: '/rcs/cards/fool_one.jpg' },
-		{ id: 2, name: 'Fool Two', description: 'Der Narr', image: '/rcs/cards/fool_two.jpg' },
+		{
+			id: 1,
+			name: 'Fool One',
+			description: 'Der Narr',
+			image: '/rcs/cards/fool_one.jpg',
+			suit: 'fool'
+		},
+		{
+			id: 2,
+			name: 'Fool Two',
+			description: 'Der Narr',
+			image: '/rcs/cards/fool_two.jpg',
+			suit: 'fool'
+		},
 		{
 			id: 3,
 			name: 'Fool Three',
 			description: 'Die Närrin',
-			image: '/rcs/cards/fool_three.jpg'
+			image: '/rcs/cards/fool_three.jpg',
+			suit: 'fool'
 		},
 		{
 			id: 4,
 			name: 'Fool Four',
 			description: 'Die Närrin',
-			image: '/rcs/cards/fool_four.jpg'
+			image: '/rcs/cards/fool_four.jpg',
+			suit: 'fool'
 		}
 	].map((card) => ({
 		...card,
@@ -238,6 +492,18 @@
 	onMount(() => {
 		preloadImages(allCardImages);
 	});
+
+	// Click handler to navigate to specific card view
+	function handleCardClick(card: Card) {
+		const params = new URLSearchParams({
+			name: card.name,
+			description: card.description,
+			image: card.image,
+			suit: card.suit,
+			id: card.id.toString()
+		});
+		goto(`/cards/specificCard?${params.toString()}`);
+	}
 </script>
 
 <main class="w-[90%] max-w-[1600px] mx-auto bg-white p-6 rounded-xl shadow-lg">
@@ -251,6 +517,10 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
@@ -283,10 +553,13 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
-					<!-- Text container: fixed height to avoid layout shift -->
 					<div class="relative h-6 w-full">
 						<!-- Name: visible normally -->
 						<p
@@ -319,10 +592,13 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
-					<!-- Text container: fixed height to avoid layout shift -->
 					<div class="relative h-6 w-full">
 						<!-- Name: visible normally -->
 						<p
@@ -355,10 +631,13 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
-					<!-- Text container: fixed height to avoid layout shift -->
 					<div class="relative h-6 w-full">
 						<!-- Name: visible normally -->
 						<p
@@ -396,10 +675,13 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
-					<!-- Text container: fixed height to avoid layout shift -->
 					<div class="relative h-6 w-full">
 						<!-- Name: visible normally -->
 						<p
@@ -438,6 +720,10 @@
 				<div
 					class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center
          				group cursor-pointer transition-transform transform hover:scale-105"
+					on:click={() => handleCardClick(card)}
+					on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+					role="button"
+					tabindex="0"
 				>
 					<CardImage src={card.image} alt={card.name} className="w-32 h-auto mb-3 rounded-md" />
 
