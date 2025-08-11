@@ -222,26 +222,6 @@
 		background: linear-gradient(135deg, #e8d8b4 0%, #d4c4a0 30%, #b8956a 70%, #a0896b 100%);
 	}
 
-	/* Top edge */
-	.edge-top {
-		width: 100%;
-		height: var(--card-thickness);
-		top: 0;
-		left: 0;
-		transform: rotateX(90deg);
-		transform-origin: center top;
-	}
-
-	/* Bottom edge */
-	.edge-bottom {
-		width: 100%;
-		height: var(--card-thickness);
-		bottom: 0;
-		left: 0;
-		transform: rotateX(-90deg);
-		transform-origin: center bottom;
-	}
-
 	/* Left edge */
 	.edge-side-left {
 		width: var(--card-thickness);
@@ -250,6 +230,7 @@
 		left: 0;
 		transform: rotateY(-90deg);
 		transform-origin: left center;
+		clip-path: inset(12px 0 12px 0 round 0 12px 12px 0);
 	}
 
 	/* Right edge */
@@ -260,6 +241,7 @@
 		right: 0;
 		transform: rotateY(90deg);
 		transform-origin: right center;
+		clip-path: inset(12px 0 12px 0 round 12px 0 0 12px);
 	}
 
 	/* Enhanced holographic shine effect */
