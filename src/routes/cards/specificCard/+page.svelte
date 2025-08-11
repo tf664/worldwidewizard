@@ -35,6 +35,7 @@
 	}
 </script>
 
+<!-- Tab Metadata -->
 <svelte:head>
 	<title>{cardData.name} - World Wide Wizard</title>
 	<meta name="description" content="Detailed view of {cardData.name}: {cardData.description}" />
@@ -72,7 +73,8 @@
 				<p class="text-xl text-white/80 capitalize">{cardData.suit} Suit</p>
 			</div>
 
-			<div class="w-24"></div> <!-- Spacer for center alignment -->
+			<div class="w-24"></div>
+			<!-- Spacer for center alignment -->
 		</div>
 
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -82,6 +84,7 @@
 					frontImage={cardData.image}
 					backImage={getCardBackImage(cardData.suit)}
 					cardName={cardData.name}
+					suit={cardData.suit}
 				/>
 			</div>
 
@@ -112,7 +115,9 @@
 							{:else if cardData.suit === 'fool'}
 								<p>🃏 <strong>Fool cards</strong> always lose tricks, cannot win any trick.</p>
 							{/if}
-							<p class="text-sm text-white/60 mt-4">Make sure to keep track of the special traits when planning your moves!</p>
+							<p class="text-sm text-white/60 mt-4">
+								Make sure to keep track of the special traits when planning your moves!
+							</p>
 						</div>
 					</div>
 				{/if}

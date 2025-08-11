@@ -5,17 +5,32 @@
 	export let frontImage: string = '/rcs/cards-optimized/_placeholder_.webp';
 	export let backImage: string = '/rcs/cards-optimized/card_back.webp';
 	export let cardName: string = 'Card';
+	export let suit: string = 'white';
 
 	// State
 	let dragging = false;
 	let startX = 0;
+	let baseAngle = 0; // Track the card's resting position
 	let cardElement: HTMLDivElement;
 
-	// Smooth spring animation
+	// Smooth spring animation with adaptive parameters
 	let angle = spring(0, {
-		stiffness: 0.3,
-		damping: 0.6
+		stiffness: 0.2,
+		damping: 0.9
 	});
+
+	// Update spring settings based on dragging state
+	$: {
+		if (dragging) {
+			// Faster, more responsive during drag
+			angle.stiffness = 0.4;
+			angle.damping = 0.7;
+		} else {
+			// Slower, smoother for release animation
+			angle.stiffness = 0.15;
+			angle.damping = 0.8;
+		}
+	}
 
 	// Mouse/Touch event handlers
 	function onDown(e: MouseEvent | TouchEvent) {
@@ -40,9 +55,11 @@
 			: (e as MouseEvent).clientX;
 
 		const delta = currentX - startX;
-		// Smooth rotation with limits
-		const newAngle = Math.max(-180, Math.min(180, delta * 0.8));
-		angle.set(newAngle);
+		const sensitivity = 0.5;
+		const rawAngle = baseAngle + (delta * sensitivity);
+		
+		// Allow free rotation without clamping during drag
+		angle.set(rawAngle);
 	}
 
 	function onUp() {
@@ -53,14 +70,27 @@
 			cardElement.style.cursor = 'grab';
 		}
 
-		// Auto-complete rotation if past halfway
-		if ($angle > 90) {
-			angle.set(180);
-		} else if ($angle < -90) {
-			angle.set(-180);
+		// Determine closest target angle (0° or ±180°)
+		const currentAngle = $angle;
+		
+		// Normalize angle to -180 to 180 range
+		const normalizedAngle = ((currentAngle % 360) + 540) % 360 - 180;
+		
+		// Find the closest snap position
+		let targetAngle: number;
+		if (normalizedAngle > 90) {
+			// Closer to 180°
+			targetAngle = 180;
+		} else if (normalizedAngle < -90) {
+			// Closer to -180°
+			targetAngle = -180;
 		} else {
-			angle.set(0);
+			// Closer to 0°
+			targetAngle = 0;
 		}
+		
+		angle.set(targetAngle);
+		baseAngle = targetAngle;
 	}
 
 	// Global event listeners to handle mouse up outside element
@@ -78,29 +108,10 @@
 		document.removeEventListener('touchmove', onMove);
 	}
 
-	// Auto-rotation demo
-	let autoRotating = false;
-	function startAutoRotation() {
-		if (autoRotating || dragging) return;
-
-		autoRotating = true;
-		angle.set(180);
-
-		setTimeout(() => {
-			angle.set(0);
-			setTimeout(() => {
-				autoRotating = false;
-			}, 1000);
-		}, 2000);
-	}
-
-	// Start auto rotation after a delay
+	// Initialize event listeners
 	import { onMount } from 'svelte';
 	onMount(() => {
 		addGlobalListeners();
-
-		// Demo rotation after 2 seconds
-		setTimeout(startAutoRotation, 2000);
 
 		return () => {
 			removeGlobalListeners();
@@ -117,18 +128,13 @@
 		role="button"
 		tabindex="0"
 		aria-label="Rotate {cardName} card"
-		on:keydown={(e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				startAutoRotation();
-			}
-		}}
 	>
 		<div class="inner" style="transform: rotateY({$angle}deg);">
 			<!-- Card thickness edges - multiple edges for realistic thickness -->
-			<div class="edge edge-top"></div>
-			<div class="edge edge-bottom"></div>
-			<div class="edge edge-side-left"></div>
-			<div class="edge edge-side-right"></div>
+			<div class="edge edge-top {suit}"></div>
+			<div class="edge edge-bottom {suit}"></div>
+			<div class="edge edge-side-left {suit}"></div>
+			<div class="edge edge-side-right {suit}"></div>
 
 			<!-- Front face -->
 			<div class="face front">
@@ -195,9 +201,10 @@
 		backface-visibility: hidden;
 		border-radius: 12px;
 		overflow: hidden;
-		box-shadow: 
-			inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+		box-shadow:
+			inset 0 0 0 2px rgba(255, 255, 255, 0.4),
 			0 2px 8px rgba(0, 0, 0, 0.15);
+		border: 1px solid rgba(255, 255, 255, 0.3);
 	}
 
 	.face img {
@@ -205,9 +212,8 @@
 		height: 100%;
 		object-fit: cover;
 		display: block;
+		border-radius: 11px;
 	}
-
-	/* Faces positioned for realistic thickness */
 	.front {
 		transform: translateZ(var(--half-thickness));
 	}
@@ -219,8 +225,22 @@
 	/* Card edges for realistic 3D thickness effect */
 	.edge {
 		position: absolute;
-		background: linear-gradient(135deg, #e8d8b4 0%, #d4c4a0 30%, #b8956a 70%, #a0896b 100%);
 	}
+	.edge.blue {
+		background: linear-gradient(135deg, #3730a3, #4338ca, #4f46e5, #6366f1);
+	}
+	.edge.red {
+		background: linear-gradient(135deg, #b91c1c, #dc2626, #ef4444, #f87171);
+	}
+	.edge.green {
+		background: linear-gradient(135deg, #166534, #16a34a, #22c55e, #4ade80);
+	}
+	.edge.yellow {
+		background: linear-gradient(135deg, #ca8a04, #eab308, #facc15, #fde047); }
+	.edge.zoro {
+		background: linear-gradient(135deg, #f472b6, #a855f7, #3b82f6, #60a5fa); }
+	.edge.fool {
+		background: linear-gradient(135deg, #f87171, #fde047, #3b82f6, #60a5fa); }
 
 	/* Left edge */
 	.edge-side-left {
@@ -247,16 +267,18 @@
 	/* Enhanced holographic shine effect */
 	.card-shine {
 		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
+		top: -10%;
+		left: -150%;
+		width: 120%;
+		height: 120%;
 		background: linear-gradient(
 			90deg,
 			transparent 0%,
-			rgba(255, 255, 255, 0.15) 25%,
+			transparent 20%,
+			rgba(255, 255, 255, 0.1) 35%,
 			rgba(255, 255, 255, 0.4) 50%,
-			rgba(255, 255, 255, 0.15) 75%,
+			rgba(255, 255, 255, 0.1) 65%,
+			transparent 80%,
 			transparent 100%
 		);
 		transform: skewX(-25deg);
@@ -267,21 +289,24 @@
 
 	@keyframes shine {
 		0% {
-			left: -100%;
+			left: -150%;
 		}
-		20% {
-			left: -100%;
+		15% {
+			left: -150%;
+		}
+		85% {
+			left: 130%;
 		}
 		100% {
-			left: 100%;
+			left: 130%;
 		}
 	}
 
 	/* Responsive adjustments */
 	@media (max-width: 768px) {
 		.card {
-			width: 240px;
-			height: 335px;
+			width: 400x;
+			height: 606px;
 		}
 	}
 
