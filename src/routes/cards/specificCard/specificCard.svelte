@@ -46,6 +46,21 @@
 		}
 	}
 
+	// Helper: Normalize angle to [-180, 180)
+	function normalizeAngle(angle: number): number {
+		angle = angle % 360;
+		if (angle >= 180) angle -= 360;
+		if (angle < -180) angle += 360;
+		return angle;
+	}
+
+	// Helper: Find shortest angle difference from a to b
+	function shortestAngleDiff(a: number, b: number): number {
+		let diff = normalizeAngle(b - a);
+		return diff;
+	}
+
+	// Turning motion, moving the mouse
 	function onMove(e: MouseEvent | TouchEvent) {
 		if (!dragging) return;
 		e.preventDefault();
@@ -56,39 +71,46 @@
 
 		const delta = currentX - startX;
 		const sensitivity = 0.5;
-		const rawAngle = baseAngle + (delta * sensitivity);
-		
-		// Allow free rotation without clamping during drag
-		angle.set(rawAngle);
+		let newAngle = baseAngle + delta * sensitivity;
+
+		// Normalize to prevent jumps
+		newAngle = normalizeAngle(newAngle);
+
+		angle.set(newAngle);
 	}
 
+	// Turning motion, releasing button
 	function onUp() {
 		dragging = false;
 
-		// Reset cursor
 		if (cardElement) {
 			cardElement.style.cursor = 'grab';
 		}
 
-		// Determine closest target angle (0° or ±180°)
+		// Current spring angle value
 		const currentAngle = $angle;
-		
-		// Normalize angle to -180 to 180 range
-		const normalizedAngle = ((currentAngle % 360) + 540) % 360 - 180;
-		
-		// Find the closest snap position
+
+		// Simple logic: snap to closest of 0°, 180°, or -180°
 		let targetAngle: number;
-		if (normalizedAngle > 90) {
-			// Closer to 180°
-			targetAngle = 180;
-		} else if (normalizedAngle < -90) {
-			// Closer to -180°
-			targetAngle = -180;
-		} else {
-			// Closer to 0°
-			targetAngle = 0;
-		}
 		
+		// Calculate distances using modular arithmetic to find shortest path
+		const distTo0 = Math.min(Math.abs(currentAngle), Math.abs(currentAngle - 360), Math.abs(currentAngle + 360));
+		const distTo180 = Math.min(Math.abs(currentAngle - 180), Math.abs(currentAngle - 180 - 360), Math.abs(currentAngle - 180 + 360));
+		const distToNeg180 = Math.min(Math.abs(currentAngle + 180), Math.abs(currentAngle + 180 - 360), Math.abs(currentAngle + 180 + 360));
+		
+		// Find minimum distance
+		const minDist = Math.min(distTo0, distTo180, distToNeg180);
+		
+		// Choose target based on shortest distance
+		if (minDist === distTo0) {
+			targetAngle = 0;
+		} else if (minDist === distTo180) {
+			targetAngle = 180;
+		} else {
+			targetAngle = -180;
+		}
+
+		// Animate the spring to this target
 		angle.set(targetAngle);
 		baseAngle = targetAngle;
 	}
@@ -236,11 +258,14 @@
 		background: linear-gradient(135deg, #166534, #16a34a, #22c55e, #4ade80);
 	}
 	.edge.yellow {
-		background: linear-gradient(135deg, #ca8a04, #eab308, #facc15, #fde047); }
+		background: linear-gradient(135deg, #ca8a04, #eab308, #facc15, #fde047);
+	}
 	.edge.zoro {
-		background: linear-gradient(135deg, #f472b6, #a855f7, #3b82f6, #60a5fa); }
+		background: linear-gradient(135deg, #f472b6, #a855f7, #3b82f6, #60a5fa);
+	}
 	.edge.fool {
-		background: linear-gradient(135deg, #f87171, #fde047, #3b82f6, #60a5fa); }
+		background: linear-gradient(135deg, #f87171, #fde047, #3b82f6, #60a5fa);
+	}
 
 	/* Left edge */
 	.edge-side-left {
