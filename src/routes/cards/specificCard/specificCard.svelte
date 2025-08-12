@@ -69,7 +69,9 @@
 		const delta = currentX - startX;
 		let newAngle = baseAngle + delta * sensitivity;
 
-		newAngle = normalizeAngle(newAngle);
+		// Clamp angle between 0 and 180 (front and back only)
+		if (newAngle < 0) newAngle = 0;
+		if (newAngle > 180) newAngle = 180;
 		angle.set(newAngle);
 	}
 
@@ -78,11 +80,11 @@
 		dragging = false;
 		if (cardElement) cardElement.style.cursor = 'grab';
 
-		const currentAngle = normalizeAngle($angle);
+		const currentAngle = $angle;
 
 		// Only snap to 0 or 180
 		const distTo0 = Math.abs(currentAngle);
-		const distTo180 = Math.abs(normalizeAngle(currentAngle - 180));
+		const distTo180 = Math.abs(currentAngle - 180);
 		let targetAngle = distTo0 < distTo180 ? 0 : 180;
 
 		angle.set(targetAngle);
