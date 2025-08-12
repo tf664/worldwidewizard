@@ -7,6 +7,8 @@
 	export let cardName: string = 'Card';
 	export let suit: string = 'white';
 
+	const sensitivity = 0.4;
+
 	// State
 	let dragging = false;
 	let startX = 0;
