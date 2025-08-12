@@ -7,12 +7,12 @@
 	export let cardName: string = 'Card';
 	export let suit: string = 'white';
 
-	const sensitivity = 0.9;
+	const sensitivity = 0.5;
 
 	// State
 	let dragging = false;
 	let startX = 0;
-	let baseAngle = 0; // Track the card's resting position
+	let baseAngle = 180; // Track the card's resting position
 	let cardElement: HTMLDivElement;
 
 	// Smooth spring animation with adaptive parameters
