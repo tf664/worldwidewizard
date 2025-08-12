@@ -72,14 +72,12 @@
 			: (e as MouseEvent).clientX;
 
 		const delta = currentX - startX;
-		const sensitivity = 0.5;
+		const sensitivity = 0.3;
 		let newAngle = baseAngle + delta * sensitivity;
 
 		// Normalize to prevent jumps
 		newAngle = normalizeAngle(newAngle);
 		angle.set(newAngle);
-
-		baseAngle = newAngle; //sync baseAngle for release
 	}
 
 	// Turning motion, releasing button
@@ -184,16 +182,17 @@
 		user-select: none;
 	}
 
-	.card {
-		width: 280px;
-		height: 390px;
-		perspective: 1200px;
-		cursor: grab;
-		touch-action: none;
-		position: relative;
-		transition: transform 0.3s ease;
-		filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.25));
-	}
+.card {
+	width: 280px;
+	height: 390px;
+	perspective: 1200px;
+	cursor: grab;
+	touch-action: none;
+	position: relative;
+	/* Remove transition here to avoid flicker */
+	/* transition: transform 0.3s ease; */
+	filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.25));
+}
 
 	.card:hover {
 		transform: scale(1.02);
@@ -203,13 +202,14 @@
 		cursor: grabbing;
 	}
 
-	.inner {
-		width: 100%;
-		height: 100%;
-		position: relative;
-		transform-style: preserve-3d;
-		transition: none; /* Handled by spring animation */
-	}
+ .inner {
+ 	width: 100%;
+ 	height: 100%;
+ 	position: relative;
+ 	transform-style: preserve-3d;
+ 	transition: none; /* Handled by spring animation */
+ 	will-change: transform; /* Add for smoother animations */
+ }
 
 	/* Card thickness - realistic trading card thickness */
 	:root {
