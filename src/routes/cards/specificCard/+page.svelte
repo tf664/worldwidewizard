@@ -41,8 +41,7 @@
 	<meta name="description" content="Detailed view of {cardData.name}: {cardData.description}" />
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 py-8">
-	<div class="max-w-6xl mx-auto px-4">
+<div class="min-h-screen max-w-6xl mx-auto px-4 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 py-8">
 		<!-- Header with Back Button -->
 		<div class="flex items-center justify-between mb-8">
 			<button
@@ -124,4 +123,3 @@
 			</div>
 		</div>
 	</div>
-</div>
