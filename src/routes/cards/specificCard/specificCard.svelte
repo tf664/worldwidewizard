@@ -73,6 +73,9 @@
 		if (newAngle < 0) newAngle = 0;
 		if (newAngle > 180) newAngle = 180;
 		angle.set(newAngle);
+
+		baseAngle = newAngle;
+		startX = currentX;
 	}
 
 	// Turning motion, releasing button
