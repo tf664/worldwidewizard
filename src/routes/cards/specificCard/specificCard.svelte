@@ -57,64 +57,37 @@
 		return angle;
 	}
 
-	// Helper: Find shortest angle difference from a to b
-	function shortestAngleDiff(a: number, b: number): number {
-		let diff = normalizeAngle(b - a);
-		return diff;
+	// Turning motion, moving the mouse
+	function onMove(e: MouseEvent | TouchEvent) {
+		if (!dragging) return;
+		e.preventDefault();
+
+		const currentX = e.type.startsWith('touch')
+			? (e as TouchEvent).touches[0].clientX
+			: (e as MouseEvent).clientX;
+
+		const delta = currentX - startX;
+		let newAngle = baseAngle + delta * sensitivity;
+
+		newAngle = normalizeAngle(newAngle);
+		angle.set(newAngle);
 	}
 
-	// Turning motion, moving the mouse
-function onMove(e: MouseEvent | TouchEvent) {
-	if (!dragging) return;
-	e.preventDefault();
-
-	const currentX = e.type.startsWith('touch')
-		? (e as TouchEvent).touches[0].clientX
-		: (e as MouseEvent).clientX;
-
-	const delta = currentX - startX;
-	let newAngle = baseAngle + delta * sensitivity;
-
-	newAngle = normalizeAngle(newAngle);
-	angle.set(newAngle);
-}
-
-
 	// Turning motion, releasing button
-function onUp() {
-	dragging = false;
-	if (cardElement) cardElement.style.cursor = 'grab';
+	function onUp() {
+		dragging = false;
+		if (cardElement) cardElement.style.cursor = 'grab';
 
-	const currentAngle = normalizeAngle($angle);
+		const currentAngle = normalizeAngle($angle);
 
-	// snapping distances
-	const distTo0 = Math.min(
-		Math.abs(currentAngle),
-		Math.abs(currentAngle - 360),
-		Math.abs(currentAngle + 360)
-	);
-	const distTo180 = Math.min(
-		Math.abs(currentAngle - 180),
-		Math.abs(currentAngle - 180 - 360),
-		Math.abs(currentAngle - 180 + 360)
-	);
-	const distToNeg180 = Math.min(
-		Math.abs(currentAngle + 180),
-		Math.abs(currentAngle + 180 - 360),
-		Math.abs(currentAngle + 180 + 360)
-	);
+		// Only snap to 0 or 180
+		const distTo0 = Math.abs(currentAngle);
+		const distTo180 = Math.abs(normalizeAngle(currentAngle - 180));
+		let targetAngle = distTo0 < distTo180 ? 0 : 180;
 
-	const minDist = Math.min(distTo0, distTo180, distToNeg180);
-
-	let targetAngle: number;
-	if (minDist === distTo0) targetAngle = 0;
-	else if (minDist === distTo180) targetAngle = 180;
-	else targetAngle = -180;
-
-	angle.set(targetAngle);
-	baseAngle = targetAngle;  // update baseAngle on release
-}
-
+		angle.set(targetAngle);
+		baseAngle = targetAngle;
+	}
 
 	// Global event listeners to handle mouse up outside element
 	function addGlobalListeners() {
@@ -182,17 +155,17 @@ function onUp() {
 		user-select: none;
 	}
 
-.card {
-	width: 280px;
-	height: 390px;
-	perspective: 1200px;
-	cursor: grab;
-	touch-action: none;
-	position: relative;
-	/* Remove transition here to avoid flicker */
-	/* transition: transform 0.3s ease; */
-	filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.25));
-}
+	.card {
+		width: 280px;
+		height: 390px;
+		perspective: 1200px;
+		cursor: grab;
+		touch-action: none;
+		position: relative;
+		/* Remove transition here to avoid flicker */
+		/* transition: transform 0.3s ease; */
+		filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.25));
+	}
 
 	.card:hover {
 		transform: scale(1.02);
@@ -202,14 +175,14 @@ function onUp() {
 		cursor: grabbing;
 	}
 
- .inner {
- 	width: 100%;
- 	height: 100%;
- 	position: relative;
- 	transform-style: preserve-3d;
- 	transition: none; /* Handled by spring animation */
- 	will-change: transform; /* Add for smoother animations */
- }
+	.inner {
+		width: 100%;
+		height: 100%;
+		position: relative;
+		transform-style: preserve-3d;
+		transition: none; /* Handled by spring animation */
+		will-change: transform; /* Add for smoother animations */
+	}
 
 	/* Card thickness - realistic trading card thickness */
 	:root {
