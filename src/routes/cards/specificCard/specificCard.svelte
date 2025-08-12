@@ -40,6 +40,8 @@
 			? (e as TouchEvent).touches[0].clientX
 			: (e as MouseEvent).clientX;
 
+		baseAngle = $angle; // capture starting rotation
+
 		// Change cursor
 		if (cardElement) {
 			cardElement.style.cursor = 'grabbing';
@@ -75,8 +77,9 @@
 
 		// Normalize to prevent jumps
 		newAngle = normalizeAngle(newAngle);
-
 		angle.set(newAngle);
+
+		baseAngle = newAngle; //sync baseAngle for release
 	}
 
 	// Turning motion, releasing button
