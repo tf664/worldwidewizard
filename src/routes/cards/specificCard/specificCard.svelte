@@ -12,11 +12,11 @@
 	// State
 	let dragging = false;
 	let startX = 0;
-	let baseAngle = 180; // Track the card's resting position
+	let baseAngle = 0; // Track the card's resting position
 	let cardElement: HTMLDivElement;
 
 	// Smooth spring animation with adaptive parameters
-	let angle = spring(0, {
+	let angle = spring(180, {
 		stiffness: 0.2,
 		damping: 0.9
 	});
