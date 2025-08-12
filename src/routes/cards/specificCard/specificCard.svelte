@@ -16,7 +16,7 @@
 	let cardElement: HTMLDivElement;
 
 	// Smooth spring animation with adaptive parameters
-	let angle = spring(180, {
+	let angle = spring(baseAngle, {
 		stiffness: 0.2,
 		damping: 0.9
 	});
