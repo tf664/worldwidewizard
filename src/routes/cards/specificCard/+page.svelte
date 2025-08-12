@@ -44,10 +44,7 @@
 </svelte:head>
 
 <div
-	class="min-h-screen max-w-6xl mx-auto px-4 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 py-8"
-	class:py-16={rulesVisible}
-	class:py-8={!rulesVisible}
-	style="transition: padding 0.3s ease;"
+	class="max-w-6xl mx-auto px-4 pb-32 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900"
 >
 	<!-- Header with Back Button -->
 	<div class="flex items-center justify-between mb-8">
@@ -90,7 +87,7 @@
 		</div>
 
 		<!-- Card Information -->
-		<div class="space-y-8">
+		<div class="space-y-2">
 			<div class="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
 				<div class="space-y-4">
 					<div>
@@ -105,7 +102,7 @@
 			</div>
 
 			<!-- Game Rules for this card type -->
-			{rulesVisible}
+			{#if rulesVisible}
 				<div class="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
 					<h3 class="text-xl font-bold text-white mb-4">Special card</h3>
 					<div class="text-white/80 space-y-2">
