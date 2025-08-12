@@ -40,8 +40,7 @@
 			? (e as TouchEvent).touches[0].clientX
 			: (e as MouseEvent).clientX;
 
-		baseAngle = $angle; // capture starting rotation
-
+		baseAngle = normalizeAngle($angle); // capture starting rotation
 		// Change cursor
 		if (cardElement) {
 			cardElement.style.cursor = 'grabbing';
@@ -63,58 +62,57 @@
 	}
 
 	// Turning motion, moving the mouse
-	function onMove(e: MouseEvent | TouchEvent) {
-		if (!dragging) return;
-		e.preventDefault();
+function onMove(e: MouseEvent | TouchEvent) {
+	if (!dragging) return;
+	e.preventDefault();
 
-		const currentX = e.type.startsWith('touch')
-			? (e as TouchEvent).touches[0].clientX
-			: (e as MouseEvent).clientX;
+	const currentX = e.type.startsWith('touch')
+		? (e as TouchEvent).touches[0].clientX
+		: (e as MouseEvent).clientX;
 
-		const delta = currentX - startX;
-		const sensitivity = 0.3;
-		let newAngle = baseAngle + delta * sensitivity;
+	const delta = currentX - startX;
+	let newAngle = baseAngle + delta * sensitivity;
 
-		// Normalize to prevent jumps
-		newAngle = normalizeAngle(newAngle);
-		angle.set(newAngle);
-	}
+	newAngle = normalizeAngle(newAngle);
+	angle.set(newAngle);
+}
+
 
 	// Turning motion, releasing button
-	function onUp() {
-		dragging = false;
+function onUp() {
+	dragging = false;
+	if (cardElement) cardElement.style.cursor = 'grab';
 
-		if (cardElement) {
-			cardElement.style.cursor = 'grab';
-		}
+	const currentAngle = normalizeAngle($angle);
 
-		// Current spring angle value
-		const currentAngle = $angle;
+	// snapping distances
+	const distTo0 = Math.min(
+		Math.abs(currentAngle),
+		Math.abs(currentAngle - 360),
+		Math.abs(currentAngle + 360)
+	);
+	const distTo180 = Math.min(
+		Math.abs(currentAngle - 180),
+		Math.abs(currentAngle - 180 - 360),
+		Math.abs(currentAngle - 180 + 360)
+	);
+	const distToNeg180 = Math.min(
+		Math.abs(currentAngle + 180),
+		Math.abs(currentAngle + 180 - 360),
+		Math.abs(currentAngle + 180 + 360)
+	);
 
-		// Simple logic: snap to closest of 0°, 180°, or -180°
-		let targetAngle: number;
-		
-		// Calculate distances using modular arithmetic to find shortest path
-		const distTo0 = Math.min(Math.abs(currentAngle), Math.abs(currentAngle - 360), Math.abs(currentAngle + 360));
-		const distTo180 = Math.min(Math.abs(currentAngle - 180), Math.abs(currentAngle - 180 - 360), Math.abs(currentAngle - 180 + 360));
-		const distToNeg180 = Math.min(Math.abs(currentAngle + 180), Math.abs(currentAngle + 180 - 360), Math.abs(currentAngle + 180 + 360));
-		
-		// Find minimum distance
-		const minDist = Math.min(distTo0, distTo180, distToNeg180);
-		
-		// Choose target based on shortest distance
-		if (minDist === distTo0) {
-			targetAngle = 0;
-		} else if (minDist === distTo180) {
-			targetAngle = 180;
-		} else {
-			targetAngle = -180;
-		}
+	const minDist = Math.min(distTo0, distTo180, distToNeg180);
 
-		// Animate the spring to this target
-		angle.set(targetAngle);
-		baseAngle = targetAngle;
-	}
+	let targetAngle: number;
+	if (minDist === distTo0) targetAngle = 0;
+	else if (minDist === distTo180) targetAngle = 180;
+	else targetAngle = -180;
+
+	angle.set(targetAngle);
+	baseAngle = targetAngle;  // update baseAngle on release
+}
+
 
 	// Global event listeners to handle mouse up outside element
 	function addGlobalListeners() {
