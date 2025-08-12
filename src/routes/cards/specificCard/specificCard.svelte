@@ -7,7 +7,7 @@
 	export let cardName: string = 'Card';
 	export let suit: string = 'white';
 
-	const sensitivity = 0.5;
+	const sensitivity = 0.3;
 
 	// State
 	let dragging = false;
@@ -16,21 +16,16 @@
 	let cardElement: HTMLDivElement;
 
 	// Smooth spring animation with adaptive parameters
-	let angle = spring(baseAngle, {
-		stiffness: 0.2,
-		damping: 0.9
-	});
+	let angle = spring(baseAngle, { stiffness: 0.2, damping: 0.9 });
 
 	// Update spring settings based on dragging state
 	$: {
 		if (dragging) {
-			// Faster, more responsive during drag
 			angle.stiffness = 0.4;
 			angle.damping = 0.7;
 		} else {
-			// Slower, smoother for release animation
 			angle.stiffness = 0.15;
-			angle.damping = 0.8;
+			angle.damping = 0.4;
 		}
 	}
 
@@ -42,19 +37,11 @@
 			? (e as TouchEvent).touches[0].clientX
 			: (e as MouseEvent).clientX;
 
-		baseAngle = normalizeAngle($angle); // capture starting rotation
-		// Change cursor
-		if (cardElement) {
-			cardElement.style.cursor = 'grabbing';
-		}
-	}
+		// baseAngle = normalizeAngle($angle); // capture starting rotation
+		baseAngle = $angle; // use raw angle, don't normalize
 
-	// Helper: Normalize angle to [-180, 180)
-	function normalizeAngle(angle: number): number {
-		angle = angle % 360;
-		if (angle >= 180) angle -= 360;
-		if (angle < -180) angle += 360;
-		return angle;
+		// Change cursor
+		if (cardElement) cardElement.style.cursor = 'grabbing';
 	}
 
 	// Turning motion, moving the mouse
@@ -77,11 +64,19 @@
 		dragging = false;
 		if (cardElement) cardElement.style.cursor = 'grab';
 
-		const currentAngle = $angle;
 		// Snap to the nearest 180°
+		const currentAngle = $angle;
 		const nearest = Math.round(currentAngle / 180) * 180;
 		angle.set(nearest);
 		baseAngle = nearest;
+	}
+
+	// Helper: Normalize angle to [-180, 180)
+	function normalizeAngle(angle: number): number {
+		angle = angle % 360;
+		if (angle >= 180) angle -= 360;
+		if (angle < -180) angle += 360;
+		return angle;
 	}
 
 	// Global event listeners to handle mouse up outside element
@@ -122,8 +117,6 @@
 	>
 		<div class="inner" style="transform: rotateY({$angle}deg);">
 			<!-- Card thickness edges - multiple edges for realistic thickness -->
-			<div class="edge edge-top {suit}"></div>
-			<div class="edge edge-bottom {suit}"></div>
 			<div class="edge edge-side-left {suit}"></div>
 			<div class="edge edge-side-right {suit}"></div>
 
