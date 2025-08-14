@@ -17,9 +17,10 @@
 	}
 
 	onMount(() => {
-		// Initialize game with the actual player names from setup
+		// Initialize game with the player names from setup
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
+		
 	});
 
 	function handlePrediction(playerId: number, prediction: number) {
@@ -67,6 +68,25 @@
 	function handleUndo() {
 		console.log('Undo last move');
 	}
+
+	let startTime: number;
+	let elapsed = 0;
+	let intervalId: ReturnType<typeof setInterval>;
+
+	function formatTime(seconds: number) {
+		const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+		const s = (seconds % 60).toString().padStart(2, '0');
+		return `${m}:${s}`;
+	}
+
+	onMount(() => {
+		startTime = Date.now();
+		intervalId = setInterval(() => {
+			elapsed = Math.floor((Date.now() - startTime) / 1000);
+		}, 1000);
+
+		return () => clearInterval(intervalId);
+	});
 </script>
 
 {#if gameState}
@@ -76,7 +96,7 @@
 	</div>
 
 	<!-- Game Controls -->
-	<GameControls {gameState} onRestart={handleRestart} onPause={handlePause} onUndo={handleUndo} />
+	<GameControls {gameState} onRestart={handleRestart} onPause={handlePause} onUndo={handleUndo} elapsed={elapsed} formatTime={formatTime} />
 
 	<!-- Game Overlays -->
 	{#if gameState.phase === 'bidding'}

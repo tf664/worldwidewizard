@@ -4,12 +4,23 @@
 	export let gameState: GameState;
 	export let onRestart: () => void; // TODO: needs function
 	export let onPause: () => void; // TODO: needs function
-	export let onUndo: () => void; // TODO: needs functionF
+	export let onUndo: () => void; // TODO: needs function
+	export let elapsed: number;
+	export let formatTime: (seconds: number) => string;
 </script>
 
-<div class="fixed top-2 right-2 bg-white rounded-lg shadow-lg p-4 w-64">
-	<h3 class="font-bold mb-2">Game Controls</h3>
+<!-- Game Timer -->
+<div
+	class="fixed top-24 left-4 z-50 bg-gray-800 text-white px-4 py-2 rounded-xl text-2xl font-mono shadow flex items-center gap-4"
+>
+	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+		<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+		<path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3" />
+	</svg>
+	<span>{formatTime(elapsed)}</span>
+</div>
 
+<div class="fixed top-28 right-2 bg-white rounded-lg shadow-lg p-4 w-64">
 	<div class="space-y-2">
 		<button
 			class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded w-full text-gray-800"
