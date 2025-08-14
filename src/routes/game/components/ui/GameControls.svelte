@@ -2,7 +2,7 @@
 	import type { GameState } from '../../logic/gameLogic.js';
 
 	export let gameState: GameState;
-	export let onRestart: () => void; // TODO: needs function
+	export let onRestart: () => void; // TODO: needs function | WORKS ALREADY?
 	export let onPause: () => void; // TODO: needs function
 	export let onUndo: () => void; // TODO: needs function
 	export let elapsed: number;
@@ -20,7 +20,7 @@
 	<span>{formatTime(elapsed)}</span>
 </div>
 
-<div class="fixed top-28 right-2 bg-white rounded-lg shadow-lg p-4 w-64">
+<div class="fixed top-28 right-2 z-100 bg-white rounded-lg shadow-lg p-4 w-64">
 	<div class="space-y-2">
 		<button
 			class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded w-full text-gray-800"
