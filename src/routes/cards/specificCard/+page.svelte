@@ -44,7 +44,7 @@
 </svelte:head>
 
 <div
-	class="max-w-6xl mx-auto px-4 pb-32 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900"
+	class="max-w-6xl mx-auto px-4 pb-32 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8 rounded-lg shadow-md"
 >
 	<!-- Header with Back Button -->
 	<div class="flex items-center justify-between mb-8">
@@ -87,31 +87,28 @@
 		</div>
 
 		<!-- Card Information -->
-		<div class="space-y-2">
-			<div class="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-				<div class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-white/70 mb-2">Description</label>
-						<p class="text-lg text-white/90">{cardData.description}</p>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-white/70 mb-2">Card ID</label>
-						<p class="text-white/80">#{cardData.id}</p>
-					</div>
+		<div class="space-y-2 bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-white/70 mb-2">Description</label>
+					<p class="text-lg text-white/90">{cardData.description}</p>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-white/70 mb-2">Card ID</label>
+					<p class="text-white/80">#{cardData.id}</p>
 				</div>
 			</div>
 
 			<!-- Game Rules for this card type -->
 			{#if rulesVisible}
-				<div class="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
+				<br />
+				<div class="bg-white/5 backdrop-blur-lg rounded-2xl p-5 border border-white/10">
 					<h3 class="text-xl font-bold text-white mb-4">Special card</h3>
 					<div class="text-white/80 space-y-2">
 						{#if cardData.suit === 'zoro'}
-							<p>
-								🧙‍♂️ <strong>Wizard cards</strong> always win tricks, regardless of the trump suit.
-							</p>
+							<p><strong>Wizard cards</strong> always win tricks, regardless of the trump suit.</p>
 						{:else if cardData.suit === 'fool'}
-							<p>🃏 <strong>Fool cards</strong> always lose tricks, cannot win any trick.</p>
+							<p><strong>Fool cards</strong> always lose tricks, cannot win any trick.</p>
 						{/if}
 						<p class="text-sm text-white/60 mt-4">
 							Make sure to keep track of the special traits when planning your moves!
