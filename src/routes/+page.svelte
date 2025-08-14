@@ -13,6 +13,11 @@
 	};
 </script>
 
+<svelte:head>
+	<title>World Wide Wizard</title>
+	<meta name="description" content="Play World Wide Wizard with your friends and foes" />
+</svelte:head>
+
 <h1 class="text-3xl font-bold mb-4">Welcome to Wizard</h1>
 <p class="text-gray-700">Stiche raten</p>
 

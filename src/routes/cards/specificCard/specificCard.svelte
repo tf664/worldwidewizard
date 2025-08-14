@@ -150,8 +150,6 @@
 		cursor: grab;
 		touch-action: none;
 		position: relative;
-		/* Remove transition here to avoid flicker */
-		/* transition: transform 0.3s ease; */
 		filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.25));
 	}
 

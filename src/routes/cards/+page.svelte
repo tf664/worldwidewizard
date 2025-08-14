@@ -506,6 +506,11 @@
 	}
 </script>
 
+<svelte:head>
+	<title>World Wide Wizard</title>
+	<meta name="description" content="World Wide Wizard." />
+</svelte:head>
+
 <main class="w-[90%] max-w-[1600px] mx-auto bg-white p-6 rounded-xl shadow-lg">
 	<!-- Card group: Blue -->
 	<section class="mb-10">
