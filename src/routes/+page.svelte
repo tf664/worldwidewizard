@@ -23,9 +23,6 @@
 	<meta name="description" content="Play World Wide Wizard with your friends and foes" />
 </svelte:head>
 
-<h1 class="text-3xl font-bold mb-4">Welcome to Wizard</h1>
-<p class="text-gray-700">Stiche raten</p>
-
 <div class="mb-10 flex justify-center">
 	<button
 		onclick={() => count++}
@@ -35,18 +32,40 @@
 	</button>
 </div>
 
-<div class="h-screen flex flex-col justify-center items-center bg-indigo-100">
-	<h1 class="text-5xl font-bold text-indigo-700 mb-6">Wizard</h1>
-	<button
-		onclick={start}
-		class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
-	>
-		Start Game
-	</button>
-	<button
-		onclick={startOnline}
-		class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
-	>
-		Play Online
-	</button>
+<div class="py-70 flex flex-col justify-center items-center bg-gradient-to-b from-indigo-100 to-indigo-200 rounded-xl shadow-lg max-w-lg mx-auto mt-20">
+	<h1 class="text-6xl font-extrabold text-indigo-800 mb-8 tracking-wide drop-shadow-lg animate-hue">
+		Wizard
+	</h1>
+	<div class="flex gap-6 py-10">
+		<button
+			onclick={start}
+			class="bg-indigo-600 text-white px-8 py-4 rounded-xl shadow-lg hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-transform duration-200"
+		>
+			Start Game
+		</button>
+		<button
+			onclick={startOnline}
+			class="bg-indigo-500 text-white px-8 py-4 rounded-xl shadow-lg hover:bg-indigo-600 hover:scale-105 active:scale-95 transition-transform duration-200"
+		>
+			Play Online
+		</button>
+	</div>
 </div>
+
+<style>
+	@keyframes hue-shift {
+		0% {
+			filter: hue-rotate(0deg);
+		}
+		50% {
+			filter: hue-rotate(30deg);
+		}
+		100% {
+			filter: hue-rotate(0deg);
+		}
+	}
+	.animate-hue {
+		display: inline-block;
+		animation: hue-shift 3s infinite linear;
+	}
+</style>
