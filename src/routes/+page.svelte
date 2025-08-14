@@ -11,6 +11,11 @@
 		//window.location.href = '/setup';
 		goto('/setup');
 	};
+
+	let startOnline = () => {
+		//window.location.href = '/setup';
+		goto('/onlinesetup');
+	};
 </script>
 
 <svelte:head>
@@ -37,5 +42,11 @@
 		class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
 	>
 		Start Game
+	</button>
+	<button
+		onclick={startOnline}
+		class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition"
+	>
+		Play Online
 	</button>
 </div>
