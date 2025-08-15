@@ -3,14 +3,17 @@
 	import { ButtonToggleGroup, ButtonToggle } from 'flowbite-svelte';
 	import { BoothCurtainOutline, BeerMugEmptyOutline } from 'flowbite-svelte-icons';
 
-	export let gameState: GameState;
-	export let onRestart: () => void;
-	export let onPause: () => void;
-	export let onUndo: () => void;
-	export let elapsed: number;
-	export let formatTime: (seconds: number) => string;
+	const { gameState, onRestart, onPause, onUndo, elapsed, formatTime } = $props<{
+		gameState: GameState;
+		onRestart: () => void;
+		onPause: () => void;
+		onUndo: () => void;
+		elapsed: number;
+		formatTime: (seconds: number) => string;
+	}>();
 
-	let visiblePanels: string[] = ['controls', 'info'];
+	let visiblePanels = $state<string[]>([]);
+
 	function handlePanelToggle(values: string[]) {
 		visiblePanels = values;
 	}
@@ -29,14 +32,14 @@
 
 <!-- Multi-selection toggle for controls/info -->
 <div class="fixed top-28 right-2 z-[9999] bg-white rounded-lg shadow-lg p-4 w-64">
-	<ButtonToggleGroup multiSelect={true} onSelect={handlePanelToggle} class="flex gap-2 mb-4">
-		<ButtonToggle value="controls" color="red" selected={visiblePanels.includes('controls')}>
-			<BoothCurtainOutline class="shrink-0 h-6 w-6 mr-2" /> Controls
-		</ButtonToggle>
-		<ButtonToggle value="info" color="yellow" selected={visiblePanels.includes('info')}>
-			<BeerMugEmptyOutline class="shrink-0 h-6 w-6 mr-2" /> Info
-		</ButtonToggle>
+	<ButtonToggleGroup multiSelect={true} onSelect={handlePanelToggle}>
+		<ButtonToggle value="one" selected={visiblePanels.includes('one')}>One</ButtonToggle>
+		<ButtonToggle value="two" selected={visiblePanels.includes('two')}>Two</ButtonToggle>
+		<ButtonToggle value="three" selected={visiblePanels.includes('three')}>Three</ButtonToggle>
 	</ButtonToggleGroup>
+	<p class="mt-2 dark:text-white">
+		Selected: {visiblePanels.length ? visiblePanels.join(', ') : 'None'}
+	</p>
 
 	{#if visiblePanels.includes('controls')}
 		<div class="space-y-2 mt-4">
