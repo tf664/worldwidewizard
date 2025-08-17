@@ -39,7 +39,7 @@
 	<!-- Header row: burger + buttons on the right -->
 	<div class="flex justify-end gap-2">
 		{#if gameControlsVisible}
-			<ButtonToggleGroup multiSelect={true} onSelect={handlePanelToggle} class="flex gap-2">
+			<ButtonToggleGroup multiSelect={true} onSelect={handlePanelToggle} class="flex gap-2 p-0.5 border-0">
 				<ButtonToggle
 					value="controls"
 					selected={visiblePanels.includes('controls')}
