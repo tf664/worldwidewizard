@@ -24,6 +24,8 @@
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.0.0",
+		"@types/express": "^5.0.3",
+		"@types/socket.io": "^3.0.1",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -40,7 +42,9 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@types/cors": "^2.8.19",
 		"@vercel/analytics": "^1.5.0",
+		"cors": "^2.8.5",
 		"express": "^4.21.2",
 		"flowbite": "^3.1.2",
 		"flowbite-svelte": "^1.12.5",
