@@ -21,7 +21,7 @@
 
 <!-- Game Timer -->
 <div
-	class="fixed top-24 left-4 z-50 bg-gray-800 text-white px-4 py-2 rounded-xl text-2xl font-mono shadow flex items-center gap-4"
+	class="fixed top-24 left-4 z-50 flex items-center gap-4 rounded-xl bg-gray-800 px-4 py-2 font-mono text-2xl text-white shadow"
 >
 	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
 		<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
@@ -32,60 +32,69 @@
 
 <!-- Multi-selection toggle for controls/info -->
 <div
-	class="fixed top-24 right-2 z-[9999] bg-gray-900 bg-opacity-95 rounded-2xl shadow-xl p-2 transition-all duration-300"
+	class="bg-opacity-95 fixed top-24 right-2 z-[9999] rounded-2xl bg-gray-900 p-2 shadow-xl transition-all duration-300"
 	class:w-72={gameControlsVisible}
 	class:w-20={!gameControlsVisible}
 >
 	<!-- Header row: burger + buttons on the right -->
 	<div class="flex justify-end gap-2">
 		{#if gameControlsVisible}
-			<ButtonToggleGroup multiSelect={true} onSelect={handlePanelToggle} class="flex gap-2 p-0.5 border-0">
+			<ButtonToggleGroup
+				multiSelect={true}
+				onSelect={handlePanelToggle}
+				class="flex gap-2 border-0 p-0.5"
+			>
 				<ButtonToggle
 					value="controls"
 					selected={visiblePanels.includes('controls')}
-					class={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white
-		   bg-gradient-to-r from-emerald-600 to-lime-500 hover:from-emerald-500 hover:to-lime-400 shadow-md
+					class={`flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-lime-500 px-5
+		   py-2.5 font-medium text-white shadow-md hover:from-emerald-500 hover:to-lime-400
 		   ${visiblePanels.includes('controls') ? 'ring-2 ring-emerald-300' : ''}`}
 				>
-					<BoothCurtainOutline class="shrink-0 h-6 w-6" />
+					<BoothCurtainOutline class="h-6 w-6 shrink-0" />
 					Controls
 				</ButtonToggle>
 				<ButtonToggle
 					value="info"
 					selected={visiblePanels.includes('info')}
-					class={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white
-		   bg-gradient-to-r from-amber-500 to-orange-400 hover:from-amber-400 hover:to-orange-300 shadow-md
+					class={`flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-400 px-5
+		   py-2.5 font-medium text-white shadow-md hover:from-amber-400 hover:to-orange-300
 		   ${visiblePanels.includes('info') ? 'ring-2 ring-amber-300' : ''}`}
 				>
-					<BeerMugEmptyOutline class="shrink-0 h-6 w-6" />
+					<BeerMugEmptyOutline class="h-6 w-6 shrink-0" />
 					Info
 				</ButtonToggle>
 			</ButtonToggleGroup>
 		{/if}
 
 		<!-- Burger always on the far right -->
-		<Hamburger bind:open={gameControlsVisible} type="elastic" title="Game Controls" --color="white" />
+		<Hamburger
+			bind:open={gameControlsVisible}
+			type="elastic"
+			title="Game Controls"
+			--color="white"
+		/>
 	</div>
 
 	<!-- Expanded content -->
 	{#if gameControlsVisible}
 		{#if visiblePanels.includes('controls')}
-			<div class="space-y-2 mt-4">
+			<div class="mt-4 space-y-2">
 				<button
-					class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg w-full text-gray-100 shadow-sm"
+					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
 					on:click={onPause}
 				>
 					Pause Game
 				</button>
 				<button
-					class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg w-full text-gray-100 shadow-sm"
+					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
 					on:click={onUndo}
 				>
 					Undo Last Move
 				</button>
 				<button
-					class="bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400
-						   px-4 py-2 rounded-lg w-full text-white font-semibold shadow-md"
+					class="w-full rounded-lg bg-gradient-to-r from-red-600 to-rose-500
+						   px-4 py-2 font-semibold text-white shadow-md hover:from-red-500 hover:to-rose-400"
 					on:click={onRestart}
 				>
 					Restart Game
