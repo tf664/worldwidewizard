@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { GameState } from './logic/gameLogic.js';
-    import { initializeGame, startNewRound, processPrediction, playCard } from './logic/gameLogic.js';
-    import { onMount } from 'svelte';
-    import GameTable from './components/ui/GameTable.svelte';
-    import BiddingInterface from './components/interfaces/BiddingInterface.svelte';
-    import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
-    import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
-    import GameControls from './components/ui/GameControls.svelte';
+	import type { GameState } from './logic/gameLogic.js';
+	import { initializeGame, startNewRound, processPrediction, playCard } from './logic/gameLogic.js';
+	import { onMount } from 'svelte';
+	import GameTable from './components/ui/GameTable.svelte';
+	import BiddingInterface from './components/interfaces/BiddingInterface.svelte';
+	import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
+	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
+	import GameControls from './components/ui/GameControls.svelte';
 
 	let gameState: GameState;
 
@@ -20,7 +20,6 @@
 		// Initialize game with the player names from setup
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
-		
 	});
 
 	function handlePrediction(playerId: number, prediction: number) {
@@ -74,15 +73,24 @@
 	let intervalId: ReturnType<typeof setInterval>;
 
 	function formatTime(seconds: number) {
-		const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+		const m = Math.floor(seconds / 60)
+			.toString()
+			.padStart(2, '0');
 		const s = (seconds % 60).toString().padStart(2, '0');
 		return `${m}:${s}`;
 	}
 
 	onMount(() => {
 		startTime = Date.now();
+
 		intervalId = setInterval(() => {
-			elapsed = Math.floor((Date.now() - startTime) / 1000);
+			// Only increment elapsed if game is not paused
+			if (!gameState.paused) {
+				elapsed = Math.floor((Date.now() - startTime) / 1000);
+			} else {
+				// Adjust startTime so that elapsed doesn't jump after resuming
+				startTime = Date.now() - elapsed * 1000;
+			}
 		}, 1000);
 
 		return () => clearInterval(intervalId);
@@ -91,12 +99,12 @@
 
 {#if gameState}
 	<!-- Full screen game table -->
-	<div class="h-screen bg-green-800 relative overflow-hidden">
+	<div class="relative h-screen overflow-hidden bg-green-800">
 		<GameTable {gameState} />
 	</div>
 
 	<!-- Game Controls -->
-	<GameControls {gameState} onRestart={handleRestart} onPause={handlePause} onUndo={handleUndo} elapsed={elapsed} formatTime={formatTime} />
+	<GameControls {gameState} onRestart={handleRestart} {elapsed} {formatTime} />
 
 	<!-- Game Overlays -->
 	{#if gameState.phase === 'bidding'}
@@ -106,15 +114,15 @@
 	{:else if gameState.phase === 'scoring'}
 		<ScoringInterface {gameState} onNextRound={handleNextRound} />
 	{:else if gameState.phase === 'finished'}
-		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center">
-				<h2 class="text-2xl font-bold mb-4">Game Finished!</h2>
+		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+			<div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 text-center">
+				<h2 class="mb-4 text-2xl font-bold">Game Finished!</h2>
 
 				<div class="mb-6">
-					<h3 class="font-bold mb-2">Final Scores:</h3>
+					<h3 class="mb-2 font-bold">Final Scores:</h3>
 					{#each gameState.players.sort((a, b) => b.score - a.score) as player, index}
 						<div
-							class="flex justify-between items-center py-1 {index === 0
+							class="flex items-center justify-between py-1 {index === 0
 								? 'font-bold text-yellow-600'
 								: ''}"
 						>
@@ -128,7 +136,7 @@
 				</div>
 
 				<button
-					class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold"
+					class="rounded bg-blue-600 px-6 py-2 font-bold text-white hover:bg-blue-700"
 					onclick={handleRestart}
 				>
 					Play Again

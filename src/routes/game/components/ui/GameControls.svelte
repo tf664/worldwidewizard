@@ -2,12 +2,16 @@
 	import type { GameState } from '../../logic/gameLogic.js';
 	import { Hamburger } from 'svelte-hamburgers';
 	import { ButtonToggleGroup, ButtonToggle } from 'flowbite-svelte';
-	import { BoothCurtainOutline, BeerMugEmptyOutline } from 'flowbite-svelte-icons';
+	import {
+		BoothCurtainOutline,
+		BeerMugEmptyOutline,
+		PauseSolid,
+		ClockOutline
+	} from 'flowbite-svelte-icons';
+	import { pauseGame, undoMove } from '../../logic/gameLogic.js';
 
 	export let gameState: GameState;
-	export let onRestart: () => void;
-	export let onPause: () => void;
-	export let onUndo: () => void;
+	export let onRestart: () => void; // doesn't require any implementation, since reloads
 	export let elapsed: number;
 	export let formatTime: (seconds: number) => string;
 
@@ -17,19 +21,29 @@
 	function handlePanelToggle(values: string[]) {
 		visiblePanels = values;
 	}
+
+	// --- Pause & Undo Button
+	function handlePause() {
+		pauseGame(gameState);
+	}
+
+	function handleUndo() {
+		undoMove(gameState);
+	}
 </script>
 
 <!-- Game Timer -->
 <div
 	class="fixed top-24 left-4 z-50 flex items-center gap-4 rounded-xl bg-gray-800 px-4 py-2 font-mono text-2xl text-white shadow"
 >
-	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-		<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
-		<path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3" />
-	</svg>
+	{#if gameState.paused}
+		<PauseSolid class="h-6 w-6 shrink-0" />
+	{:else}
+		<ClockOutline class="h-6 w-6 shrink-0" />
+	{/if}
 	<span>{formatTime(elapsed)}</span>
 </div>
-
+,
 <!-- Multi-selection toggle for controls/info -->
 <div
 	class="bg-opacity-95 fixed top-24 right-2 z-[9999] rounded-2xl bg-gray-900 p-2 shadow-xl transition-all duration-300"
@@ -82,23 +96,17 @@
 			<div class="mt-4 space-y-2">
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
-					on:click={onPause}
+					on:click={handlePause}>Pause Game</button
 				>
-					Pause Game
-				</button>
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
-					on:click={onUndo}
+					on:click={handleUndo}>Undo Last Move</button
 				>
-					Undo Last Move
-				</button>
 				<button
 					class="w-full rounded-lg bg-gradient-to-r from-red-600 to-rose-500
 						   px-4 py-2 font-semibold text-white shadow-md hover:from-red-500 hover:to-rose-400"
-					on:click={onRestart}
+					on:click={onRestart}>Restart Game</button
 				>
-					Restart Game
-				</button>
 			</div>
 		{/if}
 

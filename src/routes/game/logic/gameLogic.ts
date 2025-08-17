@@ -19,13 +19,15 @@ export interface GameState {
     trumpSuit: Suit | null;
     phase: 'bidding' | 'playing' | 'scoring' | 'finished';
     dealer: number;
+
+    paused?: boolean;
+    history?: TrickCard[][]; // Store previous tricks to undo moves
 }
 
 export interface Trick {
     cards: TrickCard[];
     winner: number;
 }
-// Add these missing functions:
 
 export function initializeGame(playerNames: string[]): GameState {
     const players = createPlayers(playerNames);
@@ -39,7 +41,9 @@ export function initializeGame(playerNames: string[]): GameState {
         currentPlayerIndex: 0,
         trumpSuit: null,
         phase: 'bidding',
-        dealer: 0
+        dealer: 0,
+        paused: false,
+        history: []
     };
 }
 
@@ -122,39 +126,34 @@ export function processPrediction(gameState: GameState, playerId: number, predic
 }
 
 export function playCard(gameState: GameState, playerId: number, cardIndex: number): boolean {
-    if (gameState.phase !== 'playing' || gameState.currentPlayerIndex !== playerId) {
+    if (gameState.phase !== 'playing' || gameState.currentPlayerIndex !== playerId || gameState.paused) {
         return false;
     }
 
     const player = gameState.players[playerId];
     const card = player.hand[cardIndex];
 
-    // Validate card play
     const leadSuit = gameState.currentTrick.length > 0 ? gameState.currentTrick[0].card.suit : null;
     if (!isValidCardPlay(card, player.hand, leadSuit, gameState.currentTrick.map(t => t.card))) {
         return false;
     }
 
-    // Play the card
-    const playedCard = player.hand.splice(cardIndex, 1)[0];
-    gameState.currentTrick.push({ card: playedCard, playerId });  // Fixed: push TrickCard object
+    // Save history for undo
+    gameState.history?.push([...gameState.currentTrick]);
 
-    // Check if trick is complete
+    const playedCard = player.hand.splice(cardIndex, 1)[0];
+    gameState.currentTrick.push({ card: playedCard, playerId });
+
     if (gameState.currentTrick.length === gameState.players.length) {
-        // End trick, determine winner
         const winnerId = calculateTrickWinner({ cards: gameState.currentTrick, winner: -1 }, gameState.trumpSuit);
         gameState.players[winnerId].tricksWon++;
-
-        // Clear trick and set next player
         gameState.currentTrick = [];
         gameState.currentPlayerIndex = winnerId;
 
-        // Check if round is over
         if (gameState.players[0].hand.length === 0) {
             gameState.phase = 'scoring';
         }
     } else {
-        // Next player's turn
         gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     }
 
@@ -219,4 +218,33 @@ export function calculateRoundScores(gameState: GameState): void {
         player.prediction = 0;
         player.hand = [];
     });
+}
+
+export function pauseGame(gameState: GameState): void {
+    gameState.paused = !gameState.paused;
+    gameState = { ...gameState }; // trigger Svelte reactivity
+    console.log(gameState.paused ? 'Game paused' : 'Game resumed');
+}
+
+export function undoMove(gameState: GameState): void {
+    if (!gameState.history || gameState.history.length === 0) {
+        console.log('No moves to undo');
+        return;
+    }
+
+    // Restore last trick
+    const lastTrick = gameState.history.pop()!;
+    lastTrick.forEach((trickCard) => {
+        const player = gameState.players[trickCard.playerId];
+        player.hand.push(trickCard.card); // Return cards to players
+        player.tricksWon = Math.max(player.tricksWon - 1, 0);
+    });
+
+    gameState.currentTrick = lastTrick;
+    gameState.currentPlayerIndex =
+        lastTrick.length > 0
+            ? lastTrick[lastTrick.length - 1].playerId
+            : (gameState.dealer + 1) % gameState.players.length;
+
+    console.log('Last move undone');
 }
