@@ -7,6 +7,7 @@
 	import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
 	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
 	import GameControls from './components/ui/GameControls.svelte';
+	import { undoMove } from './logic/gameLogic.js';
 
 	let gameState: GameState;
 
@@ -66,7 +67,8 @@
 	}
 
 	function handleUndo() {
-		console.log('Undo last move');
+		undoMove(gameState);
+		gameState = { ...gameState }; // trigger reactivity
 	}
 
 	let startTime: number;
@@ -109,6 +111,7 @@
 		{gameState}
 		onRestart={handleRestart}
 		onPause={handlePause}
+		onUndo={handleUndo}
 		{elapsed}
 		{formatTime}
 	/>

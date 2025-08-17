@@ -22,6 +22,11 @@ export interface GameState {
 
     paused?: boolean;
     history?: TrickCard[][]; // Store previous tricks to undo moves
+    moveHistory?: {
+        playerId: number;
+        card: Card;
+        handIndex: number;
+    }[];
 }
 
 export interface Trick {
@@ -35,7 +40,7 @@ export function initializeGame(playerNames: string[]): GameState {
     return {
         players,
         currentRound: 1,
-        maxRounds: 10, // Adjust based on player count
+        maxRounds: 10, // TODO: !!!! Adjust based on player count
         deck: [],
         currentTrick: [],
         currentPlayerIndex: 0,
@@ -43,7 +48,8 @@ export function initializeGame(playerNames: string[]): GameState {
         phase: 'bidding',
         dealer: 0,
         paused: false,
-        history: []
+        history: [],
+        moveHistory: []
     };
 }
 
@@ -124,7 +130,6 @@ export function processPrediction(gameState: GameState, playerId: number, predic
 
     return true;
 }
-
 export function playCard(gameState: GameState, playerId: number, cardIndex: number): boolean {
     if (gameState.phase !== 'playing' || gameState.currentPlayerIndex !== playerId || gameState.paused) {
         return false;
@@ -138,13 +143,17 @@ export function playCard(gameState: GameState, playerId: number, cardIndex: numb
         return false;
     }
 
-    // Save history for undo
-    gameState.history?.push([...gameState.currentTrick]);
+    // Save move for undo
+    gameState.moveHistory!.push({ playerId, card, handIndex: cardIndex });
 
     const playedCard = player.hand.splice(cardIndex, 1)[0];
     gameState.currentTrick.push({ card: playedCard, playerId });
 
     if (gameState.currentTrick.length === gameState.players.length) {
+        // Save the completed trick to history for undo
+        if (gameState.history) {
+            gameState.history.push([...gameState.currentTrick]);
+        }
         const winnerId = calculateTrickWinner({ cards: gameState.currentTrick, winner: -1 }, gameState.trumpSuit);
         gameState.players[winnerId].tricksWon++;
         gameState.currentTrick = [];
@@ -156,10 +165,23 @@ export function playCard(gameState: GameState, playerId: number, cardIndex: numb
     } else {
         gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     }
-
     return true;
 }
 
+export function calculateRoundScores(gameState: GameState): void {
+    gameState.players.forEach(player => {
+        if (player.prediction === player.tricksWon) {
+            player.score += 20 + player.tricksWon;
+        } else {
+            player.score += Math.abs(player.prediction - player.tricksWon) * -10;
+        }
+
+        // Reset for next round
+        player.tricksWon = 0;
+        player.prediction = 0;
+        player.hand = [];
+    });
+}
 export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): number {
     if (trick.cards.length === 0) return -1;
 
@@ -205,21 +227,6 @@ export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): numb
     return winner.playerId;
 }
 
-export function calculateRoundScores(gameState: GameState): void {
-    gameState.players.forEach(player => {
-        if (player.prediction === player.tricksWon) {
-            player.score += 20 + player.tricksWon;
-        } else {
-            player.score += Math.abs(player.prediction - player.tricksWon) * -10;
-        }
-
-        // Reset for next round
-        player.tricksWon = 0;
-        player.prediction = 0;
-        player.hand = [];
-    });
-}
-
 export function pauseGame(gameState: GameState): void {
     gameState.paused = !gameState.paused;
     gameState = { ...gameState }; // trigger Svelte reactivity
@@ -227,24 +234,44 @@ export function pauseGame(gameState: GameState): void {
 }
 
 export function undoMove(gameState: GameState): void {
-    if (!gameState.history || gameState.history.length === 0) {
+    if (!gameState.moveHistory || gameState.moveHistory.length === 0) {
         console.log('No moves to undo');
         return;
     }
 
-    // Restore last trick
-    const lastTrick = gameState.history.pop()!;
-    lastTrick.forEach((trickCard) => {
-        const player = gameState.players[trickCard.playerId];
-        player.hand.push(trickCard.card); // Return cards to players
-        player.tricksWon = Math.max(player.tricksWon - 1, 0);
-    });
+    const lastMove = gameState.moveHistory.pop()!;
+    const { playerId, card, handIndex } = lastMove;
 
-    gameState.currentTrick = lastTrick;
-    gameState.currentPlayerIndex =
-        lastTrick.length > 0
-            ? lastTrick[lastTrick.length - 1].playerId
-            : (gameState.dealer + 1) % gameState.players.length;
+    // If currentTrick is empty, restore the last completed trick
+    if (gameState.currentTrick.length === 0 && gameState.history && gameState.history.length > 0) {
+        // Restore the last trick
+        const lastTrick = gameState.history.pop()!;
+        gameState.currentTrick = [...lastTrick];
 
-    console.log('Last move undone');
+        // Find winner of last trick & decrement their tricksWon
+        const winnerId = calculateTrickWinner({ cards: lastTrick, winner: -1 }, gameState.trumpSuit);
+        if (winnerId !== -1) {
+            gameState.players[winnerId].tricksWon = Math.max(0, gameState.players[winnerId].tricksWon - 1);
+        }
+
+        // Set currentPlayerIndex to the player who played last in restored trick
+        gameState.currentPlayerIndex = lastTrick[lastTrick.length - 1].playerId;
+
+        // If phase was 'scoring', revert to 'playing'
+        if (gameState.phase === 'scoring') {
+            gameState.phase = 'playing';
+        }
+    }
+
+    // Remove card from currentTrick
+    const idx = gameState.currentTrick.map(tc => tc.playerId).lastIndexOf(playerId);
+    if (idx !== -1 && gameState.currentTrick[idx].card === card) {
+        gameState.currentTrick.splice(idx, 1);
+    }
+
+    // Return card to player's hand at original position
+    gameState.players[playerId].hand.splice(handIndex, 0, card);
+
+    // Set currentPlayerIndex back to player who undid
+    gameState.currentPlayerIndex = playerId;
 }

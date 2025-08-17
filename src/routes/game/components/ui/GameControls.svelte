@@ -13,6 +13,7 @@
 	export let gameState: GameState;
 	export let onRestart: () => void; // doesn't require any implementation, since reloads
 	export let onPause: () => void;
+	export let onUndo: () => void;
 	export let elapsed: number;
 	export let formatTime: (seconds: number) => string;
 
@@ -21,15 +22,6 @@
 
 	function handlePanelToggle(values: string[]) {
 		visiblePanels = values;
-	}
-
-	// --- Pause & Undo Button
-	function handlePause() {
-		pauseGame(gameState);
-	}
-
-	function handleUndo() {
-		undoMove(gameState);
 	}
 </script>
 
@@ -101,7 +93,7 @@
 				>
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
-					on:click={handleUndo}>Undo Last Move</button
+					on:click={onUndo}>Undo Last Move</button
 				>
 				<button
 					class="w-full rounded-lg bg-gradient-to-r from-red-600 to-rose-500
