@@ -147,6 +147,7 @@
 				<button
 					class="rounded bg-blue-600 px-6 py-2 font-bold text-white hover:bg-blue-700"
 					onclick={handleRestart}
+					disabled={gameState.paused}
 				>
 					Play Again
 				</button>

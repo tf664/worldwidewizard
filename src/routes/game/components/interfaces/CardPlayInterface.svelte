@@ -136,7 +136,7 @@
 						class="relative w-16 h-24 rounded border-2 transition-all group {validCards[index]
 							? 'border-green-500 hover:border-green-700 cursor-pointer hover:scale-105'
 							: 'border-gray-300 opacity-50 cursor-not-allowed'}"
-						disabled={!validCards[index]}
+						disabled={!validCards[index] || gameState.paused}
 						onclick={() => onCardPlayed(gameState.currentPlayerIndex, index)}
 					>
 						<!-- Card Image -->

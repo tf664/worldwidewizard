@@ -87,9 +87,9 @@
 </script>
 
 <!-- Modal-style bidding interface -->
-<div class="fixed inset-0 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500">
-		<h2 class="text-2xl font-bold mb-4 text-center">
+<div class="fixed inset-0 z-50 flex items-center justify-center">
+	<div class="mx-4 w-full max-w-2xl rounded-lg border-4 border-blue-500 bg-white p-6 shadow-2xl">
+		<h2 class="mb-4 text-center text-2xl font-bold">
 			{currentPlayer.name}'s Bid
 		</h2>
 
@@ -98,7 +98,7 @@
 			<div class="mb-4 text-center">
 				<p class="text-sm font-medium">
 					Trump Suit:
-					<span class="capitalize font-bold text-lg">{gameState.trumpSuit}</span>
+					<span class="text-lg font-bold capitalize">{gameState.trumpSuit}</span>
 				</p>
 			</div>
 		{:else}
@@ -109,10 +109,10 @@
 
 		<!-- Show player's hand -->
 		<div class="mb-4">
-			<p class="text-sm text-gray-600 mb-2">Your cards:</p>
-			<div class="flex flex-wrap gap-2 justify-center">
+			<p class="mb-2 text-sm text-gray-600">Your cards:</p>
+			<div class="flex flex-wrap justify-center gap-2">
 				{#each currentPlayer.hand as card, index (getCardKey(card, index))}
-					<div class="w-12 h-16 relative group cursor-pointer">
+					<div class="group relative h-16 w-12 cursor-pointer">
 						<!-- Card Image -->
 						<CardImage
 							src={getCardImagePath(card)}
@@ -124,7 +124,7 @@
 						<div
 							class="absolute inset-0 {getCardColor(
 								card
-							)} rounded flex items-center justify-center text-white font-bold text-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+							)} flex items-center justify-center rounded text-lg font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
 						>
 							{getCardDisplay(card)}
 						</div>
@@ -135,11 +135,11 @@
 
 		<!-- Show other players' bids -->
 		<div class="mb-4">
-			<p class="text-sm text-gray-600 mb-2">Other players' bids:</p>
+			<p class="mb-2 text-sm text-gray-600">Other players' bids:</p>
 			<div class="grid grid-cols-2 gap-2 text-xs">
 				{#each gameState.players as player, index}
 					{#if index !== gameState.currentPlayerIndex}
-						<div class="bg-gray-100 p-2 rounded text-center">
+						<div class="rounded bg-gray-100 p-2 text-center">
 							<div class="font-semibold">{player.name}</div>
 							<div>{player.prediction >= 0 ? player.prediction : '?'}</div>
 						</div>
@@ -150,17 +150,17 @@
 
 		<!-- Prediction input -->
 		<div class="mb-6">
-			<p class="block text-sm font-medium mb-2">
+			<p class="mb-2 block text-sm font-medium">
 				How many tricks will {currentPlayer.name} win?
 			</p>
 			<div class="flex items-center justify-center gap-4">
 				<button
-					class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+					class="rounded bg-gray-200 px-3 py-1 hover:bg-gray-300"
 					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}>-</button
 				>
-				<span class="text-3xl font-bold w-16 text-center">{selectedPrediction}</span>
+				<span class="w-16 text-center text-3xl font-bold">{selectedPrediction}</span>
 				<button
-					class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+					class="rounded bg-gray-200 px-3 py-1 hover:bg-gray-300"
 					onclick={() =>
 						(selectedPrediction = Math.min(gameState.currentRound, selectedPrediction + 1))}
 					>+</button
@@ -169,8 +169,9 @@
 		</div>
 
 		<button
-			class="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700"
+			class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
 			onclick={confirmBid}
+			disabled={gameState.paused}
 		>
 			Confirm Bid: {selectedPrediction} tricks
 		</button>

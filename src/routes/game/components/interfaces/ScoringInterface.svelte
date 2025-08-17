@@ -18,15 +18,15 @@
 	}
 </script>
 
-<div class="fixed inset-0 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500">
-		<h2 class="text-2xl font-bold mb-4 text-center">Round {gameState.currentRound} Results</h2>
+<div class="fixed inset-0 z-50 flex items-center justify-center">
+	<div class="mx-4 w-full max-w-2xl rounded-lg border-4 border-blue-500 bg-white p-6 shadow-2xl">
+		<h2 class="mb-4 text-center text-2xl font-bold">Round {gameState.currentRound} Results</h2>
 
-		<div class="grid grid-cols-2 gap-4 mb-6">
+		<div class="mb-6 grid grid-cols-2 gap-4">
 			{#each gameState.players as player}
-				<div class="bg-gray-100 p-4 rounded-lg">
-					<h3 class="font-bold text-lg">{player.name}</h3>
-					<div class="text-sm space-y-1">
+				<div class="rounded-lg bg-gray-100 p-4">
+					<h3 class="text-lg font-bold">{player.name}</h3>
+					<div class="space-y-1 text-sm">
 						<p>Predicted: <span class="font-semibold">{player.prediction}</span></p>
 						<p>Actual: <span class="font-semibold">{player.tricksWon}</span></p>
 						<p>
@@ -41,8 +41,9 @@
 		</div>
 
 		<button
-			class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded w-full font-bold"
+			class="w-full rounded bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
 			onclick={onNextRound}
+			disabled={gameState.paused}
 		>
 			{gameState.currentRound < gameState.maxRounds ? 'Next Round' : 'Finish Game'}
 		</button>

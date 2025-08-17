@@ -8,7 +8,6 @@
 		PauseSolid,
 		ClockOutline
 	} from 'flowbite-svelte-icons';
-	import { pauseGame, undoMove } from '../../logic/gameLogic.js';
 
 	export let gameState: GameState;
 	export let onRestart: () => void; // doesn't require any implementation, since reloads
