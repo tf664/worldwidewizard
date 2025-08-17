@@ -53,7 +53,7 @@
 
 		<!-- Mobile Hamburger -->
 		<div class="sm:hidden">
-			<Hamburger bind:open --color="white" />
+			<Hamburger bind:open --color="white" title="Navigation Bar Toggle" />
 		</div>
 	</nav>
 

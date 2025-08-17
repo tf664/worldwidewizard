@@ -64,7 +64,7 @@
 		{/if}
 
 		<!-- Burger always on the far right -->
-		<Hamburger bind:open={gameControlsVisible} --color="white" />
+		<Hamburger bind:open={gameControlsVisible} type="elastic" title="Game Controls" --color="white" />
 	</div>
 
 	<!-- Expanded content -->
