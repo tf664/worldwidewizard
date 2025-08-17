@@ -12,6 +12,7 @@
 
 	export let gameState: GameState;
 	export let onRestart: () => void; // doesn't require any implementation, since reloads
+	export let onPause: () => void;
 	export let elapsed: number;
 	export let formatTime: (seconds: number) => string;
 
@@ -96,7 +97,7 @@
 			<div class="mt-4 space-y-2">
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
-					on:click={handlePause}>Pause Game</button
+					on:click={onPause}>Pause Game</button
 				>
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"

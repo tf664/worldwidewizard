@@ -61,7 +61,8 @@
 	}
 
 	function handlePause() {
-		console.log('Game paused');
+		gameState.paused = !gameState.paused;
+		gameState = { ...gameState }; // trigger reactivity
 	}
 
 	function handleUndo() {
@@ -104,8 +105,13 @@
 	</div>
 
 	<!-- Game Controls -->
-	<GameControls {gameState} onRestart={handleRestart} {elapsed} {formatTime} />
-
+	<GameControls
+		{gameState}
+		onRestart={handleRestart}
+		onPause={handlePause}
+		{elapsed}
+		{formatTime}
+	/>
 	<!-- Game Overlays -->
 	{#if gameState.phase === 'bidding'}
 		<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
