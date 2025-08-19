@@ -11,7 +11,13 @@
 	import { tick } from 'svelte';
 
 	let gameState: GameState;
-	let biddingPosition = { x: 0, y: 0, arrowDir: 'top' };
+	let interfacePosition = {
+		x: '50%',
+		y: '50%',
+		transformX: '-50%',
+		transformY: '-50%',
+		arrowDir: 'bottom' as 'top' | 'bottom' | 'left' | 'right'
+	};
 
 	function getPlayerNames(): string[] {
 		// Get player names from localStorage (saved in /setup)
@@ -101,104 +107,66 @@
 		return () => clearInterval(intervalId);
 	});
 
-	async function updateBiddingPosition() {
+	async function updateInterfacePosition() {
+		if (!gameState) return;
+
 		await tick();
 		const el = document.getElementById(`player-${gameState.currentPlayerIndex}-card`);
 		if (!el) return;
 
 		const rect = el.getBoundingClientRect();
+		const position = getPlayerPosition(gameState.currentPlayerIndex);
 
-		// Position panel depending on where the card is on the table
-		const pos = getPlayerPosition(gameState.currentPlayerIndex);
-		switch (pos) {
+		// Calculate position relative to player card with generous spacing
+		switch (position) {
 			case 'bottom':
-				biddingPosition = {
-					x: rect.left + rect.width / 2,
-					y: rect.top - 12,
+				interfacePosition = {
+					x: `${rect.left + rect.width / 2}px`,
+					y: `${rect.top - 24}px`, // 24px above the card
+					transformX: '-50%',
+					transformY: '-100%',
 					arrowDir: 'bottom'
 				};
 				break;
 			case 'top':
-				biddingPosition = {
-					x: rect.left + rect.width / 2,
-					y: rect.bottom + 12,
+				interfacePosition = {
+					x: `${rect.left + rect.width / 2}px`,
+					y: `${rect.bottom + 24}px`, // 24px below the card
+					transformX: '-50%',
+					transformY: '0%',
 					arrowDir: 'top'
 				};
 				break;
 			case 'left':
-				biddingPosition = {
-					x: rect.right + 12,
-					y: rect.top + rect.height / 2,
+				interfacePosition = {
+					x: `${rect.right + 24}px`, // 24px to the right of the card
+					y: `${rect.top + rect.height / 2}px`,
+					transformX: '0%',
+					transformY: '-50%',
 					arrowDir: 'left'
 				};
 				break;
 			case 'right':
-				biddingPosition = {
-					x: rect.left - 12,
-					y: rect.top + rect.height / 2,
+				interfacePosition = {
+					x: `${rect.left - 24}px`, // 24px to the left of the card
+					y: `${rect.top + rect.height / 2}px`,
+					transformX: '-100%',
+					transformY: '-50%',
 					arrowDir: 'right'
 				};
 				break;
 		}
 	}
 
-	// Recalculate whenever current player changes
-	$: (gameState?.currentPlayerIndex, updateBiddingPosition());
+	// Recalculate position whenever current player changes
+	$: if (gameState?.currentPlayerIndex !== undefined) {
+		updateInterfacePosition();
+	}
 
 	function getPlayerPosition(index: number): string {
 		const positions = ['bottom', 'left', 'top', 'right'];
 		return positions[index] || 'bottom';
 	}
-
-	function getInterfacePosition(playerIndex: number): {
-		x: string;
-		y: string;
-		transformX: string;
-		transformY: string;
-	} {
-		const position = getPlayerPosition(playerIndex);
-
-		switch (position) {
-			case 'bottom':
-				return {
-					x: '50%',
-					y: 'calc(100vh - 20rem)', // Moved up significantly - about 320px from bottom
-					transformX: '-50%',
-					transformY: '0%'
-				};
-			case 'top':
-				return {
-					x: '50%',
-					y: '6rem', // Moved down a bit - 96px from top
-					transformX: '-50%',
-					transformY: '0%'
-				};
-			case 'left':
-				return {
-					x: '2rem', // Moved away from edge - 32px from left
-					y: '50%',
-					transformX: '0%',
-					transformY: '-50%'
-				};
-			case 'right':
-				return {
-					x: 'calc(100vw - 2rem)', // Moved away from edge - 32px from right
-					y: '50%',
-					transformX: '-100%',
-					transformY: '-50%'
-				};
-			default:
-				return {
-					x: '50%',
-					y: 'calc(100vh - 20rem)',
-					transformX: '-50%',
-					transformY: '0%'
-				};
-		}
-	}
-
-	// Create reactive position object
-	$: interfacePosition = getInterfacePosition(gameState?.currentPlayerIndex || 0);
 </script>
 
 {#if gameState}
@@ -217,7 +185,7 @@
 		{formatTime}
 	/>
 
-	<!-- Game Overlays positioned by current player -->
+	<!-- Game Overlays positioned relative to current player -->
 	{#if gameState.phase === 'bidding'}
 		<div
 			class="fixed z-50"
@@ -225,10 +193,14 @@
                 left: {interfacePosition.x}; 
                 top: {interfacePosition.y}; 
                 transform: translate({interfacePosition.transformX}, {interfacePosition.transformY});
-                transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             "
 		>
-			<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
+			<BiddingInterface
+				{gameState}
+				onPredictionMade={handlePrediction}
+				arrowDir={interfacePosition.arrowDir}
+			/>
 		</div>
 	{:else if gameState.phase === 'playing'}
 		<div
@@ -237,10 +209,14 @@
                 left: {interfacePosition.x}; 
                 top: {interfacePosition.y}; 
                 transform: translate({interfacePosition.transformX}, {interfacePosition.transformY});
-                transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             "
 		>
-			<CardPlayInterface {gameState} onCardPlayed={handleCardPlay} />
+			<CardPlayInterface
+				{gameState}
+				onCardPlayed={handleCardPlay}
+				arrowDir={interfacePosition.arrowDir}
+			/>
 		</div>
 	{:else if gameState.phase === 'scoring'}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
