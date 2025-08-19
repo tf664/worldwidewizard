@@ -1,5 +1,6 @@
 <script lang="ts">
     import { lobby } from '$lib/stores/lobby';
+    import { userStore } from '$lib/stores/user';
     import { goto } from '$app/navigation';
     import Popup from '$lib/components/Popup.svelte';
 
@@ -52,6 +53,8 @@
 
         // Lobby speichern und weiterleiten
         lobby.set({ lobbyCode, username });
+        userStore.set({ username });
+
         if (typeof window !== 'undefined') {
             localStorage.setItem('lobby', JSON.stringify({ lobbyCode, username }));
         }
@@ -60,6 +63,8 @@
 
     function saveAndGoto() {
         lobby.set({ lobbyCode, username });
+        userStore.set({ username });
+        
         if (typeof window !== 'undefined') {
             localStorage.setItem('lobby', JSON.stringify({ lobbyCode, username }));
         }

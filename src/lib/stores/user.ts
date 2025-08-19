@@ -1,9 +1,14 @@
 import { writable } from 'svelte/store';
 
+interface User {
+  username?: string;
+}
+
 const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
 const initial = storedUser ? JSON.parse(storedUser) : null;
 
 export const user = writable(initial);
+export const userStore = user;
 
 user.subscribe((value) => {
 	if (typeof localStorage !== 'undefined') {
