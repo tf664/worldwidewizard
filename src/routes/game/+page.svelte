@@ -342,9 +342,7 @@
 			</div>
 		</div>
 	{:else if gameState.phase === 'scoring'}
-		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-			<ScoringInterface {gameState} onNextRound={handleNextRound} />
-		</div>
+		<ScoringInterface {gameState} onNextRound={handleNextRound} />
 	{:else if gameState.phase === 'finished'}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
 			<div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 text-center">

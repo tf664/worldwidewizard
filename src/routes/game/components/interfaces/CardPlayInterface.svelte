@@ -135,7 +135,7 @@
 		<div class="flex flex-wrap justify-center gap-2">
 			{#each currentPlayer.hand as card, index (getCardKey(card, index))}
 				<button
-					class="group relative h-20 w-14 rounded-lg border-2 transition-all {validCards[index]
+					class="group relative h-22 w-14 rounded-lg border-2 transition-all {validCards[index]
 						? 'cursor-pointer border-green-500 hover:scale-110 hover:border-green-700 hover:shadow-lg'
 						: 'cursor-not-allowed border-gray-300 opacity-50'}"
 					disabled={!validCards[index] || gameState.paused}
