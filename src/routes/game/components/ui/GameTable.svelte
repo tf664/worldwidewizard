@@ -5,6 +5,11 @@
 
 	export let gameState: GameState;
 
+	// Track window size for responsive behavior
+	let windowWidth = 0;
+	let windowHeight = 0;
+	$: isMobile = windowWidth < 768;
+
 	function getCardDisplay(card: Card): string {
 		if (card.rank === 'Zoro') return 'Z';
 		if (card.rank === 'Fool') return 'F';
@@ -79,16 +84,13 @@
 
 		return { x, y, position };
 	}
-
-	function getPlayerPosition(index: number): string {
-		const totalPlayers = gameState.players.length;
-		return getPlayerCircularPosition(index, totalPlayers).position;
-	}
-
+	
 	function isCurrentPlayer(index: number): boolean {
 		return gameState.currentPlayerIndex === index;
 	}
 </script>
+
+<svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 <div class="relative flex h-full w-full items-center justify-center">
 	<!-- Player Areas arranged in circle -->
@@ -100,25 +102,27 @@
 		<!-- Player Info Card -->
 		<div
 			id="player-{index}-card"
-			class="absolute {isCurrent
-				? 'ring-4 ring-yellow-400'
-				: ''} min-w-48 rounded-lg bg-green-700 p-4 text-white"
+			class="absolute {isCurrent ? 'ring-4 ring-yellow-400' : ''} {isMobile
+				? 'min-w-36'
+				: 'min-w-48'} rounded-lg bg-green-700 {isMobile ? 'p-3' : 'p-4'} text-white"
 			style="left: 50%; top: 50%; transform: translate(calc(-50% + {circularPos.x}px), calc(-50% + {circularPos.y}px));"
 		>
 			<div class="text-center">
-				<h3 class="mb-2 text-lg font-bold">{player.name}</h3>
-				<div class="grid grid-cols-3 gap-2 text-sm">
+				<h3 class="mb-2 {isMobile ? 'text-base' : 'text-lg'} font-bold">{player.name}</h3>
+				<div class="grid grid-cols-3 gap-2 {isMobile ? 'text-xs' : 'text-sm'}">
 					<div>
 						<div class="font-semibold">Score</div>
-						<div class="text-xl">{player.score}</div>
+						<div class={isMobile ? 'text-lg' : 'text-xl'}>{player.score}</div>
 					</div>
 					<div>
 						<div class="font-semibold">Predicted</div>
-						<div class="text-xl">{player.prediction >= 0 ? player.prediction : '?'}</div>
+						<div class={isMobile ? 'text-lg' : 'text-xl'}>
+							{player.prediction >= 0 ? player.prediction : '?'}
+						</div>
 					</div>
 					<div>
 						<div class="font-semibold">Tricks</div>
-						<div class="text-xl">{player.tricksWon}</div>
+						<div class={isMobile ? 'text-lg' : 'text-xl'}>{player.tricksWon}</div>
 					</div>
 				</div>
 
@@ -137,14 +141,16 @@
 		</div>
 	{/each}
 
-	<!-- Central Game Area -->
+	<!-- Central Game Area - responsive size -->
 	<div
-		class="relative flex h-80 w-80 flex-col items-center justify-center rounded-full bg-green-600 text-white"
+		class="relative flex {isMobile
+			? 'h-64 w-64'
+			: 'h-80 w-80'} flex-col items-center justify-center rounded-full bg-green-600 text-white"
 	>
 		<!-- Game Info -->
 		<div class="mb-4 text-center">
-			<h2 class="text-2xl font-bold">Round {gameState.currentRound}</h2>
-			<p class="text-lg capitalize">{gameState.phase} Phase</p>
+			<h2 class="{isMobile ? 'text-xl' : 'text-2xl'} font-bold">Round {gameState.currentRound}</h2>
+			<p class="{isMobile ? 'text-base' : 'text-lg'} capitalize">{gameState.phase} Phase</p>
 			{#if gameState.trumpSuit}
 				<p class="mt-1 text-sm">
 					Trump: <span class="font-semibold capitalize">{gameState.trumpSuit}</span>
@@ -160,7 +166,11 @@
 			<div class="flex min-h-16 items-center space-x-1">
 				{#if gameState.currentTrick.length > 0}
 					{#each gameState.currentTrick as trickCard}
-						<div class="relative h-14 w-10 overflow-hidden rounded border border-white">
+						<div
+							class="relative {isMobile
+								? 'h-12 w-8'
+								: 'h-14 w-10'} overflow-hidden rounded border border-white"
+						>
 							<CardImage
 								src={getCardImagePath(trickCard.card)}
 								alt={getCardDisplay(trickCard.card)}
@@ -184,7 +194,11 @@
 		{#if gameState.deck.length > 0}
 			{@const trumpCard = gameState.deck[gameState.deck.length - 1]}
 			<div class="absolute -right-2 -bottom-2">
-				<div class="relative h-16 w-12 overflow-hidden rounded border border-white">
+				<div
+					class="relative {isMobile
+						? 'h-12 w-8'
+						: 'h-16 w-12'} overflow-hidden rounded border border-white"
+				>
 					<CardImage
 						src={getCardImagePath(trumpCard)}
 						alt={getCardDisplay(trumpCard)}

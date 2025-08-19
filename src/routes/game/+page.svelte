@@ -111,8 +111,6 @@
 		return `${m}:${s}`;
 	}
 
-	
-
 	// Recalculate position whenever current player changes or window resizes
 	$: if (gameState?.currentPlayerIndex !== undefined || windowWidth || windowHeight) {
 		updateInterfacePosition();
@@ -259,10 +257,25 @@
 		}
 	}
 
-
 	function getPlayerPosition(index: number): string {
-		const positions = ['bottom', 'left', 'top', 'right'];
-		return positions[index] || 'bottom';
+		const totalPlayers = gameState.players.length;
+
+		// Calculate angle for each player in the circle (same as GameTable)
+		const angleStep = (2 * Math.PI) / totalPlayers;
+		const angle = Math.PI / 2 - index * angleStep;
+
+		// Determine position name for arrow direction based on angle
+		const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+		if (normalizedAngle >= (7 * Math.PI) / 4 || normalizedAngle < Math.PI / 4) {
+			return 'right';
+		} else if (normalizedAngle >= Math.PI / 4 && normalizedAngle < (3 * Math.PI) / 4) {
+			return 'top';
+		} else if (normalizedAngle >= (3 * Math.PI) / 4 && normalizedAngle < (5 * Math.PI) / 4) {
+			return 'left';
+		} else {
+			return 'bottom';
+		}
 	}
 </script>
 
