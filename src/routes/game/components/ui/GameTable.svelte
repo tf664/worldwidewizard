@@ -54,24 +54,23 @@
 
 	function getPlayerCircularPosition(
 		index: number,
-		totalPlayers: number
+		totalPlayers: number,
+		windowWidth: number,
+		windowHeight: number
 	): { x: number; y: number; position: string } {
-		// Calculate angle for each player in the circle
-		// Start from top (90 degrees) and go clockwise
 		const angleStep = (2 * Math.PI) / totalPlayers;
-		const angle = Math.PI / 2 - index * angleStep; // Start from top, go clockwise
+		const angle = Math.PI / 2 - index * angleStep;
 
-		// Radius from center (adjust based on screen size)
-		const radius = 480; // Distance from center
+		// Use viewport size for scaling
+		const minDimension = Math.min(windowWidth, windowHeight);
+		const radius = isMobile ? minDimension * 0.35 : minDimension * 0.42;
 
-		// Calculate position
 		const x = Math.cos(angle) * radius;
-		const y = -Math.sin(angle) * radius; // Negative because CSS y increases downward
+		const y = -Math.sin(angle) * radius;
 
-		// Determine position name for arrow direction
-		let position: string;
+		// Naming logic...
 		const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
+		let position: string;
 		if (normalizedAngle >= (7 * Math.PI) / 4 || normalizedAngle < Math.PI / 4) {
 			position = 'right';
 		} else if (normalizedAngle >= Math.PI / 4 && normalizedAngle < (3 * Math.PI) / 4) {
@@ -84,7 +83,7 @@
 
 		return { x, y, position };
 	}
-	
+
 	function isCurrentPlayer(index: number): boolean {
 		return gameState.currentPlayerIndex === index;
 	}
@@ -96,12 +95,12 @@
 	<!-- Player Areas arranged in circle -->
 	{#each gameState.players as player, index}
 		{@const totalPlayers = gameState.players.length}
-		{@const circularPos = getPlayerCircularPosition(index, totalPlayers)}
+		{@const circularPos = getPlayerCircularPosition(index, totalPlayers, windowWidth, windowHeight)}
 		{@const isCurrent = isCurrentPlayer(index)}
 
 		<!-- Player Info Card -->
 		<div
-			id="player-{index}-card"
+			id="player-{index}"
 			class="absolute {isCurrent ? 'ring-4 ring-yellow-400' : ''} {isMobile
 				? 'min-w-36'
 				: 'min-w-48'} rounded-lg bg-green-700 {isMobile ? 'p-3' : 'p-4'} text-white"

@@ -49,7 +49,6 @@
 		}
 
 		const suitName = card.suit?.toLowerCase() || 'unknown';
-
 		if (typeof card.rank === 'number') {
 			const rankWords = [
 				'',
@@ -79,12 +78,8 @@
 	}
 
 	function getCardColor(card: Card): string {
-		if (card.rank === 'Zoro') {
-			return 'bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400';
-		}
-		if (card.rank === 'Fool') {
-			return 'bg-gradient-to-r from-red-400 via-yellow-300 to-blue-500';
-		}
+		if (card.rank === 'Zoro') return 'bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400';
+		if (card.rank === 'Fool') return 'bg-gradient-to-r from-red-400 via-yellow-300 to-blue-500';
 
 		switch (card.suit) {
 			case 'red':
@@ -114,12 +109,9 @@
 	}
 </script>
 
-<!-- Enlarged card play interface matching BiddingInterface style -->
 <div class="relative w-96 rounded-2xl border-4 border-green-500 bg-white p-6 shadow-2xl">
-	<!-- Enhanced arrow pointing to player -->
 	<div class={getArrowClasses()}>▲</div>
 
-	<!-- Header -->
 	<div class="mb-6 text-center">
 		<h3 class="text-2xl font-bold text-gray-800">{currentPlayer.name}'s Turn</h3>
 		{#if gameState.trumpSuit}
@@ -138,7 +130,6 @@
 		</div>
 	</div>
 
-	<!-- Hand display -->
 	<div class="mb-6">
 		<p class="mb-4 text-center text-lg font-medium text-gray-700">Choose your card:</p>
 		<div class="flex flex-wrap justify-center gap-2">
@@ -155,7 +146,6 @@
 						alt={getCardDisplay(card)}
 						className="w-full h-full object-cover rounded-lg transition-all duration-300 group-hover:opacity-0 group-hover:scale-105"
 					/>
-
 					<div
 						class="absolute inset-0 {getCardColor(
 							card
@@ -174,7 +164,6 @@
 		</div>
 	</div>
 
-	<!-- Toggle details button -->
 	<div class="text-center">
 		<button
 			class="rounded-xl bg-gray-200 px-6 py-3 text-base text-gray-700 transition-all hover:bg-gray-300"
@@ -184,7 +173,6 @@
 		</button>
 	</div>
 
-	<!-- Expandable current trick -->
 	{#if showDetails}
 		<div class="mt-4 space-y-4 border-t-2 pt-4">
 			<div>
@@ -209,7 +197,6 @@
 				</div>
 			</div>
 
-			<!-- Additional info section -->
 			<div>
 				<p class="mb-2 text-sm font-medium text-gray-700">Game info:</p>
 				<div class="flex flex-wrap justify-center gap-2">

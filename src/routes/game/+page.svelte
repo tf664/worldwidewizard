@@ -112,9 +112,12 @@
 	}
 
 	// Recalculate position whenever current player changes or window resizes
-	$: if (gameState?.currentPlayerIndex !== undefined || windowWidth || windowHeight) {
+	// Recalculate position whenever current player changes or window resizes
+	$: if (gameState?.currentPlayerIndex !== undefined) {
 		updateInterfacePosition();
-		updateCurrentPlayerBorder();
+	}
+	$: if (windowWidth || windowHeight) {
+		updateInterfacePosition();
 	}
 
 	async function updateInterfacePosition() {
@@ -132,11 +135,13 @@
 			return;
 		}
 
-		// On larger screens, position relative to player cards
+		// Wait for DOM updates
 		await tick();
-		const el = document.getElementById(`player-${gameState.currentPlayerIndex}-card`);
+		await new Promise((resolve) => setTimeout(resolve, 50)); // Small delay for scaling to complete
+
+		const el = document.getElementById(`player-${gameState.currentPlayerIndex}`);
 		if (!el) {
-			// Fallback to center if player card not found
+			// Fallback to center if player info card not found
 			interfacePosition = {
 				x: '50%',
 				y: '50%',
@@ -150,10 +155,10 @@
 		const rect = el.getBoundingClientRect();
 		const position = getPlayerPosition(gameState.currentPlayerIndex);
 
-		// Check if interface would go off-screen and fallback to center
-		const interfaceWidth = 384; // w-96 = 384px
-		const interfaceHeight = 400; // approximate height
-		const margin = 16; // Reduced margin for closer positioning
+		// Adjusted interface dimensions accounting for 75% scale
+		const interfaceWidth = 384 * 0.75; // Original width * scale factor
+		const interfaceHeight = 400 * 0.75; // Original height * scale factor
+		const margin = 20; // Margin from player info card
 
 		let newPosition: {
 			x: string;
@@ -165,7 +170,7 @@
 
 		switch (position) {
 			case 'bottom':
-				// Position interface to the right of the bottom player card
+				// Position interface to the right of the bottom player info
 				newPosition = {
 					x: `${rect.right + margin}px`,
 					y: `${rect.top + rect.height / 2}px`,
@@ -175,7 +180,7 @@
 				};
 				break;
 			case 'top':
-				// Position interface to the left of the top player card
+				// Position interface to the left of the top player info
 				newPosition = {
 					x: `${rect.left - margin}px`,
 					y: `${rect.top + rect.height / 2}px`,
@@ -185,7 +190,7 @@
 				};
 				break;
 			case 'left':
-				// Position interface below the left player card
+				// Position interface below the left player info
 				newPosition = {
 					x: `${rect.left + rect.width / 2}px`,
 					y: `${rect.bottom + margin}px`,
@@ -195,7 +200,7 @@
 				};
 				break;
 			case 'right':
-				// Position interface above the right player card
+				// Position interface above the right player info
 				newPosition = {
 					x: `${rect.left + rect.width / 2}px`,
 					y: `${rect.top - margin}px`,
@@ -215,7 +220,7 @@
 				break;
 		}
 
-		// Check bounds and fallback to center if needed
+		// Check bounds with scaled dimensions
 		const finalX = parseFloat(newPosition.x);
 		const finalY = parseFloat(newPosition.y);
 
@@ -297,40 +302,44 @@
 		{formatTime}
 	/>
 
-	<!-- Game Overlays positioned relative to current player or centered on mobile -->
+	<!-- Game Overlays positioned relative to current player info card or centered on mobile -->
 	{#if gameState.phase === 'bidding'}
 		<div
-			class="fixed z-50"
+			class="pointer-events-none fixed z-50"
 			class:inset-4={isMobile}
 			class:flex={isMobile}
 			class:items-center={isMobile}
 			class:justify-center={isMobile}
 			style={isMobile
-				? ''
-				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);`}
+				? 'pointer-events: auto;'
+				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.3s ease-out; pointer-events: auto;`}
 		>
-			<BiddingInterface
-				{gameState}
-				onPredictionMade={handlePrediction}
-				arrowDir={interfacePosition.arrowDir}
-			/>
+			<div class="origin-center scale-75">
+				<BiddingInterface
+					{gameState}
+					onPredictionMade={handlePrediction}
+					arrowDir={interfacePosition.arrowDir}
+				/>
+			</div>
 		</div>
 	{:else if gameState.phase === 'playing'}
 		<div
-			class="fixed z-50"
+			class="pointer-events-none fixed z-50"
 			class:inset-4={isMobile}
 			class:flex={isMobile}
 			class:items-center={isMobile}
 			class:justify-center={isMobile}
 			style={isMobile
-				? ''
-				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);`}
+				? 'pointer-events: auto;'
+				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.3s ease-out; pointer-events: auto;`}
 		>
-			<CardPlayInterface
-				{gameState}
-				onCardPlayed={handleCardPlay}
-				arrowDir={interfacePosition.arrowDir}
-			/>
+			<div class="origin-center scale-75">
+				<CardPlayInterface
+					{gameState}
+					onCardPlayed={handleCardPlay}
+					arrowDir={interfacePosition.arrowDir}
+				/>
+			</div>
 		</div>
 	{:else if gameState.phase === 'scoring'}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
