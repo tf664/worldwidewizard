@@ -1,31 +1,29 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { lobby, type LobbyInfo} from '$lib/stores/lobby';
+    import { userStore } from '$lib/stores/user';
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
     import { io, Socket } from 'socket.io-client';
     import { get } from 'svelte/store';
-    import Popup from '$lib/components/Popup.svelte'; // Popup-Komponente importieren
+    import Popup from '$lib/components/Popup.svelte';
     import { browser } from '$app/environment';
-
 
     let socket: Socket | null = null;
     let users: string[] = [];
-    let admin: string | null = null; // Admin der Lobby
+    let admin: string | null = null;
     let messages: { user: string; text: string }[] = [];
     let message = '';
     let error = '';
     let showPopup = false;
     let popupMessage = '';
-    let popupOnClose: () => void; // Declare the popupOnClose variable
-
+    let popupOnClose: () => void;
+    let gameStarted = false; // Track if game has started
 
     const MAX_PLAYERS = 6;
     const MIN_PLAYERS = 3;
     const SOCKET_URL = 'http://localhost:3001';
 
-    
-    // Lobby-Infos aus Store oder localStorage holen
     let lobbyInfo: LobbyInfo | null = get(lobby);
 
     if (typeof window !== 'undefined' && !lobbyInfo) {
@@ -36,7 +34,10 @@
         }
     }
 
-    // Redirect, falls keine Lobby-Infos vorhanden oder Code nicht passt
+    $: if (lobbyInfo?.username) {
+        userStore.set({ username: lobbyInfo.username });
+    }
+
     $: if (!lobbyInfo || $page.params.code !== lobbyInfo.lobbyCode) {
         if (browser) {
             goto('/onlinesetup');
@@ -44,7 +45,6 @@
     }
 
     onMount(() => {
-
         if (!lobbyInfo) return;
         socket = io(SOCKET_URL);
 
@@ -52,8 +52,13 @@
 
         // Listen for the game started event
         socket.on('game started', (gameState) => {
-            console.log('Game started:', gameState);
-            goto(`/onlinegame/${lobbyInfo.lobbyCode}`); // Navigate to the game screen
+            console.log('Game started event received:', gameState);
+            gameStarted = true; // Mark that game has started
+            
+            // Navigate to game page when game starts
+            if (browser) {
+                goto(`/onlinegame/${lobbyInfo.lobbyCode}`);
+            }
         });
             
         socket.on('lobby users', ({ users: userList, admin: adminUser }) => {
@@ -65,26 +70,22 @@
             messages = [...messages, msg];
         });
 
-        // Event für entfernte Spieler
-            socket.on('removed from lobby', ({ message }) => {
+        socket.on('removed from lobby', ({ message }) => {
             popupMessage = message;
             showPopup = true;
 
-            // Warte, bis der Nutzer das Popup schließt, und leite dann weiter
             const handleClose = () => {
                 showPopup = false;
                 if (browser){
                     goto('/onlinesetup');
                 }
-                };
+            };
 
-            // Übergib den `handleClose`-Handler an das Popup
             popupMessage = message;
             showPopup = true;
             popupOnClose = handleClose;
         });
     });
-
 
     function send() {
         if (message.trim() && socket && lobbyInfo) {
@@ -100,28 +101,25 @@
     }
 
     function startGame() {
-    if (socket && lobbyInfo) {
-        socket.emit('start game', { lobbyCode: lobbyInfo.lobbyCode });
-
-        // Admin wird direkt zur Spielseite weitergeleitet
-        if (browser) {       
-            goto(`/onlinegame/${lobbyInfo.lobbyCode}`);
+        if (socket && lobbyInfo) {
+            console.log('Admin starting game from lobby page');
+            socket.emit('start game', { lobbyCode: lobbyInfo.lobbyCode });
         }
     }
-}
 
     onDestroy(() => {
-        if (socket && lobbyInfo) {
+        // IMPORTANT: Only leave lobby if game hasn't started
+        if (socket && lobbyInfo && !gameStarted) {
             socket.emit('leave lobby', { lobbyCode: lobbyInfo.lobbyCode, user: lobbyInfo.username });
-            socket.disconnect();
         }
-        lobby.set(null);
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('lobby');
+        
+        if (socket) {
+            socket.disconnect();
         }
     });
 </script>
 
+<!-- Rest of template stays exactly the same -->
 {#if lobbyInfo}
     <div class="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
         <h2 class="text-lg font-semibold mb-2">Lobby: {lobbyInfo.lobbyCode}</h2>
@@ -148,8 +146,8 @@
         </div>
         <!-- Admin-Buttons -->
         {#if admin === lobbyInfo.username}
-            <button on:click={startGame} class="bg-green-600 text-white px-4 py-2 rounded mt-4">
-                Spiel starten
+            <button on:click={startGame} class="bg-green-600 text-white px-4 py-2 rounded mt-4" disabled={users.length < MIN_PLAYERS}>
+                {users.length < MIN_PLAYERS ? `Need ${MIN_PLAYERS - users.length} more players` : 'Spiel starten'}
             </button>
         {/if}
         <!-- Chat -->
