@@ -15,6 +15,8 @@
 	$: currentPlayer = gameState.players[gameState.currentPlayerIndex];
 	$: validCards = getValidCards(currentPlayer.hand, gameState.currentTrick, gameState.trumpSuit);
 
+	let showDetails = false;
+
 	function getValidCards(hand: Card[], trick: TrickCard[], trumpSuit: Suit | null): boolean[] {
 		const leadSuit = trick.length > 0 ? trick[0].card.suit : null;
 		return hand.map((card) =>
@@ -96,78 +98,110 @@
 				return 'bg-gray-500';
 		}
 	}
+
+	function getPlayerPosition(index: number): string {
+		const positions = ['bottom', 'left', 'top', 'right'];
+		return positions[index] || 'bottom';
+	}
+
+	function getArrowClasses(): string {
+		const position = getPlayerPosition(gameState.currentPlayerIndex);
+		switch (position) {
+			case 'bottom':
+				return 'absolute -top-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl';
+			case 'top':
+				return 'absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl rotate-180';
+			case 'left':
+				return 'absolute -right-6 top-1/2 transform -translate-y-1/2 text-yellow-400 text-2xl -rotate-90';
+			case 'right':
+				return 'absolute -left-6 top-1/2 transform -translate-y-1/2 text-yellow-400 text-2xl rotate-90';
+			default:
+				return 'absolute -top-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl';
+		}
+	}
 </script>
 
-<div class="fixed inset-0 flex items-center justify-center z-50">
-	<div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500">
-		<h2 class="text-2xl font-bold mb-4 text-center">
-			{currentPlayer.name}'s Turn
-		</h2>
+<!-- Compact card play interface with positioning arrow -->
+<div class="relative max-w-md rounded-lg border-4 border-blue-500 bg-white p-4 shadow-2xl">
+	<!-- Arrow pointing to player -->
+	<div class={getArrowClasses()}>▲</div>
 
-		<!-- Show current trick -->
-		<div class="mb-6">
-			<h3 class="font-semibold mb-2">Cards played this trick:</h3>
-			<div class="flex gap-2 justify-center min-h-20 items-center bg-green-100 rounded p-4">
+	<!-- Header -->
+	<div class="mb-3 text-center">
+		<h3 class="text-lg font-bold">{currentPlayer.name}'s Turn</h3>
+		<div class="flex justify-center gap-4 text-sm text-gray-600">
+			<span>Trump: {gameState.trumpSuit || 'None'}</span>
+			<span>Pred: {currentPlayer.prediction}</span>
+			<span>Won: {currentPlayer.tricksWon}</span>
+		</div>
+	</div>
+
+	<!-- Compact hand display -->
+	<div class="mb-3">
+		<p class="mb-2 text-center text-sm font-medium">Choose your card:</p>
+		<div class="flex flex-wrap justify-center gap-1">
+			{#each currentPlayer.hand as card, index (getCardKey(card, index))}
+				<button
+					class="group relative h-14 w-10 rounded border-2 transition-all {validCards[index]
+						? 'cursor-pointer border-green-500 hover:scale-105 hover:border-green-700'
+						: 'cursor-not-allowed border-gray-300 opacity-50'}"
+					disabled={!validCards[index] || gameState.paused}
+					onclick={() => onCardPlayed(gameState.currentPlayerIndex, index)}
+				>
+					<CardImage
+						src={getCardImagePath(card)}
+						alt={getCardDisplay(card)}
+						className="w-full h-full object-cover rounded transition-opacity duration-300 group-hover:opacity-0"
+					/>
+
+					<div
+						class="absolute inset-0 {getCardColor(
+							card
+						)} flex items-center justify-center rounded text-xs font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+					>
+						{getCardDisplay(card)}
+					</div>
+
+					{#if validCards[index]}
+						<div class="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-500"></div>
+					{/if}
+				</button>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Toggle details button -->
+	<div class="text-center">
+		<button
+			class="rounded bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+			onclick={() => (showDetails = !showDetails)}
+		>
+			{showDetails ? 'Hide Details ▲' : 'Show Trick ▼'}
+		</button>
+	</div>
+
+	<!-- Expandable current trick -->
+	{#if showDetails}
+		<div class="mt-3 border-t pt-3">
+			<h4 class="mb-2 text-sm font-semibold">Current Trick:</h4>
+			<div class="flex min-h-12 items-center justify-center gap-1 rounded bg-green-100 p-2">
 				{#each gameState.currentTrick as trickCard, trickIndex}
-					<div class="w-12 h-16 relative">
+					<div class="relative h-11 w-8">
 						<CardImage
 							src={getCardImagePath(trickCard.card)}
 							alt={getCardDisplay(trickCard.card)}
 							className="w-full h-full object-cover rounded border"
 						/>
 						<div
-							class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-1 rounded"
+							class="absolute -bottom-1 left-1/2 -translate-x-1/2 transform rounded bg-blue-600 px-1 text-xs text-white"
 						>
-							{gameState.players[trickCard.playerId].name}
+							{gameState.players[trickCard.playerId].name.substring(0, 2)}
 						</div>
 					</div>
 				{:else}
-					<p class="text-gray-500">No cards played yet</p>
+					<p class="text-gray-500 text-sm">No cards played yet</p>
 				{/each}
 			</div>
 		</div>
-
-		<!-- Player's hand -->
-		<div class="mb-6">
-			<h3 class="font-semibold mb-2">Choose a card to play:</h3>
-			<div class="grid grid-cols-8 gap-2 justify-center">
-				{#each currentPlayer.hand as card, index (getCardKey(card, index))}
-					<button
-						class="relative w-16 h-24 rounded border-2 transition-all group {validCards[index]
-							? 'border-green-500 hover:border-green-700 cursor-pointer hover:scale-105'
-							: 'border-gray-300 opacity-50 cursor-not-allowed'}"
-						disabled={!validCards[index] || gameState.paused}
-						onclick={() => onCardPlayed(gameState.currentPlayerIndex, index)}
-					>
-						<!-- Card Image -->
-						<CardImage
-							src={getCardImagePath(card)}
-							alt={getCardDisplay(card)}
-							className="w-full h-full object-cover rounded transition-opacity duration-300 group-hover:opacity-0"
-						/>
-
-						<!-- Colored overlay with card value - hidden by default, visible on hover -->
-						<div
-							class="absolute inset-0 {getCardColor(
-								card
-							)} rounded flex items-center justify-center text-white font-bold text-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-						>
-							{getCardDisplay(card)}
-						</div>
-
-						<!-- Valid play indicator only -->
-						{#if validCards[index]}
-							<div class="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full"></div>
-						{/if}
-					</button>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Game info -->
-		<div class="text-sm text-gray-600 text-center">
-			<p>Trump: {gameState.trumpSuit || 'None'} | Round: {gameState.currentRound}</p>
-			<p>Prediction: {currentPlayer.prediction} | Tricks won: {currentPlayer.tricksWon}</p>
-		</div>
-	</div>
+	{/if}
 </div>

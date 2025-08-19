@@ -98,6 +98,29 @@
 
 		return () => clearInterval(intervalId);
 	});
+
+	function getPlayerPosition(index: number): string {
+		const positions = ['bottom', 'left', 'top', 'right'];
+		return positions[index] || 'bottom';
+	}
+
+	function getInterfaceClasses(playerIndex: number): string {
+		const position = getPlayerPosition(playerIndex);
+		const baseClasses = 'fixed z-50 transition-all duration-500 ease-in-out';
+
+		switch (position) {
+			case 'bottom':
+				return `${baseClasses} bottom-32 left-1/2 transform -translate-x-1/2`;
+			case 'top':
+				return `${baseClasses} top-32 left-1/2 transform -translate-x-1/2`;
+			case 'left':
+				return `${baseClasses} left-4 top-1/2 transform -translate-y-1/2`;
+			case 'right':
+				return `${baseClasses} right-4 top-1/2 transform -translate-y-1/2`;
+			default:
+				return `${baseClasses} bottom-32 left-1/2 transform -translate-x-1/2`;
+		}
+	}
 </script>
 
 {#if gameState}
@@ -115,13 +138,20 @@
 		{elapsed}
 		{formatTime}
 	/>
-	<!-- Game Overlays -->
+
+	<!-- Game Overlays positioned by current player -->
 	{#if gameState.phase === 'bidding'}
-		<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
+		<div class={getInterfaceClasses(gameState.currentPlayerIndex)}>
+			<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
+		</div>
 	{:else if gameState.phase === 'playing'}
-		<CardPlayInterface {gameState} onCardPlayed={handleCardPlay} />
+		<div class={getInterfaceClasses(gameState.currentPlayerIndex)}>
+			<CardPlayInterface {gameState} onCardPlayed={handleCardPlay} />
+		</div>
 	{:else if gameState.phase === 'scoring'}
-		<ScoringInterface {gameState} onNextRound={handleNextRound} />
+		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+			<ScoringInterface {gameState} onNextRound={handleNextRound} />
+		</div>
 	{:else if gameState.phase === 'finished'}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
 			<div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 text-center">
