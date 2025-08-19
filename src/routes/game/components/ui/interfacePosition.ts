@@ -1,7 +1,7 @@
 export type Position = 'top' | 'bottom' | 'left' | 'right';
 export type ArrowDirection = 'top' | 'bottom' | 'left' | 'right';
 
-export interface InterfacePosition {
+export interface PanelPosition {
     x: string;
     y: string;
     transformX: string;
@@ -10,149 +10,241 @@ export interface InterfacePosition {
     position: Position;
 }
 
-export interface PlayerBounds {
-    rect: DOMRect;
-    position: Position;
-    index: number;
-}
+export class PanelPositionManager {
+    private playerPositions: Map<number, PanelPosition> = new Map();
+    private lastWindowSize = { width: 0, height: 0 };
+    private lastOrientation = 0;
+    private panelDimensions = { width: 384, height: 400 };
 
-export function calculateOptimalPosition(
-    playerBounds: PlayerBounds,
-    panelWidth: number,
-    panelHeight: number,
-    windowWidth: number,
-    windowHeight: number,
-    margin: number = 20
-): InterfacePosition {
-    const { rect, position } = playerBounds;
+    constructor(private minMobileWidth = 768) { }
 
-    // Priority order for positioning based on player's circular position
-    const positionPriorities: Record<Position, Position[]> = {
-        'bottom': ['right', 'left', 'top', 'bottom'],
-        'top': ['left', 'right', 'bottom', 'top'],
-        'left': ['bottom', 'top', 'right', 'left'],
-        'right': ['top', 'bottom', 'left', 'right']
-    };
+    /**
+     * Initialize positions using real player DOM elements
+     */
+    initializePositionsFromDOM(
+        playerElements: HTMLElement[],
+        windowWidth: number,
+        windowHeight: number,
+        panelScale: number = 0.8
+    ): void {
+        this.panelDimensions = {
+            width: 384 * panelScale,
+            height: 400 * panelScale
+        };
 
-    const priorities = positionPriorities[position];
+        // Clear existing positions
+        this.playerPositions.clear();
+        this.lastWindowSize = { width: windowWidth, height: windowHeight };
+        this.lastOrientation = screen.orientation?.angle || 0;
 
-    for (const targetPosition of priorities) {
-        const pos = calculatePositionForSide(
-            rect, targetPosition, panelWidth, panelHeight, margin
-        );
+        // Mobile fallback - all players use center position
+        if (this.isMobileScreen(windowWidth, windowHeight)) {
+            for (let i = 0; i < playerElements.length; i++) {
+                this.playerPositions.set(i, this.getMobileFallbackPosition());
+            }
+            return;
+        }
 
-        if (isPositionValid(pos, panelWidth, panelHeight, windowWidth, windowHeight)) {
-            return {
-                ...pos,
-                position: targetPosition,
-                arrowDir: getArrowDirection(targetPosition)
-            };
+        // Calculate positions for each player using real DOM positions
+        playerElements.forEach((element, index) => {
+            if (element) {
+                const rect = element.getBoundingClientRect();
+                const position = this.calculateOptimalPosition(
+                    rect,
+                    windowWidth,
+                    windowHeight,
+                    40 // safe zone margin
+                );
+                this.playerPositions.set(index, position);
+            }
+        });
+    }
+
+    /**
+     * Legacy method for backward compatibility
+     */
+    initializePositions(
+        playerCount: number,
+        windowWidth: number,
+        windowHeight: number,
+        panelScale: number = 0.8
+    ): void {
+        // Fallback to center position for all players when DOM elements aren't available
+        this.panelDimensions = {
+            width: 384 * panelScale,
+            height: 400 * panelScale
+        };
+
+        this.playerPositions.clear();
+        this.lastWindowSize = { width: windowWidth, height: windowHeight };
+        this.lastOrientation = screen.orientation?.angle || 0;
+
+        const fallbackPosition = this.isMobileScreen(windowWidth, windowHeight)
+            ? this.getMobileFallbackPosition()
+            : this.getAdaptiveCenterPosition(windowWidth, windowHeight);
+
+        for (let i = 0; i < playerCount; i++) {
+            this.playerPositions.set(i, fallbackPosition);
         }
     }
 
-    // Fallback to center with adaptive sizing
-    return getCenterPosition(panelWidth, panelHeight, windowWidth, windowHeight);
-}
-
-function calculatePositionForSide(
-    rect: DOMRect,
-    side: Position,
-    panelWidth: number,
-    panelHeight: number,
-    margin: number
-): Pick<InterfacePosition, 'x' | 'y' | 'transformX' | 'transformY'> {
-    switch (side) {
-        case 'right':
-            return {
-                x: `${rect.right + margin}px`,
-                y: `${rect.top + rect.height / 2}px`,
-                transformX: '0%',
-                transformY: '-50%'
-            };
-        case 'left':
-            return {
-                x: `${rect.left - margin}px`,
-                y: `${rect.top + rect.height / 2}px`,
-                transformX: '-100%',
-                transformY: '-50%'
-            };
-        case 'bottom':
-            return {
-                x: `${rect.left + rect.width / 2}px`,
-                y: `${rect.bottom + margin}px`,
-                transformX: '-50%',
-                transformY: '0%'
-            };
-        case 'top':
-            return {
-                x: `${rect.left + rect.width / 2}px`,
-                y: `${rect.top - margin}px`,
-                transformX: '-50%',
-                transformY: '-100%'
-            };
-    }
-}
-
-function isPositionValid(
-    pos: Pick<InterfacePosition, 'x' | 'y' | 'transformX' | 'transformY'>,
-    panelWidth: number,
-    panelHeight: number,
-    windowWidth: number,
-    windowHeight: number
-): boolean {
-    const x = parseFloat(pos.x);
-    const y = parseFloat(pos.y);
-
-    let finalX: number, finalY: number;
-
-    // Calculate final position based on transform
-    if (pos.transformX === '-50%') {
-        finalX = x - panelWidth / 2;
-    } else if (pos.transformX === '-100%') {
-        finalX = x - panelWidth;
-    } else {
-        finalX = x;
+    /**
+     * Get position for a specific player
+     */
+    getPlayerPosition(playerId: number): PanelPosition {
+        return this.playerPositions.get(playerId) || this.getMobileFallbackPosition();
     }
 
-    if (pos.transformY === '-50%') {
-        finalY = y - panelHeight / 2;
-    } else if (pos.transformY === '-100%') {
-        finalY = y - panelHeight;
-    } else {
-        finalY = y;
+    /**
+     * Check if positions need recalculation
+     */
+    shouldRecalculate(windowWidth: number, windowHeight: number): boolean {
+        const currentOrientation = screen.orientation?.angle || 0;
+        const sizeChanged = Math.abs(this.lastWindowSize.width - windowWidth) > 50 ||
+            Math.abs(this.lastWindowSize.height - windowHeight) > 50;
+        const orientationChanged = this.lastOrientation !== currentOrientation;
+
+        return sizeChanged || orientationChanged;
     }
 
-    return finalX >= 0 && finalY >= 0 &&
-        finalX + panelWidth <= windowWidth &&
-        finalY + panelHeight <= windowHeight;
-}
+    private calculateOptimalPosition(
+        playerRect: DOMRect,
+        windowWidth: number,
+        windowHeight: number,
+        margin: number
+    ): PanelPosition {
+        // Calculate distances to each side
+        const distances = {
+            right: windowWidth - playerRect.right,
+            left: playerRect.left,
+            bottom: windowHeight - playerRect.bottom,
+            top: playerRect.top
+        };
 
-function getArrowDirection(position: Position): ArrowDirection {
-    const opposites: Record<Position, ArrowDirection> = {
-        'right': 'left',
-        'left': 'right',
-        'bottom': 'top',
-        'top': 'bottom'
-    };
-    return opposites[position];
-}
+        // Try positions in order of available space
+        const positionsBySpace = Object.entries(distances)
+            .sort(([, a], [, b]) => b - a)
+            .map(([pos]) => pos as Position);
 
-function getCenterPosition(
-    panelWidth: number,
-    panelHeight: number,
-    windowWidth: number,
-    windowHeight: number
-): InterfacePosition {
-    // Scale down panel if it doesn't fit
-    const maxWidth = windowWidth * 0.9;
-    const maxHeight = windowHeight * 0.9;
+        // Try each position and use the first valid one
+        for (const targetPosition of positionsBySpace) {
+            const candidate = this.calculatePositionForSide(
+                playerRect,
+                targetPosition,
+                margin
+            );
 
-    return {
-        x: '50%',
-        y: '50%',
-        transformX: '-50%',
-        transformY: '-50%',
-        arrowDir: 'bottom',
-        position: 'bottom'
-    };
+            if (this.isPositionValid(candidate, windowWidth, windowHeight, margin)) {
+                return {
+                    ...candidate,
+                    position: targetPosition,
+                    arrowDir: this.getArrowDirection(targetPosition)
+                };
+            }
+        }
+
+        // Fallback to adaptive center position
+        return this.getAdaptiveCenterPosition(windowWidth, windowHeight);
+    }
+
+    private calculatePositionForSide(
+        rect: DOMRect,
+        side: Position,
+        margin: number
+    ): Omit<PanelPosition, 'position' | 'arrowDir'> {
+        switch (side) {
+            case 'right':
+                return {
+                    x: `${rect.right + margin}px`,
+                    y: `${rect.top + rect.height / 2}px`,
+                    transformX: '0%',
+                    transformY: '-50%'
+                };
+            case 'left':
+                return {
+                    x: `${rect.left - margin}px`,
+                    y: `${rect.top + rect.height / 2}px`,
+                    transformX: '-100%',
+                    transformY: '-50%'
+                };
+            case 'bottom':
+                return {
+                    x: `${rect.left + rect.width / 2}px`,
+                    y: `${rect.bottom + margin}px`,
+                    transformX: '-50%',
+                    transformY: '0%'
+                };
+            case 'top':
+                return {
+                    x: `${rect.left + rect.width / 2}px`,
+                    y: `${rect.top - margin}px`,
+                    transformX: '-50%',
+                    transformY: '-100%'
+                };
+        }
+    }
+
+    private isPositionValid(
+        pos: Omit<PanelPosition, 'position' | 'arrowDir'>,
+        windowWidth: number,
+        windowHeight: number,
+        safeZone: number
+    ): boolean {
+        const x = parseFloat(pos.x);
+        const y = parseFloat(pos.y);
+
+        // Calculate final position after transform
+        let finalX = x;
+        let finalY = y;
+
+        if (pos.transformX === '-50%') finalX = x - this.panelDimensions.width / 2;
+        else if (pos.transformX === '-100%') finalX = x - this.panelDimensions.width;
+
+        if (pos.transformY === '-50%') finalY = y - this.panelDimensions.height / 2;
+        else if (pos.transformY === '-100%') finalY = y - this.panelDimensions.height;
+
+        return finalX >= safeZone &&
+            finalY >= safeZone &&
+            finalX + this.panelDimensions.width <= windowWidth - safeZone &&
+            finalY + this.panelDimensions.height <= windowHeight - safeZone;
+    }
+
+    private getArrowDirection(position: Position): ArrowDirection {
+        const opposites: Record<Position, ArrowDirection> = {
+            'right': 'left',
+            'left': 'right',
+            'bottom': 'top',
+            'top': 'bottom'
+        };
+        return opposites[position];
+    }
+
+    private isMobileScreen(width: number, height: number): boolean {
+        return width < this.minMobileWidth || height < 600 ||
+            (Math.min(width, height) < 500);
+    }
+
+    private getMobileFallbackPosition(): PanelPosition {
+        return {
+            x: '50%',
+            y: '85%',
+            transformX: '-50%',
+            transformY: '-100%',
+            arrowDir: 'top',
+            position: 'bottom'
+        };
+    }
+
+    private getAdaptiveCenterPosition(windowWidth: number, windowHeight: number): PanelPosition {
+        const centerY = windowHeight > 600 ? '50%' : '60%';
+
+        return {
+            x: '50%',
+            y: centerY,
+            transformX: '-50%',
+            transformY: '-50%',
+            arrowDir: 'bottom',
+            position: 'bottom'
+        };
+    }
 }

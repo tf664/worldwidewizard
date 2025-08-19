@@ -8,15 +8,11 @@
 	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
 	import GameControls from './components/ui/GameControls.svelte';
 	import { undoMove } from './logic/gameLogic.js';
-	import {
-		calculateOptimalPosition,
-		type InterfacePosition,
-		type PlayerBounds,
-		type Position
-	} from './components/ui/interfacePosition.js';
+	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
 
 	let gameState: GameState;
-	let interfacePosition: InterfacePosition = {
+	let positionManager = new PanelPositionManager();
+	let currentPanelPosition: PanelPosition = {
 		x: '50%',
 		y: '50%',
 		transformX: '-50%',
@@ -30,6 +26,8 @@
 	let windowHeight = 0;
 	let containerRef: HTMLElement;
 	let interfaceRef: HTMLElement;
+	let positionsInitialized = false;
+	let playerElements: HTMLElement[] = []; // Add this line
 
 	$: isMobile = windowWidth < 768;
 	$: isTablet = windowWidth >= 768 && windowWidth < 1024;
@@ -37,7 +35,6 @@
 
 	// Dynamic scaling based on screen size
 	$: interfaceScale = getInterfaceScale(windowWidth, windowHeight);
-	$: panelDimensions = getPanelDimensions(interfaceScale);
 
 	function getInterfaceScale(width: number, height: number): number {
 		if (isMobile) return 0.65;
@@ -46,41 +43,73 @@
 		return 0.8;
 	}
 
-	function getPanelDimensions(scale: number): { width: number; height: number } {
-		const baseWidth = 384; // 24rem
-		const baseHeight = 400; // Estimated height
-		return {
-			width: baseWidth * scale,
-			height: baseHeight * scale
-		};
-	}
-
 	function getPlayerNames(): string[] {
-		// Get player names from localStorage (saved in /setup)
 		const storedPlayers = localStorage.getItem('players');
-		return storedPlayers ? JSON.parse(storedPlayers) : ['Player 1', 'Player 2', 'Player 3']; // Fallback names
+		return storedPlayers ? JSON.parse(storedPlayers) : ['Player 1', 'Player 2', 'Player 3'];
 	}
 
 	onMount(() => {
-		// Initialize game with the player names from setup
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
 
 		// Timer setup
 		startTime = Date.now();
-
 		intervalId = setInterval(() => {
-			// Only increment elapsed if game is not paused
 			if (gameState && !gameState.paused) {
 				elapsed = Math.floor((Date.now() - startTime) / 1000);
 			} else {
-				// Adjust startTime so that elapsed doesn't jump after resuming
 				startTime = Date.now() - elapsed * 1000;
 			}
 		}, 1000);
 
 		return () => clearInterval(intervalId);
 	});
+
+	// Initialize positions when game state and window dimensions are ready
+	$: if (gameState && windowWidth > 0 && windowHeight > 0) {
+		initializeOrUpdatePositions();
+	}
+
+	// Update current position when current player changes
+	$: if (gameState?.currentPlayerIndex !== undefined && positionsInitialized) {
+		currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
+	}
+
+	async function initializeOrUpdatePositions() {
+		if (!gameState || playerElements.length === 0) return;
+
+		const shouldRecalc =
+			!positionsInitialized || positionManager.shouldRecalculate(windowWidth, windowHeight);
+
+		if (shouldRecalc) {
+			// Wait for DOM to be ready
+			await tick();
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			console.log('Initializing panel positions for', gameState.players.length, 'players');
+
+			// Use the new DOM-based method
+			positionManager.initializePositionsFromDOM(
+				playerElements,
+				windowWidth,
+				windowHeight,
+				interfaceScale
+			);
+
+			positionsInitialized = true;
+			currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
+
+			console.log('Panel positions initialized');
+		}
+	}
+
+	// Add this function to handle player elements ready
+	function handlePlayerElementsReady(elements: HTMLElement[]) {
+		playerElements = elements;
+		if (gameState && windowWidth > 0 && windowHeight > 0) {
+			initializeOrUpdatePositions();
+		}
+	}
 
 	function handlePrediction(playerId: number, prediction: number) {
 		if (processPrediction(gameState, playerId, prediction)) {
@@ -116,18 +145,19 @@
 	}
 
 	function handleRestart() {
+		positionsInitialized = false; // Force position recalculation
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
 	}
 
 	function handlePause() {
 		gameState.paused = !gameState.paused;
-		gameState = { ...gameState }; // trigger reactivity
+		gameState = { ...gameState };
 	}
 
 	function handleUndo() {
 		undoMove(gameState);
-		gameState = { ...gameState }; // trigger reactivity
+		gameState = { ...gameState };
 	}
 
 	let startTime: number;
@@ -141,93 +171,13 @@
 		const s = (seconds % 60).toString().padStart(2, '0');
 		return `${m}:${s}`;
 	}
-
-	// Recalculate position whenever current player changes or window resizes
-	$: if (gameState?.currentPlayerIndex !== undefined) {
-		updateInterfacePosition();
-	}
-	$: if (windowWidth || windowHeight) {
-		updateInterfacePosition();
-	}
-
-	async function updateInterfacePosition() {
-		if (!gameState) return;
-
-		// Mobile always centers
-		if (isMobile) {
-			interfacePosition = {
-				x: '50%',
-				y: '50%',
-				transformX: '-50%',
-				transformY: '-50%',
-				arrowDir: 'bottom',
-				position: 'bottom'
-			};
-			return;
-		}
-
-		await tick();
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		const playerElement = document.getElementById(`player-${gameState.currentPlayerIndex}`);
-		if (!playerElement) {
-			interfacePosition = getCenterFallback();
-			return;
-		}
-
-		const rect = playerElement.getBoundingClientRect();
-		const playerBounds: PlayerBounds = {
-			rect,
-			position: getPlayerPosition(gameState.currentPlayerIndex),
-			index: gameState.currentPlayerIndex
-		};
-
-		const newPosition = calculateOptimalPosition(
-			playerBounds,
-			panelDimensions.width,
-			panelDimensions.height,
-			windowWidth,
-			windowHeight,
-			20
-		);
-
-		interfacePosition = newPosition;
-	}
-
-	function getCenterFallback(): InterfacePosition {
-		return {
-			x: '50%',
-			y: '50%',
-			transformX: '-50%',
-			transformY: '-50%',
-			arrowDir: 'bottom',
-			position: 'bottom'
-		};
-	}
-
-	function getPlayerPosition(index: number): Position {
-		const totalPlayers = gameState.players.length;
-		const angleStep = (2 * Math.PI) / totalPlayers;
-		const angle = Math.PI / 2 - index * angleStep;
-		const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
-		if (normalizedAngle >= (7 * Math.PI) / 4 || normalizedAngle < Math.PI / 4) {
-			return 'right';
-		} else if (normalizedAngle >= Math.PI / 4 && normalizedAngle < (3 * Math.PI) / 4) {
-			return 'top';
-		} else if (normalizedAngle >= (3 * Math.PI) / 4 && normalizedAngle < (5 * Math.PI) / 4) {
-			return 'left';
-		} else {
-			return 'bottom';
-		}
-	}
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 {#if gameState}
 	<div class="relative h-screen overflow-hidden bg-green-800" bind:this={containerRef}>
-		<GameTable {gameState} />
+		<GameTable {gameState} onPlayerElementsReady={handlePlayerElementsReady} />
 	</div>
 
 	<GameControls
@@ -242,17 +192,17 @@
 	<!-- Dynamic Interface Positioning -->
 	{#if gameState.phase === 'bidding' || gameState.phase === 'playing'}
 		<div
-			class="pointer-events-none fixed z-50 transition-all duration-300 ease-out"
+			class="pointer-events-none fixed z-50 transition-all duration-500 ease-out"
 			class:inset-4={isMobile}
 			class:flex={isMobile}
 			class:items-center={isMobile}
 			class:justify-center={isMobile}
 			style={isMobile
 				? 'pointer-events: auto;'
-				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); pointer-events: auto;`}
+				: `left: ${currentPanelPosition.x}; top: ${currentPanelPosition.y}; transform: translate(${currentPanelPosition.transformX}, ${currentPanelPosition.transformY}); pointer-events: auto;`}
 		>
 			<div
-				class="origin-center"
+				class="origin-center transition-transform duration-300"
 				style="transform: scale({interfaceScale})"
 				bind:this={interfaceRef}
 			>
@@ -260,13 +210,13 @@
 					<BiddingInterface
 						{gameState}
 						onPredictionMade={handlePrediction}
-						arrowDir={interfacePosition.arrowDir}
+						arrowDir={currentPanelPosition.arrowDir}
 					/>
 				{:else if gameState.phase === 'playing'}
 					<CardPlayInterface
 						{gameState}
 						onCardPlayed={handleCardPlay}
-						arrowDir={interfacePosition.arrowDir}
+						arrowDir={currentPanelPosition.arrowDir}
 					/>
 				{/if}
 			</div>

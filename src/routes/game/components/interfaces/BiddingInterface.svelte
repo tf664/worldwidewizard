@@ -6,6 +6,7 @@
 	export let gameState: GameState;
 	export let onPredictionMade: (playerId: number, prediction: number) => void;
 	export let arrowDir: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
+	$: shouldShowArrow = !isMobile && arrowDir;
 
 	let selectedPrediction = 0;
 	let showDetails = false;
@@ -98,7 +99,7 @@
 	class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6 md:w-96"
 >
 	<!-- Dynamic Arrow -->
-	{#if !isMobile}
+	{#if shouldShowArrow}
 		<div class={getArrowClasses()}>▲</div>
 	{/if}
 
