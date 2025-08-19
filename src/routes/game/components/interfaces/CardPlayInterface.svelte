@@ -108,22 +108,22 @@
 		const position = getPlayerPosition(gameState.currentPlayerIndex);
 		switch (position) {
 			case 'bottom':
-				return 'absolute -top-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl';
+				return 'absolute -top-8 left-1/2 transform -translate-x-1/2 text-yellow-400 text-3xl drop-shadow-lg';
 			case 'top':
-				return 'absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl rotate-180';
+				return 'absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-yellow-400 text-3xl drop-shadow-lg rotate-180';
 			case 'left':
-				return 'absolute -right-6 top-1/2 transform -translate-y-1/2 text-yellow-400 text-2xl -rotate-90';
+				return 'absolute -right-8 top-1/2 transform -translate-y-1/2 text-yellow-400 text-3xl drop-shadow-lg -rotate-90';
 			case 'right':
-				return 'absolute -left-6 top-1/2 transform -translate-y-1/2 text-yellow-400 text-2xl rotate-90';
+				return 'absolute -left-8 top-1/2 transform -translate-y-1/2 text-yellow-400 text-3xl drop-shadow-lg rotate-90';
 			default:
-				return 'absolute -top-6 left-1/2 transform -translate-x-1/2 text-yellow-400 text-2xl';
+				return 'absolute -top-8 left-1/2 transform -translate-x-1/2 text-yellow-400 text-3xl drop-shadow-lg';
 		}
 	}
 </script>
 
-<!-- Compact card play interface with positioning arrow -->
+<!-- Compact card play interface with enhanced arrow -->
 <div class="relative max-w-md rounded-lg border-4 border-blue-500 bg-white p-4 shadow-2xl">
-	<!-- Arrow pointing to player -->
+	<!-- Enhanced arrow pointing to player -->
 	<div class={getArrowClasses()}>▲</div>
 
 	<!-- Header -->
@@ -173,7 +173,7 @@
 	<!-- Toggle details button -->
 	<div class="text-center">
 		<button
-			class="rounded bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+			class="rounded bg-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-300"
 			onclick={() => (showDetails = !showDetails)}
 		>
 			{showDetails ? 'Hide Details ▲' : 'Show Trick ▼'}

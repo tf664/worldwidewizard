@@ -57,7 +57,7 @@
 	}
 </script>
 
-<div class="relative w-full h-full flex items-center justify-center">
+<div class="relative flex h-full w-full items-center justify-center">
 	<!-- Player Areas arranged around the table -->
 	{#each gameState.players as player, index}
 		{@const position = getPlayerPosition(index)}
@@ -65,12 +65,13 @@
 
 		<!-- Player Info Card -->
 		<div
+			id="player-{index}-card"
 			class="absolute player-{position} {isCurrent
 				? 'ring-4 ring-yellow-400'
-				: ''} bg-green-700 rounded-lg p-4 text-white min-w-48"
+				: ''} min-w-48 rounded-lg bg-green-700 p-4 text-white"
 		>
 			<div class="text-center">
-				<h3 class="font-bold text-lg mb-2">{player.name}</h3>
+				<h3 class="mb-2 text-lg font-bold">{player.name}</h3>
 				<div class="grid grid-cols-3 gap-2 text-sm">
 					<div>
 						<div class="font-semibold">Score</div>
@@ -93,7 +94,7 @@
 
 				<!-- Current player indicator -->
 				{#if isCurrent}
-					<div class="mt-2 bg-yellow-400 text-black px-2 py-1 rounded text-xs font-bold">
+					<div class="mt-2 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-black">
 						Current Player
 					</div>
 				{/if}
@@ -103,28 +104,28 @@
 
 	<!-- Central Game Area -->
 	<div
-		class="bg-green-600 rounded-full w-80 h-80 flex flex-col items-center justify-center text-white relative"
+		class="relative flex h-80 w-80 flex-col items-center justify-center rounded-full bg-green-600 text-white"
 	>
 		<!-- Game Info -->
-		<div class="text-center mb-4">
+		<div class="mb-4 text-center">
 			<h2 class="text-2xl font-bold">Round {gameState.currentRound}</h2>
 			<p class="text-lg capitalize">{gameState.phase} Phase</p>
 			{#if gameState.trumpSuit}
-				<p class="text-sm mt-1">
-					Trump: <span class="capitalize font-semibold">{gameState.trumpSuit}</span>
+				<p class="mt-1 text-sm">
+					Trump: <span class="font-semibold capitalize">{gameState.trumpSuit}</span>
 				</p>
 			{:else}
-				<p class="text-sm mt-1">No Trump</p>
+				<p class="mt-1 text-sm">No Trump</p>
 			{/if}
 		</div>
 
 		<!-- Current Trick -->
 		<div class="flex flex-col items-center">
-			<h3 class="text-sm font-semibold mb-2">Current Trick</h3>
-			<div class="flex space-x-1 min-h-16 items-center">
+			<h3 class="mb-2 text-sm font-semibold">Current Trick</h3>
+			<div class="flex min-h-16 items-center space-x-1">
 				{#if gameState.currentTrick.length > 0}
 					{#each gameState.currentTrick as trickCard}
-						<div class="relative w-10 h-14 rounded border border-white overflow-hidden">
+						<div class="relative h-14 w-10 overflow-hidden rounded border border-white">
 							<CardImage
 								src={getCardImagePath(trickCard.card)}
 								alt={getCardDisplay(trickCard.card)}
@@ -132,7 +133,7 @@
 							/>
 							<!-- Player name -->
 							<div
-								class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-1 rounded whitespace-nowrap"
+								class="absolute -bottom-4 left-1/2 -translate-x-1/2 transform rounded bg-blue-600 px-1 text-xs whitespace-nowrap text-white"
 							>
 								{gameState.players[trickCard.playerId].name}
 							</div>
@@ -147,15 +148,15 @@
 		<!-- Trump Card (if exists) -->
 		{#if gameState.deck.length > 0}
 			{@const trumpCard = gameState.deck[gameState.deck.length - 1]}
-			<div class="absolute -bottom-2 -right-2">
-				<div class="relative w-12 h-16 rounded border border-white overflow-hidden">
+			<div class="absolute -right-2 -bottom-2">
+				<div class="relative h-16 w-12 overflow-hidden rounded border border-white">
 					<CardImage
 						src={getCardImagePath(trumpCard)}
 						alt={getCardDisplay(trumpCard)}
 						className="w-full h-full object-cover"
 					/>
 					<div
-						class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-yellow-600 text-black text-xs px-1 rounded font-bold"
+						class="absolute -bottom-3 left-1/2 -translate-x-1/2 transform rounded bg-yellow-600 px-1 text-xs font-bold text-black"
 					>
 						Trump
 					</div>
@@ -164,7 +165,7 @@
 		{/if}
 
 		<!-- Deck Count -->
-		<div class="absolute -top-2 -left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs">
+		<div class="absolute -top-2 -left-2 rounded bg-blue-600 px-2 py-1 text-xs text-white">
 			Deck: {gameState.deck.length}
 		</div>
 	</div>

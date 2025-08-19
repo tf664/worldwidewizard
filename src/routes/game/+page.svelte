@@ -8,8 +8,10 @@
 	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
 	import GameControls from './components/ui/GameControls.svelte';
 	import { undoMove } from './logic/gameLogic.js';
+	import { tick } from 'svelte';
 
 	let gameState: GameState;
+	let biddingPosition = { x: 0, y: 0, arrowDir: 'top' };
 
 	function getPlayerNames(): string[] {
 		// Get player names from localStorage (saved in /setup)
@@ -99,28 +101,104 @@
 		return () => clearInterval(intervalId);
 	});
 
+	async function updateBiddingPosition() {
+		await tick();
+		const el = document.getElementById(`player-${gameState.currentPlayerIndex}-card`);
+		if (!el) return;
+
+		const rect = el.getBoundingClientRect();
+
+		// Position panel depending on where the card is on the table
+		const pos = getPlayerPosition(gameState.currentPlayerIndex);
+		switch (pos) {
+			case 'bottom':
+				biddingPosition = {
+					x: rect.left + rect.width / 2,
+					y: rect.top - 12,
+					arrowDir: 'bottom'
+				};
+				break;
+			case 'top':
+				biddingPosition = {
+					x: rect.left + rect.width / 2,
+					y: rect.bottom + 12,
+					arrowDir: 'top'
+				};
+				break;
+			case 'left':
+				biddingPosition = {
+					x: rect.right + 12,
+					y: rect.top + rect.height / 2,
+					arrowDir: 'left'
+				};
+				break;
+			case 'right':
+				biddingPosition = {
+					x: rect.left - 12,
+					y: rect.top + rect.height / 2,
+					arrowDir: 'right'
+				};
+				break;
+		}
+	}
+
+	// Recalculate whenever current player changes
+	$: (gameState?.currentPlayerIndex, updateBiddingPosition());
+
 	function getPlayerPosition(index: number): string {
 		const positions = ['bottom', 'left', 'top', 'right'];
 		return positions[index] || 'bottom';
 	}
 
-	function getInterfaceClasses(playerIndex: number): string {
+	function getInterfacePosition(playerIndex: number): {
+		x: string;
+		y: string;
+		transformX: string;
+		transformY: string;
+	} {
 		const position = getPlayerPosition(playerIndex);
-		const baseClasses = 'fixed z-50 transition-all duration-500 ease-in-out';
 
 		switch (position) {
 			case 'bottom':
-				return `${baseClasses} bottom-32 left-1/2 transform -translate-x-1/2`;
+				return {
+					x: '50%',
+					y: 'calc(100vh - 20rem)', // Moved up significantly - about 320px from bottom
+					transformX: '-50%',
+					transformY: '0%'
+				};
 			case 'top':
-				return `${baseClasses} top-32 left-1/2 transform -translate-x-1/2`;
+				return {
+					x: '50%',
+					y: '6rem', // Moved down a bit - 96px from top
+					transformX: '-50%',
+					transformY: '0%'
+				};
 			case 'left':
-				return `${baseClasses} left-4 top-1/2 transform -translate-y-1/2`;
+				return {
+					x: '2rem', // Moved away from edge - 32px from left
+					y: '50%',
+					transformX: '0%',
+					transformY: '-50%'
+				};
 			case 'right':
-				return `${baseClasses} right-4 top-1/2 transform -translate-y-1/2`;
+				return {
+					x: 'calc(100vw - 2rem)', // Moved away from edge - 32px from right
+					y: '50%',
+					transformX: '-100%',
+					transformY: '-50%'
+				};
 			default:
-				return `${baseClasses} bottom-32 left-1/2 transform -translate-x-1/2`;
+				return {
+					x: '50%',
+					y: 'calc(100vh - 20rem)',
+					transformX: '-50%',
+					transformY: '0%'
+				};
 		}
 	}
+
+	// Create reactive position object
+	$: interfacePosition = getInterfacePosition(gameState?.currentPlayerIndex || 0);
 </script>
 
 {#if gameState}
@@ -141,11 +219,27 @@
 
 	<!-- Game Overlays positioned by current player -->
 	{#if gameState.phase === 'bidding'}
-		<div class={getInterfaceClasses(gameState.currentPlayerIndex)}>
+		<div
+			class="fixed z-50"
+			style="
+                left: {interfacePosition.x}; 
+                top: {interfacePosition.y}; 
+                transform: translate({interfacePosition.transformX}, {interfacePosition.transformY});
+                transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            "
+		>
 			<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
 		</div>
 	{:else if gameState.phase === 'playing'}
-		<div class={getInterfaceClasses(gameState.currentPlayerIndex)}>
+		<div
+			class="fixed z-50"
+			style="
+                left: {interfacePosition.x}; 
+                top: {interfacePosition.y}; 
+                transform: translate({interfacePosition.transformX}, {interfacePosition.transformY});
+                transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            "
+		>
 			<CardPlayInterface {gameState} onCardPlayed={handleCardPlay} />
 		</div>
 	{:else if gameState.phase === 'scoring'}
