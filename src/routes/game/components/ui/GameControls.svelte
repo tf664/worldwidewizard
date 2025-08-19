@@ -39,7 +39,7 @@
 <!-- Multi-selection toggle for controls/info -->
 <div
 	class="bg-opacity-95 fixed top-24 right-2 z-[9999] rounded-2xl bg-gray-900 p-2 shadow-xl transition-all duration-300"
-	class:w-72={gameControlsVisible}
+	class:w-68={gameControlsVisible}
 	class:w-20={!gameControlsVisible}
 >
 	<!-- Header row: burger + buttons on the right -->
