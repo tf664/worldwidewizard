@@ -82,6 +82,7 @@
 	}
 
 	function getArrowClasses() {
+		// DOESNT WORK
 		if (isMobile) return 'hidden';
 		const base = 'absolute text-yellow-400 text-4xl drop-shadow-lg';
 		return (
@@ -102,11 +103,11 @@
 	class={`relative rounded-2xl border-4 border-blue-500 bg-white shadow-2xl 
 	${isMobile ? 'mx-auto w-full max-w-sm p-4' : 'w-96 p-6'}`}
 >
-	<!-- Arrow -->
+	<!-- Arrow DOESNT WORK-->
 	<div class={getArrowClasses()}>▲</div>
 
 	<!-- Header -->
-	<div class="mb-6 text-center">
+	<div class="mb-4 text-center">
 		<h3 class={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-800`}>
 			{currentPlayer.name}'s Bid
 		</h3>
@@ -115,13 +116,13 @@
 				>{gameState.trumpSuit || 'No Trump'}</span
 			>
 		</p>
-		<div class="mt-3 text-sm text-gray-500">
+		<div class="mt-1 text-sm text-gray-500">
 			Round {gameState.currentRound} • {currentPlayer.hand.length} cards
 		</div>
 	</div>
 
 	<!-- Prediction input -->
-	<div class="mb-6 text-center">
+	<div class="mb-4 text-center">
 		<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-4 font-medium text-gray-700`}>
 			Predict tricks to win:
 		</p>
@@ -161,57 +162,43 @@
 		>
 			Confirm: {selectedPrediction}
 		</button>
-		<button
-			class={`rounded-xl bg-gray-200 text-gray-700 transition-all hover:bg-gray-300
-			${isMobile ? 'px-3 py-3 text-base' : 'px-4 py-4 text-lg'}`}
-			onclick={() => (showDetails = !showDetails)}
-		>
-			{showDetails ? '▲' : '▼'}
-		</button>
 	</div>
-
-	<!-- Expandable details -->
-	{#if showDetails}
-		<div class="space-y-4 border-t-2 pt-4">
-			<!-- Player's hand -->
-			<div>
-				<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
-				<div class="flex flex-wrap justify-center gap-2">
-					{#each currentPlayer.hand as card, index (getCardKey(card, index))}
-						<div class={`group relative cursor-pointer ${isMobile ? 'h-12 w-8' : 'h-16 w-11'}`}>
-							<CardImage
-								src={getCardImagePath(card)}
-								alt={getCardDisplay(card)}
-								className="h-full w-full rounded-lg border-2 object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-0"
-							/>
-							<div
-								class={`absolute inset-0 flex items-center justify-center rounded-lg font-bold text-white opacity-0 transition-all duration-300 group-hover:scale-105 group-hover:opacity-100 ${getCardColor(card)} ${isMobile ? 'text-xs' : 'text-sm'}`}
-							>
-								{getCardDisplay(card)}
-							</div>
-						</div>
-					{/each}
+	<!-- Player's hand -->
+	<div>
+		<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
+		<div class="flex flex-wrap justify-center gap-2">
+			{#each currentPlayer.hand as card, index (getCardKey(card, index))}
+				<div class={`group relative cursor-pointer ${isMobile ? 'h-16 w-12' : 'h-20 w-14'}`}>
+					<CardImage
+						src={getCardImagePath(card)}
+						alt={getCardDisplay(card)}
+						className="h-full w-full rounded-lg border-2 object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-0"
+					/>
+					<div
+						class={`absolute inset-0 flex items-center justify-center rounded-lg font-bold text-white opacity-0 transition-all duration-300 group-hover:scale-105 group-hover:opacity-100 ${getCardColor(card)} ${isMobile ? 'text-sm' : 'text-base'}`}
+					>
+						{getCardDisplay(card)}
+					</div>
 				</div>
-			</div>
-
-			<!-- Other players' bids -->
-			<div>
-				<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
-				<div class="flex flex-wrap justify-center gap-2">
-					{#each gameState.players as player, index}
-						{#if index !== gameState.currentPlayerIndex}
-							<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
-								<span class="font-medium text-gray-800"
-									>{isMobile ? player.name.substring(0, 6) : player.name}</span
-								>:
-								<span class="font-bold text-blue-600"
-									>{player.prediction >= 0 ? player.prediction : '?'}</span
-								>
-							</div>
-						{/if}
-					{/each}
-				</div>
-			</div>
+			{/each}
 		</div>
-	{/if}
+	</div>
+	<!-- Other players' bids -->
+	<div>
+		<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
+		<div class="flex flex-wrap justify-center gap-2">
+			{#each gameState.players as player, index}
+				{#if index !== gameState.currentPlayerIndex}
+					<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
+						<span class="font-medium text-gray-800"
+							>{isMobile ? player.name.substring(0, 6) : player.name}</span
+						>:
+						<span class="font-bold text-blue-600"
+							>{player.prediction >= 0 ? player.prediction : '?'}</span
+						>
+					</div>
+				{/if}
+			{/each}
+		</div>
+	</div>
 </div>
