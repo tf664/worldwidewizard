@@ -111,6 +111,14 @@
 		return `${m}:${s}`;
 	}
 
+	
+
+	// Recalculate position whenever current player changes or window resizes
+	$: if (gameState?.currentPlayerIndex !== undefined || windowWidth || windowHeight) {
+		updateInterfacePosition();
+		updateCurrentPlayerBorder();
+	}
+
 	async function updateInterfacePosition() {
 		if (!gameState) return;
 
@@ -147,7 +155,7 @@
 		// Check if interface would go off-screen and fallback to center
 		const interfaceWidth = 384; // w-96 = 384px
 		const interfaceHeight = 400; // approximate height
-		const margin = 24;
+		const margin = 16; // Reduced margin for closer positioning
 
 		let newPosition: {
 			x: string;
@@ -159,24 +167,7 @@
 
 		switch (position) {
 			case 'bottom':
-				newPosition = {
-					x: `${rect.left + rect.width / 2}px`,
-					y: `${rect.top - margin}px`,
-					transformX: '-50%',
-					transformY: '-100%',
-					arrowDir: 'bottom'
-				};
-				break;
-			case 'top':
-				newPosition = {
-					x: `${rect.left + rect.width / 2}px`,
-					y: `${rect.bottom + margin}px`,
-					transformX: '-50%',
-					transformY: '0%',
-					arrowDir: 'top'
-				};
-				break;
-			case 'left':
+				// Position interface to the right of the bottom player card
 				newPosition = {
 					x: `${rect.right + margin}px`,
 					y: `${rect.top + rect.height / 2}px`,
@@ -185,13 +176,34 @@
 					arrowDir: 'left'
 				};
 				break;
-			case 'right':
+			case 'top':
+				// Position interface to the left of the top player card
 				newPosition = {
 					x: `${rect.left - margin}px`,
 					y: `${rect.top + rect.height / 2}px`,
 					transformX: '-100%',
 					transformY: '-50%',
 					arrowDir: 'right'
+				};
+				break;
+			case 'left':
+				// Position interface below the left player card
+				newPosition = {
+					x: `${rect.left + rect.width / 2}px`,
+					y: `${rect.bottom + margin}px`,
+					transformX: '-50%',
+					transformY: '0%',
+					arrowDir: 'top'
+				};
+				break;
+			case 'right':
+				// Position interface above the right player card
+				newPosition = {
+					x: `${rect.left + rect.width / 2}px`,
+					y: `${rect.top - margin}px`,
+					transformX: '-50%',
+					transformY: '-100%',
+					arrowDir: 'bottom'
 				};
 				break;
 			default:
@@ -235,10 +247,18 @@
 		}
 	}
 
-	// Recalculate position whenever current player changes or window resizes
-	$: if (gameState?.currentPlayerIndex !== undefined || windowWidth || windowHeight) {
-		updateInterfacePosition();
+	async function updateCurrentPlayerBorder() {
+		if (!gameState) return;
+
+		const playerIndex = gameState.currentPlayerIndex;
+		const playerEl = document.getElementById(`player-${playerIndex}`);
+
+		if (playerEl) {
+			// Update the border of the current player
+			playerEl.classList.add('border-4', 'border-yellow-500');
+		}
 	}
+
 
 	function getPlayerPosition(index: number): string {
 		const positions = ['bottom', 'left', 'top', 'right'];
