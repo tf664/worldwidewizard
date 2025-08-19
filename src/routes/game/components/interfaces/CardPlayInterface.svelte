@@ -96,16 +96,15 @@
 	}
 
 	function getArrowClasses() {
-		switch (arrowDir) {
-			case 'top':
-				return 'absolute -top-4 left-1/2 -translate-x-1/2 rotate-180 text-yellow-400 text-4xl drop-shadow-lg';
-			case 'bottom':
-				return 'absolute -bottom-4 left-1/2 -translate-x-1/2 text-yellow-400 text-4xl drop-shadow-lg';
-			case 'left':
-				return 'absolute -left-4 top-1/2 -translate-y-1/2 -rotate-90 text-yellow-400 text-4xl drop-shadow-lg';
-			case 'right':
-				return 'absolute -right-4 top-1/2 -translate-y-1/2 rotate-90 text-yellow-400 text-4xl drop-shadow-lg';
-		}
+		const baseClasses = 'absolute text-yellow-400 text-3xl drop-shadow-lg pointer-events-none z-10';
+		const positions = {
+			top: '-top-3 left-1/2 -translate-x-1/2 rotate-180',
+			bottom: '-bottom-3 left-1/2 -translate-x-1/2',
+			left: '-left-3 top-1/2 -translate-y-1/2 -rotate-90',
+			right: '-right-3 top-1/2 -translate-y-1/2 rotate-90'
+		};
+
+		return `${baseClasses} ${positions[arrowDir]}`;
 	}
 </script>
 

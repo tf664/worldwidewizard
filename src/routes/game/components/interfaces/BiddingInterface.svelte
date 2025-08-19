@@ -82,123 +82,122 @@
 	}
 
 	function getArrowClasses() {
-		// DOESNT WORK
-		if (isMobile) return 'hidden';
-		const base = 'absolute text-yellow-400 text-4xl drop-shadow-lg';
-		return (
-			base +
-			{
-				top: '-top-4 left-1/2 -translate-x-1/2 rotate-180',
-				bottom: '-bottom-4 left-1/2 -translate-x-1/2',
-				left: '-left-4 top-1/2 -translate-y-1/2 -rotate-90',
-				right: '-right-4 top-1/2 -translate-y-1/2 rotate-90'
-			}[arrowDir]
-		);
+		const baseClasses = 'absolute text-yellow-400 text-3xl drop-shadow-lg pointer-events-none z-10';
+		const positions = {
+			top: '-top-3 left-1/2 -translate-x-1/2 rotate-180',
+			bottom: '-bottom-3 left-1/2 -translate-x-1/2',
+			left: '-left-3 top-1/2 -translate-y-1/2 -rotate-90',
+			right: '-right-3 top-1/2 -translate-y-1/2 rotate-90'
+		};
+
+		return `${baseClasses} ${positions[arrowDir]}`;
 	}
 </script>
 
-<svelte:window bind:innerWidth={windowWidth} />
-
 <div
-	class={`relative rounded-2xl border-4 border-blue-500 bg-white shadow-2xl 
-	${isMobile ? 'mx-auto w-full max-w-sm p-4' : 'w-96 p-6'}`}
+	class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6 md:w-96"
 >
-	<!-- Arrow DOESNT WORK-->
-	<div class={getArrowClasses()}>▲</div>
+	<!-- Dynamic Arrow -->
+	{#if !isMobile}
+		<div class={getArrowClasses()}>▲</div>
+	{/if}
 
-	<!-- Header -->
-	<div class="mb-4 text-center">
-		<h3 class={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-800`}>
-			{currentPlayer.name}'s Bid
-		</h3>
-		<p class="mt-2 text-base text-gray-600">
-			Trump: <span class="font-semibold text-blue-600 capitalize"
-				>{gameState.trumpSuit || 'No Trump'}</span
-			>
-		</p>
-		<div class="mt-1 text-sm text-gray-500">
-			Round {gameState.currentRound} • {currentPlayer.hand.length} cards
-		</div>
-	</div>
-
-	<!-- Prediction input -->
-	<div class="mb-4 text-center">
-		<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-4 font-medium text-gray-700`}>
-			Predict tricks to win:
-		</p>
-		<div class="flex items-center justify-center gap-4">
-			<button
-				class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300 
-				${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
-				onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}>-</button
-			>
-
-			<div class="flex flex-col items-center">
-				<span
-					class={`rounded-lg bg-blue-100 text-center font-bold text-blue-800 
-					${isMobile ? 'w-14 py-2 text-2xl' : 'w-16 py-3 text-3xl'}`}
-				>
-					{selectedPrediction}
+	<!-- Responsive content with consistent spacing -->
+	<div class="space-y-4">
+		<!-- Header -->
+		<div class="text-center">
+			<h3 class="truncate text-lg font-bold text-gray-800 sm:text-xl md:text-2xl">
+				{currentPlayer.name}'s Bid
+			</h3>
+			<p class="mt-1 text-sm text-gray-600 sm:text-base">
+				Trump: <span class="font-semibold text-blue-600 capitalize">
+					{gameState.trumpSuit || 'No Trump'}
 				</span>
-				<span class="mt-1 text-xs text-gray-500">tricks</span>
+			</p>
+			<div class="mt-1 text-xs text-gray-500 sm:text-sm">
+				Round {gameState.currentRound} • {currentPlayer.hand.length} cards
 			</div>
-
-			<button
-				class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300
+		</div>
+		<!-- Prediction input -->
+		<div class="mb-4 text-center">
+			<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-4 font-medium text-gray-700`}>
+				Predict tricks to win:
+			</p>
+			<div class="flex items-center justify-center gap-4">
+				<button
+					class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300 
 				${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
-				onclick={() =>
-					(selectedPrediction = Math.min(gameState.currentRound, selectedPrediction + 1))}>+</button
-			>
-		</div>
-	</div>
+					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}>-</button
+				>
 
-	<!-- Action buttons -->
-	<div class="mb-4 flex gap-3">
-		<button
-			class={`flex-1 rounded-xl bg-blue-600 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700
-			${isMobile ? 'px-4 py-3 text-base' : 'px-6 py-4 text-lg'}`}
-			onclick={confirmBid}
-			disabled={gameState.paused}
-		>
-			Confirm: {selectedPrediction}
-		</button>
-	</div>
-	<!-- Player's hand -->
-	<div>
-		<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
-		<div class="flex flex-wrap justify-center gap-2">
-			{#each currentPlayer.hand as card, index (getCardKey(card, index))}
-				<div class={`group relative cursor-pointer ${isMobile ? 'h-16 w-12' : 'h-20 w-14'}`}>
-					<CardImage
-						src={getCardImagePath(card)}
-						alt={getCardDisplay(card)}
-						className="h-full w-full rounded-lg border-2 object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-0"
-					/>
-					<div
-						class={`absolute inset-0 flex items-center justify-center rounded-lg font-bold text-white opacity-0 transition-all duration-300 group-hover:scale-105 group-hover:opacity-100 ${getCardColor(card)} ${isMobile ? 'text-sm' : 'text-base'}`}
+				<div class="flex flex-col items-center">
+					<span
+						class={`rounded-lg bg-blue-100 text-center font-bold text-blue-800 
+					${isMobile ? 'w-14 py-2 text-2xl' : 'w-16 py-3 text-3xl'}`}
 					>
-						{getCardDisplay(card)}
-					</div>
+						{selectedPrediction}
+					</span>
+					<span class="mt-1 text-xs text-gray-500">tricks</span>
 				</div>
-			{/each}
+
+				<button
+					class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300
+				${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
+					onclick={() =>
+						(selectedPrediction = Math.min(gameState.currentRound, selectedPrediction + 1))}
+					>+</button
+				>
+			</div>
 		</div>
-	</div>
-	<!-- Other players' bids -->
-	<div>
-		<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
-		<div class="flex flex-wrap justify-center gap-2">
-			{#each gameState.players as player, index}
-				{#if index !== gameState.currentPlayerIndex}
-					<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
-						<span class="font-medium text-gray-800"
-							>{isMobile ? player.name.substring(0, 6) : player.name}</span
-						>:
-						<span class="font-bold text-blue-600"
-							>{player.prediction >= 0 ? player.prediction : '?'}</span
+
+		<!-- Action buttons -->
+		<div class="mb-4 flex gap-3">
+			<button
+				class={`flex-1 rounded-xl bg-blue-600 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700
+			${isMobile ? 'px-4 py-3 text-base' : 'px-6 py-4 text-lg'}`}
+				onclick={confirmBid}
+				disabled={gameState.paused}
+			>
+				Confirm: {selectedPrediction}
+			</button>
+		</div>
+		<!-- Player's hand -->
+		<div>
+			<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
+			<div class="flex flex-wrap justify-center gap-2">
+				{#each currentPlayer.hand as card, index (getCardKey(card, index))}
+					<div class={`group relative cursor-pointer ${isMobile ? 'h-16 w-12' : 'h-20 w-14'}`}>
+						<CardImage
+							src={getCardImagePath(card)}
+							alt={getCardDisplay(card)}
+							className="h-full w-full rounded-lg border-2 object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-0"
+						/>
+						<div
+							class={`absolute inset-0 flex items-center justify-center rounded-lg font-bold text-white opacity-0 transition-all duration-300 group-hover:scale-105 group-hover:opacity-100 ${getCardColor(card)} ${isMobile ? 'text-sm' : 'text-base'}`}
 						>
+							{getCardDisplay(card)}
+						</div>
 					</div>
-				{/if}
-			{/each}
+				{/each}
+			</div>
+		</div>
+		<!-- Other players' bids -->
+		<div>
+			<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
+			<div class="flex flex-wrap justify-center gap-2">
+				{#each gameState.players as player, index}
+					{#if index !== gameState.currentPlayerIndex}
+						<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
+							<span class="font-medium text-gray-800"
+								>{isMobile ? player.name.substring(0, 6) : player.name}</span
+							>:
+							<span class="font-bold text-blue-600"
+								>{player.prediction >= 0 ? player.prediction : '?'}</span
+							>
+						</div>
+					{/if}
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>
