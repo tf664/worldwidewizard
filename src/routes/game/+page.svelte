@@ -9,6 +9,8 @@
 	import GameControls from './components/ui/GameControls.svelte';
 	import { undoMove } from './logic/gameLogic.js';
 	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
+	import TrumpChoosingInterface from './components/interfaces/TrumpChoosingInterface.svelte';
+	import { chooseTrumpSuit } from './logic/gameLogic.js';
 
 	let gameState: GameState;
 	let positionManager = new PanelPositionManager();
@@ -111,6 +113,12 @@
 		}
 	}
 
+	function handleTrumpChoice(playerId: number, suit: Suit) {
+		if (chooseTrumpSuit(gameState, playerId, suit)) {
+			gameState = { ...gameState };
+		}
+	}
+
 	function handlePrediction(playerId: number, prediction: number) {
 		if (processPrediction(gameState, playerId, prediction)) {
 			gameState = { ...gameState };
@@ -126,7 +134,8 @@
 	function handleNextRound() {
 		if (gameState.phase === 'scoring') {
 			gameState.players.forEach((player) => {
-				if (player.prediction === player.tricksWon) { // TODO ? adjust scoring
+				if (player.prediction === player.tricksWon) {
+					// TODO ? adjust scoring
 					player.score += 20 + player.tricksWon;
 				} else {
 					player.score -= Math.abs(player.prediction - player.tricksWon) * 10;
@@ -190,7 +199,7 @@
 	/>
 
 	<!-- Dynamic Interface Positioning -->
-	{#if gameState.phase === 'bidding' || gameState.phase === 'playing'}
+	{#if gameState.phase === 'choosing-trump' || gameState.phase === 'bidding' || gameState.phase === 'playing'}
 		<div
 			class="pointer-events-none fixed z-50 transition-all duration-500 ease-out"
 			class:inset-4={isMobile}
@@ -206,7 +215,13 @@
 				style="transform: scale({interfaceScale})"
 				bind:this={interfaceRef}
 			>
-				{#if gameState.phase === 'bidding'}
+				{#if gameState.phase === 'choosing-trump'}
+					<TrumpChoosingInterface
+						{gameState}
+						onTrumpChosen={handleTrumpChoice}
+						arrowDir={currentPanelPosition.arrowDir}
+					/>
+				{:else if gameState.phase === 'bidding'}
 					<BiddingInterface
 						{gameState}
 						onPredictionMade={handlePrediction}

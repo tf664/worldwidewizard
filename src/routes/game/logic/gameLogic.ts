@@ -4,20 +4,15 @@ import { createPlayers } from '../types/player.js';
 import { createDeck } from './cards.js';
 import { isValidCardPlay } from './gameRules.js';
 
-export interface TrickCard {
-    card: Card;
-    playerId: number;
-}
-
 export interface GameState {
     players: Player[];
     currentRound: number;
     maxRounds: number;
     deck: Card[];
-    currentTrick: TrickCard[];  // Changed from Card[] to TrickCard[]
+    currentTrick: TrickCard[];
     currentPlayerIndex: number;
     trumpSuit: Suit | null;
-    phase: 'bidding' | 'playing' | 'scoring' | 'finished';
+    phase: 'bidding' | 'playing' | 'scoring' | 'finished' | 'choosing-trump';
     dealer: number;
 
     paused?: boolean;
@@ -27,6 +22,12 @@ export interface GameState {
         card: Card;
         handIndex: number;
     }[];
+    trumpChooser?: number; // player who needs to choose the trump when Zoro
+}
+
+export interface TrickCard {
+    card: Card;
+    playerId: number;
 }
 
 export interface Trick {
@@ -89,9 +90,12 @@ export function startNewRound(gameState: GameState): void {
     dealCards(gameState);
     determineTrumpSuit(gameState);
 
-    // Start bidding phase
-    gameState.phase = 'bidding';
-    gameState.currentPlayerIndex = (gameState.dealer + 1) % gameState.players.length;
+    // Only set to bidding if not choosing trump (Zoro case)
+    if (gameState.phase !== 'choosing-trump') {
+        gameState.phase = 'bidding';
+        gameState.currentPlayerIndex = (gameState.dealer + 1) % gameState.players.length;
+    }
+
     gameState.currentTrick = [];
 }
 
@@ -117,9 +121,10 @@ export function determineTrumpSuit(gameState: GameState): void {
     const trumpCard = gameState.deck[gameState.deck.length - 1];
 
     if (trumpCard.rank === 'Zoro') {
-        // Zoro - player chooses trump (for now, random) // TODO!
-        const suits: Suit[] = ['red', 'blue', 'green', 'yellow'];
-        gameState.trumpSuit = suits[Math.floor(Math.random() * suits.length)];
+        // Zoro - dealer chooses trump
+        gameState.phase = 'choosing-trump';
+        gameState.trumpChooser = gameState.dealer;
+        gameState.trumpSuit = null; // Will be set when player chooses
     } else if (trumpCard.rank === 'Fool') {
         // Fool - no trump
         gameState.trumpSuit = null;
@@ -127,6 +132,19 @@ export function determineTrumpSuit(gameState: GameState): void {
         // Regular card - its suit is trump
         gameState.trumpSuit = trumpCard.suit;
     }
+}
+
+export function chooseTrumpSuit(gameState: GameState, playerId: number, suit: Suit): boolean {
+    if (gameState.phase !== 'choosing-trump' || gameState.trumpChooser !== playerId) {
+        return false;
+    }
+
+    gameState.trumpSuit = suit;
+    gameState.phase = 'bidding';
+    gameState.currentPlayerIndex = (gameState.dealer + 1) % gameState.players.length;
+    gameState.trumpChooser = undefined;
+
+    return true;
 }
 
 export function processPrediction(gameState: GameState, playerId: number, prediction: number): boolean {
