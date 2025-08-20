@@ -158,7 +158,7 @@ export function processPrediction(gameState: GameState, playerId: number, predic
     const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     const startingPlayer = (gameState.dealer + 1) % gameState.players.length;
 
-    // If we've cycled back to the starting player, all bids are in
+    // If cycled back to the starting player, all bids are in
     if (nextPlayerIndex === startingPlayer) {
         gameState.phase = 'playing';
         gameState.currentPlayerIndex = startingPlayer;

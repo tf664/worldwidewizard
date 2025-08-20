@@ -13,5 +13,5 @@
 </div>
 
 <style>
-    /* Optional: Styling für das Popup */
+    /* Optional: Styling for the Popup */
 </style>

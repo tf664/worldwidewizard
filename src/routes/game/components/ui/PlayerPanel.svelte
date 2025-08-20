@@ -44,7 +44,7 @@
 		// Handle number cards
 		const suitName = card.suit?.toLowerCase() || 'unknown';
 
-		// Fix: Explicitly handle number ranks only
+		// Explicitly handle number ranks only
 		if (typeof card.rank === 'number') {
 			const rankWords = [
 				'',
@@ -66,8 +66,8 @@
 			return `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
 		}
 
-		// This should never happen since we handled all cases above
-		return `/rcs/cards-optimized/unknown_unknown.webp`;
+		// Fallback
+		return `/rcs/cards-optimized/_placeholder_.webp`;
 	}
 </script>
 

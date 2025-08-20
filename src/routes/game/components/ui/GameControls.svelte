@@ -35,7 +35,7 @@
 	{/if}
 	<span>{formatTime(elapsed)}</span>
 </div>
-,
+
 <!-- Multi-selection toggle for controls/info -->
 <div
 	class="bg-opacity-95 fixed top-24 right-2 z-[9999] rounded-2xl bg-gray-900 p-2 shadow-xl transition-all duration-300"
@@ -73,7 +73,7 @@
 			</ButtonToggleGroup>
 		{/if}
 
-		<!-- Burger always on the far right -->
+		<!-- Burger Toggle Menu on the far right -->
 		<Hamburger
 			bind:open={gameControlsVisible}
 			type="elastic"
@@ -88,7 +88,7 @@
 			<div class="mt-4 space-y-2">
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"
-					on:click={onPause}>Pause Game</button
+					on:click={onPause}>{gameState.paused ? 'Resume Game' : 'Pause Game'}</button
 				>
 				<button
 					class="w-full rounded-lg bg-gray-700 px-4 py-2 text-gray-100 shadow-sm hover:bg-gray-600"

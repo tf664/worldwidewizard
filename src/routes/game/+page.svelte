@@ -1,19 +1,35 @@
 <script lang="ts">
+	// Type Imports
 	import type { GameState } from './logic/gameLogic.js';
-	import { initializeGame, startNewRound, processPrediction, playCard } from './logic/gameLogic.js';
+	import type { Suit } from './logic/cards.js';
+	import type { PanelPosition } from './components/ui/interfacePosition.js';
+	// Core Svelte Imports
 	import { onMount, tick } from 'svelte';
+	// Game Logic Imports
+	import {
+		initializeGame,
+		startNewRound,
+		processPrediction,
+		playCard,
+		undoMove,
+		chooseTrumpSuit
+	} from './logic/gameLogic.js';
+	import { PanelPositionManager } from './components/ui/interfacePosition.js';
+
+	// Component Imports
 	import GameTable from './components/ui/GameTable.svelte';
+	import GameControls from './components/ui/GameControls.svelte';
 	import BiddingInterface from './components/interfaces/BiddingInterface.svelte';
 	import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
 	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
-	import GameControls from './components/ui/GameControls.svelte';
-	import { undoMove } from './logic/gameLogic.js';
-	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
 	import TrumpChoosingInterface from './components/interfaces/TrumpChoosingInterface.svelte';
-	import { chooseTrumpSuit } from './logic/gameLogic.js';
-	import type { Suit } from './logic/cards.js';
 
+	// ===========================================
+	// STATE MANAGEMENT
+	// ===========================================
 	let gameState: GameState;
+
+	// Position Management
 	let positionManager = new PanelPositionManager();
 	let currentPanelPosition: PanelPosition = {
 		x: '50%',
@@ -22,22 +38,39 @@
 		transformY: '-50%',
 		position: 'bottom'
 	};
+	let positionsInitialized = false;
+	let playerElements: HTMLElement[] = [];
 
-	// Responsive breakpoints
-	let windowWidth = 0;
-	let windowHeight = 0;
 	let containerRef: HTMLElement;
 	let interfaceRef: HTMLElement;
-	let positionsInitialized = false;
-	let playerElements: HTMLElement[] = []; // Add this line
 
+	let windowWidth = 0;
+	let windowHeight = 0;
+
+	let startTime: number;
+	let elapsed = 0;
+	let intervalId: ReturnType<typeof setInterval>;
+
+	// ===========================================
+	// REACTIVE COMPUTATIONS
+	// ===========================================
 	$: isMobile = windowWidth < 768;
 	$: isTablet = windowWidth >= 768 && windowWidth < 1024;
 	$: isSmallScreen = windowWidth < 1024 || windowHeight < 600;
-
-	// Dynamic scaling based on screen size
 	$: interfaceScale = getInterfaceScale(windowWidth, windowHeight);
 
+	// Position Management Reactions
+	$: if (gameState && windowWidth > 0 && windowHeight > 0) {
+		initializeOrUpdatePositions();
+	}
+
+	$: if (gameState?.currentPlayerIndex !== undefined && positionsInitialized) {
+		currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
+	}
+
+	// ===========================================
+	// UTILITY FUNCTIONS
+	// ===========================================
 	function getInterfaceScale(width: number, height: number): number {
 		if (isMobile) return 0.65;
 		if (isTablet) return 0.7;
@@ -50,33 +83,17 @@
 		return storedPlayers ? JSON.parse(storedPlayers) : ['Player 1', 'Player 2', 'Player 3'];
 	}
 
-	onMount(() => {
-		gameState = initializeGame(getPlayerNames());
-		startNewRound(gameState);
-
-		// Timer setup
-		startTime = Date.now();
-		intervalId = setInterval(() => {
-			if (gameState && !gameState.paused) {
-				elapsed = Math.floor((Date.now() - startTime) / 1000);
-			} else {
-				startTime = Date.now() - elapsed * 1000;
-			}
-		}, 1000);
-
-		return () => clearInterval(intervalId);
-	});
-
-	// Initialize positions when game state and window dimensions are ready
-	$: if (gameState && windowWidth > 0 && windowHeight > 0) {
-		initializeOrUpdatePositions();
+	function formatTime(seconds: number): string {
+		const m = Math.floor(seconds / 60)
+			.toString()
+			.padStart(2, '0');
+		const s = (seconds % 60).toString().padStart(2, '0');
+		return `${m}:${s}`;
 	}
 
-	// Update current position when current player changes
-	$: if (gameState?.currentPlayerIndex !== undefined && positionsInitialized) {
-		currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
-	}
-
+	// ===========================================
+	// POSITION MANAGEMENT
+	// ===========================================
 	async function initializeOrUpdatePositions() {
 		if (!gameState || playerElements.length === 0) return;
 
@@ -105,7 +122,6 @@
 		}
 	}
 
-	// Add this function to handle player elements ready
 	function handlePlayerElementsReady(elements: HTMLElement[]) {
 		playerElements = elements;
 		if (gameState && windowWidth > 0 && windowHeight > 0) {
@@ -113,6 +129,9 @@
 		}
 	}
 
+	// ===========================================
+	// GAME ACTION HANDLERS
+	// ===========================================
 	function handleTrumpChoice(playerId: number, suit: Suit) {
 		if (chooseTrumpSuit(gameState, playerId, suit)) {
 			gameState = { ...gameState };
@@ -153,6 +172,9 @@
 		}
 	}
 
+	// ===========================================
+	// CONTROL HANDLERS
+	// ===========================================
 	function handleRestart() {
 		positionsInitialized = false; // Force position recalculation
 		gameState = initializeGame(getPlayerNames());
@@ -161,34 +183,47 @@
 
 	function handlePause() {
 		gameState.paused = !gameState.paused;
-		gameState = { ...gameState };
+		gameState = { ...gameState }; // Trigger reactivity
 	}
 
 	function handleUndo() {
 		undoMove(gameState);
-		gameState = { ...gameState };
+		gameState = { ...gameState }; // Trigger reactivity
 	}
 
-	let startTime: number;
-	let elapsed = 0;
-	let intervalId: ReturnType<typeof setInterval>;
+	// ===========================================
+	// LIFECYCLE
+	// ===========================================
+	onMount(() => {
+		// Initialize game state
+		gameState = initializeGame(getPlayerNames());
+		startNewRound(gameState);
 
-	function formatTime(seconds: number) {
-		const m = Math.floor(seconds / 60)
-			.toString()
-			.padStart(2, '0');
-		const s = (seconds % 60).toString().padStart(2, '0');
-		return `${m}:${s}`;
-	}
+		// Timer setup
+		startTime = Date.now();
+		intervalId = setInterval(() => {
+			if (gameState && !gameState.paused) {
+				elapsed = Math.floor((Date.now() - startTime) / 1000);
+			} else {
+				startTime = Date.now() - elapsed * 1000;
+			}
+		}, 1000);
+
+		// Cleanup function
+		return () => clearInterval(intervalId);
+	});
 </script>
 
+<!-- Window size binding -->
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 {#if gameState}
+	<!-- GAME TABLE CONTAINER -->
 	<div class="relative h-screen overflow-hidden bg-green-800" bind:this={containerRef}>
 		<GameTable {gameState} onPlayerElementsReady={handlePlayerElementsReady} />
 	</div>
 
+	<!-- GAME CONTROLS -->
 	<GameControls
 		{gameState}
 		onRestart={handleRestart}
@@ -198,7 +233,7 @@
 		{formatTime}
 	/>
 
-	<!-- Dynamic Interface Positioning -->
+	<!-- DYNAMIC INTERFACE PANELS -->
 	{#if gameState.phase === 'choosing-trump' || gameState.phase === 'bidding' || gameState.phase === 'playing'}
 		<div
 			class="pointer-events-none fixed z-50 transition-all duration-500 ease-out"
@@ -224,9 +259,15 @@
 				{/if}
 			</div>
 		</div>
-	{:else if gameState.phase === 'scoring'}
+	{/if}
+
+	<!-- SCORING INTERFACE -->
+	{#if gameState.phase === 'scoring'}
 		<ScoringInterface {gameState} onNextRound={handleNextRound} />
-	{:else if gameState.phase === 'finished'}
+	{/if}
+
+	<!-- GAME FINISHED -->
+	{#if gameState.phase === 'finished'}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
 			<div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 text-center">
 				<h2 class="mb-4 text-2xl font-bold">Game Finished!</h2>
@@ -235,9 +276,8 @@
 					<h3 class="mb-2 font-bold">Final Scores:</h3>
 					{#each gameState.players.sort((a, b) => b.score - a.score) as player, index}
 						<div
-							class="flex items-center justify-between py-1 {index === 0
-								? 'font-bold text-yellow-600'
-								: ''}"
+							class="flex items-center justify-between py-1
+                                   {index === 0 ? 'font-bold text-yellow-600' : ''}"
 						>
 							<span>{index + 1}. {player.name}</span>
 							<span>{player.score}</span>

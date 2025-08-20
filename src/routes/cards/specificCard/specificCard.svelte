@@ -1,35 +1,45 @@
 <script lang="ts">
 	import { spring } from 'svelte/motion';
+	import { onMount } from 'svelte';
 
-	// Props
+	// Component Props
 	export let frontImage: string = '/rcs/cards-optimized/_placeholder_.webp';
 	export let backImage: string = '/rcs/cards-optimized/card_back.webp';
 	export let cardName: string = 'Card';
 	export let suit: string = 'white';
 
-	const sensitivity = 0.5;
+	// Configuration Constants
+	const SENSITIVITY = 0.5;
+	const SNAP_ANGLE = 180;
+	const SPRING_CONFIG = {
+		dragging: { stiffness: 0.4, damping: 0.7 },
+		idle: { stiffness: 0.15, damping: 0.4 }
+	};
 
-	// State
+	// Component State
 	let dragging = false;
 	let startX = 0;
-	let baseAngle = 0; // Track the card's resting position
+	let baseAngle = 0;
 	let cardElement: HTMLDivElement;
 
-	// Smooth spring animation with adaptive parameters
-	let angle = spring(baseAngle, { stiffness: 0.2, damping: 0.9 });
+	// Animation State
+	let angle = spring(baseAngle, SPRING_CONFIG.idle);
 
-	// Update spring settings based on dragging state
-	$: {
-		if (dragging) {
-			angle.stiffness = 0.4;
-			angle.damping = 0.7;
-		} else {
-			angle.stiffness = 0.15;
-			angle.damping = 0.4;
-		}
+	// Reactive Statements
+	$: updateSpringSettings(dragging);
+
+	/**
+	 * Updates spring animation settings based on dragging state
+	 */
+	function updateSpringSettings(isDragging: boolean) {
+		const config = isDragging ? SPRING_CONFIG.dragging : SPRING_CONFIG.idle;
+		angle.stiffness = config.stiffness;
+		angle.damping = config.damping;
 	}
 
-	// Mouse/Touch event handlers
+	/**
+	 * Handles mouse/touch down events to start dragging
+	 */
 	function onDown(e: MouseEvent | TouchEvent) {
 		e.preventDefault();
 		dragging = true;
@@ -37,14 +47,16 @@
 			? (e as TouchEvent).touches[0].clientX
 			: (e as MouseEvent).clientX;
 
-		// baseAngle = normalizeAngle($angle); // capture starting rotation
-		baseAngle = $angle; // use raw angle, don't normalize
+		baseAngle = $angle;
 
-		// Change cursor
-		if (cardElement) cardElement.style.cursor = 'grabbing';
+		if (cardElement) {
+			cardElement.style.cursor = 'grabbing';
+		}
 	}
 
-	// Turning motion, moving the mouse
+	/**
+	 * Handles mouse/touch move events for card rotation while dragging
+	 */
 	function onMove(e: MouseEvent | TouchEvent) {
 		if (!dragging) return;
 		e.preventDefault();
@@ -54,32 +66,28 @@
 			: (e as MouseEvent).clientX;
 
 		const delta = currentX - startX;
-		let newAngle = baseAngle + delta * sensitivity;
+		const newAngle = baseAngle + delta * SENSITIVITY;
 
 		angle.set(newAngle);
 	}
 
-	// Turning motion, releasing button
+	/**
+	 * Handles mouse/touch up events to stop dragging and snap to nearest position
+	 */
 	function onUp() {
 		dragging = false;
-		if (cardElement) cardElement.style.cursor = 'grab';
+
+		if (cardElement) {
+			cardElement.style.cursor = 'grab';
+		}
 
 		// Snap to the nearest 180°
 		const currentAngle = $angle;
-		const nearest = Math.round(currentAngle / 180) * 180;
+		const nearest = Math.round(currentAngle / SNAP_ANGLE) * SNAP_ANGLE;
 		angle.set(nearest);
 		baseAngle = nearest;
 	}
 
-	// Helper: Normalize angle to [-180, 180)
-	function normalizeAngle(angle: number): number {
-		angle = angle % 360;
-		if (angle >= 180) angle -= 360;
-		if (angle < -180) angle += 360;
-		return angle;
-	}
-
-	// Global event listeners to handle mouse up outside element
 	function addGlobalListeners() {
 		document.addEventListener('mouseup', onUp);
 		document.addEventListener('mousemove', onMove);
@@ -94,14 +102,10 @@
 		document.removeEventListener('touchmove', onMove);
 	}
 
-	// Initialize event listeners
-	import { onMount } from 'svelte';
+	// Lifecycle
 	onMount(() => {
 		addGlobalListeners();
-
-		return () => {
-			removeGlobalListeners();
-		};
+		return removeGlobalListeners;
 	});
 </script>
 
@@ -116,7 +120,7 @@
 		aria-label="Rotate {cardName} card"
 	>
 		<div class="inner" style="transform: rotateY({$angle}deg);">
-			<!-- Card thickness edges - multiple edges for realistic thickness -->
+			<!-- Card thickness edges -->
 			<div class="edge edge-side-left {suit}"></div>
 			<div class="edge edge-side-right {suit}"></div>
 
@@ -126,7 +130,7 @@
 				<div class="card-shine"></div>
 			</div>
 
-			<!-- Back face -->
+			<!-- Backside -->
 			<div class="face back">
 				<img src={backImage} alt="{cardName} back" loading="eager" draggable="false" />
 				<div class="card-shine"></div>
@@ -136,6 +140,13 @@
 </div>
 
 <style>
+	:root {
+		--card-width: 280px;
+		--card-height: 390px;
+		--card-thickness: 2px;
+		--half-thickness: calc(var(--card-thickness) / 2);
+	}
+
 	.card-container {
 		display: flex;
 		flex-direction: column;
@@ -143,6 +154,7 @@
 		user-select: none;
 	}
 
+	/* Main Card Element */
 	.card {
 		width: 280px;
 		height: 390px;
@@ -166,18 +178,10 @@
 		height: 100%;
 		position: relative;
 		transform-style: preserve-3d;
-		transition: none; /* Handled by spring animation */
-		will-change: transform; /* Add for smoother animations */
+		transition: none;
+		will-change: transform;
 	}
-
-	/* Card thickness - realistic trading card thickness */
-	:root {
-		--card-width: 280px;
-		--card-height: 390px;
-		--card-thickness: 2px; /* More realistic card thickness */
-		--half-thickness: calc(var(--card-thickness) / 2);
-	}
-
+	
 	.face {
 		position: absolute;
 		width: 100%;
@@ -198,6 +202,7 @@
 		display: block;
 		border-radius: 11px;
 	}
+
 	.front {
 		transform: translateZ(var(--half-thickness));
 	}
@@ -206,30 +211,35 @@
 		transform: rotateY(180deg) translateZ(var(--half-thickness));
 	}
 
-	/* Card edges for realistic 3D thickness effect */
+	/* Card Edges */
 	.edge {
 		position: absolute;
 	}
+
 	.edge.blue {
 		background: linear-gradient(135deg, #3730a3, #4338ca, #4f46e5, #6366f1);
 	}
+
 	.edge.red {
 		background: linear-gradient(135deg, #b91c1c, #dc2626, #ef4444, #f87171);
 	}
+
 	.edge.green {
 		background: linear-gradient(135deg, #166534, #16a34a, #22c55e, #4ade80);
 	}
+
 	.edge.yellow {
 		background: linear-gradient(135deg, #ca8a04, #eab308, #facc15, #fde047);
 	}
+
 	.edge.zoro {
 		background: linear-gradient(135deg, #f472b6, #a855f7, #3b82f6, #60a5fa);
 	}
+
 	.edge.fool {
 		background: linear-gradient(135deg, #f87171, #fde047, #3b82f6, #60a5fa);
 	}
 
-	/* Left edge */
 	.edge-side-left {
 		width: var(--card-thickness);
 		height: 100%;
@@ -240,7 +250,6 @@
 		clip-path: inset(12px 0 12px 0 round 0 12px 12px 0);
 	}
 
-	/* Right edge */
 	.edge-side-right {
 		width: var(--card-thickness);
 		height: 100%;
@@ -251,7 +260,7 @@
 		clip-path: inset(12px 0 12px 0 round 12px 0 0 12px);
 	}
 
-	/* Enhanced holographic shine effect */
+	/* Holographic Shine Effect */
 	.card-shine {
 		position: absolute;
 		top: -10%;
@@ -289,11 +298,11 @@
 		}
 	}
 
-	/* Responsive adjustments */
+	/* Responsive Design */
 	@media (max-width: 768px) {
 		.card {
-			width: 400x;
-			height: 606px;
+			width: 240px;
+			height: 336px;
 		}
 	}
 
