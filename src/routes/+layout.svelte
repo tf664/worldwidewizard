@@ -59,11 +59,6 @@
                 on:click|preventDefault={() => goto('/cards')}
                 class="hover:underline hover:text-yellow-300">Cards</a
             >
-            <a
-                href="/profile"
-                on:click|preventDefault={() => goto('/profile')}
-                class="hover:underline hover:text-yellow-300">Profile</a
-            >
         </div>
 
         <!-- Mobile Hamburger -->
