@@ -5,10 +5,10 @@
 
 	export let gameState: GameState;
 
-	// Track window size for responsive behavior
 	let windowWidth = 0;
 	let windowHeight = 0;
-	$: isMobile = windowWidth < 768;
+	$: responsiveConfig = getResponsiveConfig(windowWidth, windowHeight);
+	$: isMobile = responsiveConfig.breakpoint === 'mobile';
 
 	function getCardDisplay(card: Card): string {
 		if (card.rank === 'Zoro') return 'Z';
@@ -52,25 +52,62 @@
 		return `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
 	}
 
+	function isCurrentPlayer(index: number): boolean {
+		return gameState.currentPlayerIndex === index;
+	}
+
+	function getResponsiveConfig(width: number, height: number) {
+		const breakpoint = width < 640 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
+
+		const minDimension = Math.min(width, height);
+		const configs = {
+			mobile: {
+				breakpoint: 'mobile',
+				radius: minDimension * 0.3,
+				cardSize: { width: 'w-6', height: 'h-10' },
+				playerCardSize: { width: 'min-w-28', padding: 'p-2' },
+				centralSize: 'h-48 w-48',
+				textSize: { header: 'text-base', body: 'text-xs', score: 'text-sm' }
+			},
+			tablet: {
+				breakpoint: 'tablet',
+				radius: minDimension * 0.35,
+				cardSize: { width: 'w-8', height: 'h-12' },
+				playerCardSize: { width: 'min-w-32', padding: 'p-3' },
+				centralSize: 'h-60 w-60',
+				textSize: { header: 'text-lg', body: 'text-xs', score: 'text-base' }
+			},
+			desktop: {
+				breakpoint: 'desktop',
+				radius: minDimension * 0.42,
+				cardSize: { width: 'w-10', height: 'h-14' },
+				playerCardSize: { width: 'min-w-48', padding: 'p-4' },
+				centralSize: 'h-80 w-80',
+				textSize: { header: 'text-xl', body: 'text-sm', score: 'text-xl' }
+			}
+		};
+
+		return configs[breakpoint];
+	}
+
+	// Enhanced circular positioning with collision avoidance
 	function getPlayerCircularPosition(
 		index: number,
 		totalPlayers: number,
 		windowWidth: number,
-		windowHeight: number
+		windowHeight: number,
+		config: any // Add config parameter
 	): { x: number; y: number; position: string } {
 		const angleStep = (2 * Math.PI) / totalPlayers;
-		const angle = Math.PI / 2 - index * angleStep;
+		const startAngle = Math.PI / 2; // Start from top
+		const angle = startAngle - index * angleStep;
 
-		// Use viewport size for scaling
-		const minDimension = Math.min(windowWidth, windowHeight);
-		const radius = isMobile ? minDimension * 0.35 : minDimension * 0.42;
+		const x = Math.cos(angle) * config.radius; // Use passed config
+		const y = -Math.sin(angle) * config.radius; // Use passed config
 
-		const x = Math.cos(angle) * radius;
-		const y = -Math.sin(angle) * radius;
-
-		// Naming logic...
 		const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 		let position: string;
+
 		if (normalizedAngle >= (7 * Math.PI) / 4 || normalizedAngle < Math.PI / 4) {
 			position = 'right';
 		} else if (normalizedAngle >= Math.PI / 4 && normalizedAngle < (3 * Math.PI) / 4) {
@@ -83,68 +120,69 @@
 
 		return { x, y, position };
 	}
-
-	function isCurrentPlayer(index: number): boolean {
-		return gameState.currentPlayerIndex === index;
-	}
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 <div class="relative flex h-full w-full items-center justify-center">
-	<!-- Player Areas arranged in circle -->
+	<!-- Player Cards with enhanced responsive positioning -->
 	{#each gameState.players as player, index}
 		{@const totalPlayers = gameState.players.length}
-		{@const circularPos = getPlayerCircularPosition(index, totalPlayers, windowWidth, windowHeight)}
+		{@const circularPos = getPlayerCircularPosition(
+			index,
+			totalPlayers,
+			windowWidth,
+			windowHeight,
+			responsiveConfig
+		)}
 		{@const isCurrent = isCurrentPlayer(index)}
 
-		<!-- Player Info Card -->
 		<div
 			id="player-{index}"
-			class="absolute {isCurrent ? 'ring-4 ring-yellow-400' : ''} {isMobile
-				? 'min-w-36'
-				: 'min-w-48'} rounded-lg bg-green-700 {isMobile ? 'p-3' : 'p-4'} text-white"
+			class="absolute {isCurrent ? 'ring-opacity-75 ring-4 ring-yellow-400' : ''} 
+                   {responsiveConfig.playerCardSize.width} {responsiveConfig.playerCardSize.padding}
+                   rounded-lg bg-green-700 text-white shadow-lg transition-all duration-300
+                   {isCurrent ? 'z-10 scale-105' : 'z-0'}"
 			style="left: 50%; top: 50%; transform: translate(calc(-50% + {circularPos.x}px), calc(-50% + {circularPos.y}px));"
 		>
+			<!-- Player info with responsive text sizes -->
 			<div class="text-center">
-				<h3 class="mb-2 {isMobile ? 'text-base' : 'text-lg'} font-bold">{player.name}</h3>
-				<div class="grid grid-cols-3 gap-2 {isMobile ? 'text-xs' : 'text-sm'}">
+				<h3 class="{responsiveConfig.textSize.header} mb-1 truncate font-bold" title={player.name}>
+					{player.name}
+				</h3>
+				<div class="grid grid-cols-3 gap-1 {responsiveConfig.textSize.body}">
 					<div>
 						<div class="font-semibold">Score</div>
-						<div class={isMobile ? 'text-lg' : 'text-xl'}>{player.score}</div>
+						<div class={responsiveConfig.textSize.score}>{player.score}</div>
 					</div>
 					<div>
-						<div class="font-semibold">Predicted</div>
-						<div class={isMobile ? 'text-lg' : 'text-xl'}>
+						<div class="font-semibold">Pred</div>
+						<div class={responsiveConfig.textSize.score}>
 							{player.prediction >= 0 ? player.prediction : '?'}
 						</div>
 					</div>
 					<div>
-						<div class="font-semibold">Tricks</div>
-						<div class={isMobile ? 'text-lg' : 'text-xl'}>{player.tricksWon}</div>
+						<div class="font-semibold">Won</div>
+						<div class={responsiveConfig.textSize.score}>{player.tricksWon}</div>
 					</div>
 				</div>
 
-				<!-- Show hand count -->
-				<div class="mt-3 text-xs opacity-75">
+				<div class="mt-2 {responsiveConfig.textSize.body} opacity-75">
 					Cards: {player.hand.length}
 				</div>
 
-				<!-- Current player indicator -->
 				{#if isCurrent}
-					<div class="mt-2 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-black">
-						Current Player
+					<div class="mt-1 rounded bg-yellow-400 px-1 py-0.5 text-xs font-bold text-black">
+						Current
 					</div>
 				{/if}
 			</div>
 		</div>
 	{/each}
 
-	<!-- Central Game Area - responsive size -->
+	<!-- Central game area with responsive sizing -->
 	<div
-		class="relative flex {isMobile
-			? 'h-64 w-64'
-			: 'h-80 w-80'} flex-col items-center justify-center rounded-full bg-green-600 text-white"
+		class="relative flex {responsiveConfig.centralSize} flex-col items-center justify-center rounded-full bg-green-600 text-white shadow-inner"
 	>
 		<!-- Game Info -->
 		<div class="mb-4 text-center">

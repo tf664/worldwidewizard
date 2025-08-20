@@ -42,7 +42,7 @@
 
 		<button
 			class="w-full rounded bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
-			onclick={onNextRound}
+			on:click={onNextRound}
 			disabled={gameState.paused}
 		>
 			{gameState.currentRound < gameState.maxRounds ? 'Next Round' : 'Finish Game'}

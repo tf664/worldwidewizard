@@ -1,55 +1,115 @@
 <script lang="ts">
 	import type { GameState } from './logic/gameLogic.js';
 	import { initializeGame, startNewRound, processPrediction, playCard } from './logic/gameLogic.js';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import GameTable from './components/ui/GameTable.svelte';
 	import BiddingInterface from './components/interfaces/BiddingInterface.svelte';
 	import CardPlayInterface from './components/interfaces/CardPlayInterface.svelte';
 	import ScoringInterface from './components/interfaces/ScoringInterface.svelte';
 	import GameControls from './components/ui/GameControls.svelte';
 	import { undoMove } from './logic/gameLogic.js';
-	import { tick } from 'svelte';
+	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
 
 	let gameState: GameState;
-	let interfacePosition = {
+	let positionManager = new PanelPositionManager();
+	let currentPanelPosition: PanelPosition = {
 		x: '50%',
 		y: '50%',
 		transformX: '-50%',
 		transformY: '-50%',
-		arrowDir: 'bottom' as 'top' | 'bottom' | 'left' | 'right'
+		arrowDir: 'bottom',
+		position: 'bottom'
 	};
 
-	// Track window size for responsive behavior
+	// Responsive breakpoints
 	let windowWidth = 0;
 	let windowHeight = 0;
-	$: isMobile = windowWidth < 768; // Mobile breakpoint
+	let containerRef: HTMLElement;
+	let interfaceRef: HTMLElement;
+	let positionsInitialized = false;
+	let playerElements: HTMLElement[] = []; // Add this line
+
+	$: isMobile = windowWidth < 768;
+	$: isTablet = windowWidth >= 768 && windowWidth < 1024;
+	$: isSmallScreen = windowWidth < 1024 || windowHeight < 600;
+
+	// Dynamic scaling based on screen size
+	$: interfaceScale = getInterfaceScale(windowWidth, windowHeight);
+
+	function getInterfaceScale(width: number, height: number): number {
+		if (isMobile) return 0.65;
+		if (isTablet) return 0.7;
+		if (isSmallScreen) return 0.75;
+		return 0.8;
+	}
 
 	function getPlayerNames(): string[] {
-		// Get player names from localStorage (saved in /setup)
 		const storedPlayers = localStorage.getItem('players');
-		return storedPlayers ? JSON.parse(storedPlayers) : ['Player 1', 'Player 2', 'Player 3']; // Fallback names
+		return storedPlayers ? JSON.parse(storedPlayers) : ['Player 1', 'Player 2', 'Player 3'];
 	}
 
 	onMount(() => {
-		// Initialize game with the player names from setup
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
 
 		// Timer setup
 		startTime = Date.now();
-
 		intervalId = setInterval(() => {
-			// Only increment elapsed if game is not paused
 			if (gameState && !gameState.paused) {
 				elapsed = Math.floor((Date.now() - startTime) / 1000);
 			} else {
-				// Adjust startTime so that elapsed doesn't jump after resuming
 				startTime = Date.now() - elapsed * 1000;
 			}
 		}, 1000);
 
 		return () => clearInterval(intervalId);
 	});
+
+	// Initialize positions when game state and window dimensions are ready
+	$: if (gameState && windowWidth > 0 && windowHeight > 0) {
+		initializeOrUpdatePositions();
+	}
+
+	// Update current position when current player changes
+	$: if (gameState?.currentPlayerIndex !== undefined && positionsInitialized) {
+		currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
+	}
+
+	async function initializeOrUpdatePositions() {
+		if (!gameState || playerElements.length === 0) return;
+
+		const shouldRecalc =
+			!positionsInitialized || positionManager.shouldRecalculate(windowWidth, windowHeight);
+
+		if (shouldRecalc) {
+			// Wait for DOM to be ready
+			await tick();
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			console.log('Initializing panel positions for', gameState.players.length, 'players');
+
+			// Use the new DOM-based method
+			positionManager.initializePositionsFromDOM(
+				playerElements,
+				windowWidth,
+				windowHeight,
+				interfaceScale
+			);
+
+			positionsInitialized = true;
+			currentPanelPosition = positionManager.getPlayerPosition(gameState.currentPlayerIndex);
+
+			console.log('Panel positions initialized');
+		}
+	}
+
+	// Add this function to handle player elements ready
+	function handlePlayerElementsReady(elements: HTMLElement[]) {
+		playerElements = elements;
+		if (gameState && windowWidth > 0 && windowHeight > 0) {
+			initializeOrUpdatePositions();
+		}
+	}
 
 	function handlePrediction(playerId: number, prediction: number) {
 		if (processPrediction(gameState, playerId, prediction)) {
@@ -85,18 +145,19 @@
 	}
 
 	function handleRestart() {
+		positionsInitialized = false; // Force position recalculation
 		gameState = initializeGame(getPlayerNames());
 		startNewRound(gameState);
 	}
 
 	function handlePause() {
 		gameState.paused = !gameState.paused;
-		gameState = { ...gameState }; // trigger reactivity
+		gameState = { ...gameState };
 	}
 
 	function handleUndo() {
 		undoMove(gameState);
-		gameState = { ...gameState }; // trigger reactivity
+		gameState = { ...gameState };
 	}
 
 	let startTime: number;
@@ -110,189 +171,15 @@
 		const s = (seconds % 60).toString().padStart(2, '0');
 		return `${m}:${s}`;
 	}
-
-	// Recalculate position whenever current player changes or window resizes
-	// Recalculate position whenever current player changes or window resizes
-	$: if (gameState?.currentPlayerIndex !== undefined) {
-		updateInterfacePosition();
-	}
-	$: if (windowWidth || windowHeight) {
-		updateInterfacePosition();
-	}
-
-	async function updateInterfacePosition() {
-		if (!gameState) return;
-
-		// On mobile or small screens, always center the interface
-		if (isMobile) {
-			interfacePosition = {
-				x: '50%',
-				y: '50%',
-				transformX: '-50%',
-				transformY: '-50%',
-				arrowDir: 'bottom' // Default arrow direction for mobile
-			};
-			return;
-		}
-
-		// Wait for DOM updates
-		await tick();
-		await new Promise((resolve) => setTimeout(resolve, 50)); // Small delay for scaling to complete
-
-		const el = document.getElementById(`player-${gameState.currentPlayerIndex}`);
-		if (!el) {
-			// Fallback to center if player info card not found
-			interfacePosition = {
-				x: '50%',
-				y: '50%',
-				transformX: '-50%',
-				transformY: '-50%',
-				arrowDir: 'bottom'
-			};
-			return;
-		}
-
-		const rect = el.getBoundingClientRect();
-		const position = getPlayerPosition(gameState.currentPlayerIndex);
-
-		// Adjusted interface dimensions accounting for 75% scale
-		const interfaceWidth = 384 * 0.75; // Original width * scale factor
-		const interfaceHeight = 400 * 0.75; // Original height * scale factor
-		const margin = 20; // Margin from player info card
-
-		let newPosition: {
-			x: string;
-			y: string;
-			transformX: string;
-			transformY: string;
-			arrowDir: 'top' | 'bottom' | 'left' | 'right';
-		};
-
-		switch (position) {
-			case 'bottom':
-				// Position interface to the right of the bottom player info
-				newPosition = {
-					x: `${rect.right + margin}px`,
-					y: `${rect.top + rect.height / 2}px`,
-					transformX: '0%',
-					transformY: '-50%',
-					arrowDir: 'left'
-				};
-				break;
-			case 'top':
-				// Position interface to the left of the top player info
-				newPosition = {
-					x: `${rect.left - margin}px`,
-					y: `${rect.top + rect.height / 2}px`,
-					transformX: '-100%',
-					transformY: '-50%',
-					arrowDir: 'right'
-				};
-				break;
-			case 'left':
-				// Position interface below the left player info
-				newPosition = {
-					x: `${rect.left + rect.width / 2}px`,
-					y: `${rect.bottom + margin}px`,
-					transformX: '-50%',
-					transformY: '0%',
-					arrowDir: 'top'
-				};
-				break;
-			case 'right':
-				// Position interface above the right player info
-				newPosition = {
-					x: `${rect.left + rect.width / 2}px`,
-					y: `${rect.top - margin}px`,
-					transformX: '-50%',
-					transformY: '-100%',
-					arrowDir: 'bottom'
-				};
-				break;
-			default:
-				newPosition = {
-					x: '50%',
-					y: '50%',
-					transformX: '-50%',
-					transformY: '-50%',
-					arrowDir: 'bottom'
-				};
-				break;
-		}
-
-		// Check bounds with scaled dimensions
-		const finalX = parseFloat(newPosition.x);
-		const finalY = parseFloat(newPosition.y);
-
-		const wouldOverflowX =
-			(newPosition.transformX === '-50%' &&
-				(finalX - interfaceWidth / 2 < 0 || finalX + interfaceWidth / 2 > windowWidth)) ||
-			(newPosition.transformX === '0%' && finalX + interfaceWidth > windowWidth) ||
-			(newPosition.transformX === '-100%' && finalX - interfaceWidth < 0);
-
-		const wouldOverflowY =
-			(newPosition.transformY === '-50%' &&
-				(finalY - interfaceHeight / 2 < 0 || finalY + interfaceHeight / 2 > windowHeight)) ||
-			(newPosition.transformY === '0%' && finalY + interfaceHeight > windowHeight) ||
-			(newPosition.transformY === '-100%' && finalY - interfaceHeight < 0);
-
-		if (wouldOverflowX || wouldOverflowY) {
-			// Fallback to center
-			interfacePosition = {
-				x: '50%',
-				y: '50%',
-				transformX: '-50%',
-				transformY: '-50%',
-				arrowDir: 'bottom'
-			};
-		} else {
-			interfacePosition = newPosition;
-		}
-	}
-
-	async function updateCurrentPlayerBorder() {
-		if (!gameState) return;
-
-		const playerIndex = gameState.currentPlayerIndex;
-		const playerEl = document.getElementById(`player-${playerIndex}`);
-
-		if (playerEl) {
-			// Update the border of the current player
-			playerEl.classList.add('border-4', 'border-yellow-500');
-		}
-	}
-
-	function getPlayerPosition(index: number): string {
-		const totalPlayers = gameState.players.length;
-
-		// Calculate angle for each player in the circle (same as GameTable)
-		const angleStep = (2 * Math.PI) / totalPlayers;
-		const angle = Math.PI / 2 - index * angleStep;
-
-		// Determine position name for arrow direction based on angle
-		const normalizedAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
-		if (normalizedAngle >= (7 * Math.PI) / 4 || normalizedAngle < Math.PI / 4) {
-			return 'right';
-		} else if (normalizedAngle >= Math.PI / 4 && normalizedAngle < (3 * Math.PI) / 4) {
-			return 'top';
-		} else if (normalizedAngle >= (3 * Math.PI) / 4 && normalizedAngle < (5 * Math.PI) / 4) {
-			return 'left';
-		} else {
-			return 'bottom';
-		}
-	}
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 {#if gameState}
-	<!-- Full screen game table -->
-	<div class="relative h-screen overflow-hidden bg-green-800">
-		<GameTable {gameState} />
+	<div class="relative h-screen overflow-hidden bg-green-800" bind:this={containerRef}>
+		<GameTable {gameState} onPlayerElementsReady={handlePlayerElementsReady} />
 	</div>
 
-	<!-- Game Controls -->
 	<GameControls
 		{gameState}
 		onRestart={handleRestart}
@@ -302,43 +189,36 @@
 		{formatTime}
 	/>
 
-	<!-- Game Overlays positioned relative to current player info card or centered on mobile -->
-	{#if gameState.phase === 'bidding'}
+	<!-- Dynamic Interface Positioning -->
+	{#if gameState.phase === 'bidding' || gameState.phase === 'playing'}
 		<div
-			class="pointer-events-none fixed z-50"
+			class="pointer-events-none fixed z-50 transition-all duration-500 ease-out"
 			class:inset-4={isMobile}
 			class:flex={isMobile}
 			class:items-center={isMobile}
 			class:justify-center={isMobile}
 			style={isMobile
 				? 'pointer-events: auto;'
-				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.3s ease-out; pointer-events: auto;`}
+				: `left: ${currentPanelPosition.x}; top: ${currentPanelPosition.y}; transform: translate(${currentPanelPosition.transformX}, ${currentPanelPosition.transformY}); pointer-events: auto;`}
 		>
-			<div class="origin-center scale-75">
-				<BiddingInterface
-					{gameState}
-					onPredictionMade={handlePrediction}
-					arrowDir={interfacePosition.arrowDir}
-				/>
-			</div>
-		</div>
-	{:else if gameState.phase === 'playing'}
-		<div
-			class="pointer-events-none fixed z-50"
-			class:inset-4={isMobile}
-			class:flex={isMobile}
-			class:items-center={isMobile}
-			class:justify-center={isMobile}
-			style={isMobile
-				? 'pointer-events: auto;'
-				: `left: ${interfacePosition.x}; top: ${interfacePosition.y}; transform: translate(${interfacePosition.transformX}, ${interfacePosition.transformY}); transition: all 0.3s ease-out; pointer-events: auto;`}
-		>
-			<div class="origin-center scale-75">
-				<CardPlayInterface
-					{gameState}
-					onCardPlayed={handleCardPlay}
-					arrowDir={interfacePosition.arrowDir}
-				/>
+			<div
+				class="origin-center transition-transform duration-300"
+				style="transform: scale({interfaceScale})"
+				bind:this={interfaceRef}
+			>
+				{#if gameState.phase === 'bidding'}
+					<BiddingInterface
+						{gameState}
+						onPredictionMade={handlePrediction}
+						arrowDir={currentPanelPosition.arrowDir}
+					/>
+				{:else if gameState.phase === 'playing'}
+					<CardPlayInterface
+						{gameState}
+						onCardPlayed={handleCardPlay}
+						arrowDir={currentPanelPosition.arrowDir}
+					/>
+				{/if}
 			</div>
 		</div>
 	{:else if gameState.phase === 'scoring'}
@@ -367,7 +247,7 @@
 
 				<button
 					class="rounded bg-blue-600 px-6 py-2 font-bold text-white hover:bg-blue-700"
-					onclick={handleRestart}
+					on:click={handleRestart}
 					disabled={gameState.paused}
 				>
 					Play Again
