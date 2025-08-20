@@ -11,6 +11,7 @@
 	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
 	import TrumpChoosingInterface from './components/interfaces/TrumpChoosingInterface.svelte';
 	import { chooseTrumpSuit } from './logic/gameLogic.js';
+	import type { Suit } from './logic/cards.js';
 
 	let gameState: GameState;
 	let positionManager = new PanelPositionManager();
