@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GameState } from '../../logic/gameLogic.js';
 	import type { Card } from '../../logic/cards.js';
+	import { getForbiddenBid } from '../../logic/gameLogic.js';
 	import CardImage from '$lib/components/CardImage.svelte';
 
 	export let gameState: GameState;
@@ -8,13 +9,16 @@
 
 	let selectedPrediction = 0;
 	let showDetails = false;
-	$: currentPlayer = gameState.players[gameState.currentPlayerIndex];
-
-	// Track window size for responsive behavior
 	let windowWidth = 0;
+
+	// ===== REACTIVE STATEMENTS =====
+	$: currentPlayer = gameState.players[gameState.currentPlayerIndex];
+	$: forbiddenBid = getForbiddenBid(gameState, gameState.currentPlayerIndex);
+	$: isLastBidder = forbiddenBid !== null;
+	$: isForbiddenBid = selectedPrediction === forbiddenBid;
 	$: isMobile = windowWidth < 768;
 
-	// --- Card Utilities ---
+	// ===== CARD UTILITIES =====
 	function getCardDisplay(card: Card): string {
 		if (card.rank === 'Zoro') return 'Z';
 		if (card.rank === 'Fool') return 'F';
@@ -74,19 +78,21 @@
 		}
 	}
 
+	// ===== EVENT HANDLERS =====
 	function confirmBid() {
+		if (isForbiddenBid) return; // Prevent forbidden bid
 		onPredictionMade(gameState.currentPlayerIndex, selectedPrediction);
 		selectedPrediction = 0;
 		showDetails = false;
 	}
 </script>
 
+<svelte:window bind:innerWidth={windowWidth} />
+
 <div
 	class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6 md:w-96"
 >
-	<!-- Responsive content with consistent spacing -->
 	<div class="space-y-4">
-		<!-- Header -->
 		<div class="text-center">
 			<h3 class="truncate text-lg font-bold text-gray-800 sm:text-xl md:text-2xl">
 				{currentPlayer.name}'s Bid
@@ -100,22 +106,33 @@
 				Round {gameState.currentRound} • {currentPlayer.hand.length} cards
 			</div>
 		</div>
-		<!-- Prediction input -->
+
+		<!-- ===== PREDICTION INPUT SECTION ===== -->
 		<div class="mb-4 text-center">
-			<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-4 font-medium text-gray-700`}>
+			<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-2 font-medium text-gray-700`}>
 				Predict tricks to win:
 			</p>
+
+			{#if isLastBidder && forbiddenBid !== null}
+				<div class="mb-2 text-sm font-medium text-red-600">
+					Cannot bid {forbiddenBid} (total would equal {gameState.currentRound})
+				</div>
+			{/if}
+
 			<div class="flex items-center justify-center gap-4">
 				<button
 					class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300 
-				${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
-					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}>-</button
+                ${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
+					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}
 				>
+					-
+				</button>
 
 				<div class="flex flex-col items-center">
 					<span
-						class={`rounded-lg bg-blue-100 text-center font-bold text-blue-800 
-					${isMobile ? 'w-14 py-2 text-2xl' : 'w-16 py-3 text-3xl'}`}
+						class={`rounded-lg text-center font-bold 
+                        ${isForbiddenBid ? 'border-2 border-red-400 bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}
+                        ${isMobile ? 'w-14 py-2 text-2xl' : 'w-16 py-3 text-3xl'}`}
 					>
 						{selectedPrediction}
 					</span>
@@ -124,26 +141,29 @@
 
 				<button
 					class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300
-				${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
+                ${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
 					onclick={() =>
 						(selectedPrediction = Math.min(gameState.currentRound, selectedPrediction + 1))}
-					>+</button
 				>
+					+
+				</button>
 			</div>
 		</div>
 
-		<!-- Action buttons -->
+		<!-- ===== ACTION BUTTONS SECTION ===== -->
 		<div class="mb-4 flex gap-3">
 			<button
-				class={`flex-1 rounded-xl bg-blue-600 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700
-			${isMobile ? 'px-4 py-3 text-base' : 'px-6 py-4 text-lg'}`}
+				class={`flex-1 rounded-xl font-semibold text-white transition-all hover:scale-105
+                ${isForbiddenBid ? 'cursor-not-allowed bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}
+                ${isMobile ? 'px-4 py-3 text-base' : 'px-6 py-4 text-lg'}`}
 				onclick={confirmBid}
-				disabled={gameState.paused}
+				disabled={gameState.paused || isForbiddenBid}
 			>
-				Confirm: {selectedPrediction}
+				{isForbiddenBid ? 'Invalid Bid' : `Confirm: ${selectedPrediction}`}
 			</button>
 		</div>
-		<!-- Player's hand -->
+
+		<!-- ===== PLAYER'S HAND SECTION ===== -->
 		<div>
 			<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
 			<div class="flex flex-wrap justify-center gap-2">
@@ -163,19 +183,20 @@
 				{/each}
 			</div>
 		</div>
-		<!-- Other players' bids -->
+
+		<!-- ===== OTHER PLAYERS' BIDS SECTION ===== -->
 		<div>
 			<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
 			<div class="flex flex-wrap justify-center gap-2">
 				{#each gameState.players as player, index}
 					{#if index !== gameState.currentPlayerIndex}
 						<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
-							<span class="font-medium text-gray-800"
-								>{isMobile ? player.name.substring(0, 6) : player.name}</span
-							>:
-							<span class="font-bold text-blue-600"
-								>{player.prediction >= 0 ? player.prediction : '?'}</span
-							>
+							<span class="font-medium text-gray-800">
+								{isMobile ? player.name.substring(0, 6) : player.name}
+							</span>:
+							<span class="font-bold text-blue-600">
+								{player.prediction >= 0 ? player.prediction : '?'}
+							</span>
 						</div>
 					{/if}
 				{/each}

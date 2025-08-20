@@ -272,7 +272,10 @@
 			>
 				<!-- Winner spotlight -->
 				{#if gameState.players.length > 0}
-					{@const winner = gameState.players.sort((a, b) => b.score - a.score)[0]}
+					{@const sortedPlayers = gameState.players.sort((a, b) => b.score - a.score)}
+					{@const highestScore = sortedPlayers[0].score}
+					{@const winners = sortedPlayers.filter((p) => p.score === highestScore)}
+
 					<div
 						class="mb-6 rounded-xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 p-4 text-center text-white shadow-lg"
 					>
@@ -290,8 +293,14 @@
 								></path>
 							</svg>
 						</div>
-						<h3 class="text-xl font-bold">{winner.name} Wins!</h3>
-						<p class="text-lg font-semibold">{winner.score} points</p>
+						<h3 class="text-xl font-bold">
+							{#if winners.length === 1}
+								{winners[0].name} Wins!
+							{:else}
+								{winners.map((w) => w.name).join(', ')} Win!
+							{/if}
+						</h3>
+						<p class="text-lg font-semibold">{highestScore} points</p>
 					</div>
 				{/if}
 

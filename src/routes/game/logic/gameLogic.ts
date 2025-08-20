@@ -4,6 +4,7 @@ import { createPlayers } from '../types/player.js';
 import { createDeck } from './cards.js';
 import { isValidCardPlay } from './gameRules.js';
 
+// TYPE DEFINITIONS
 export interface GameState {
     players: Player[];
     currentRound: number;
@@ -35,6 +36,9 @@ export interface Trick {
     winner: number;
 }
 
+// ===========================================
+// GAME INITIALIZATION & SETUP
+// ===========================================
 export function initializeGame(playerNames: string[]): GameState {
     const players = createPlayers(playerNames);
 
@@ -134,6 +138,9 @@ export function determineTrumpSuit(gameState: GameState): void {
     }
 }
 
+// ===========================================
+// TRUMP SELECTION
+// ===========================================
 export function chooseTrumpSuit(gameState: GameState, playerId: number, suit: Suit): boolean {
     if (gameState.phase !== 'choosing-trump' || gameState.trumpChooser !== playerId) {
         return false;
@@ -147,19 +154,39 @@ export function chooseTrumpSuit(gameState: GameState, playerId: number, suit: Su
     return true;
 }
 
+// ===========================================
+// BIDDING PHASE
+// ===========================================
 export function processPrediction(gameState: GameState, playerId: number, prediction: number): boolean {
     if (gameState.phase !== 'bidding' || gameState.currentPlayerIndex !== playerId) {
         return false;
     }
 
-    gameState.players[playerId].prediction = prediction;
-
-    // Move to next player
+    // Check if this is the last player to bid (dealer)
     const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     const startingPlayer = (gameState.dealer + 1) % gameState.players.length;
+    const isLastBidder = nextPlayerIndex === startingPlayer;
+
+    if (isLastBidder) {
+        // Calculate total of all other players' bids
+        let totalBids = 0;
+        for (let i = 0; i < gameState.players.length; i++) {
+            if (i !== playerId && gameState.players[i].prediction >= 0) {
+                totalBids += gameState.players[i].prediction;
+            }
+        }
+
+        // Check if this bid would make total equal to available tricks
+        const totalTricks = gameState.currentRound;
+        if (totalBids + prediction === totalTricks) {
+            return false; // Invalid bid - total would equal available tricks
+        }
+    }
+
+    gameState.players[playerId].prediction = prediction;
 
     // If cycled back to the starting player, all bids are in
-    if (nextPlayerIndex === startingPlayer) {
+    if (isLastBidder) {
         gameState.phase = 'playing';
         gameState.currentPlayerIndex = startingPlayer;
     } else {
@@ -168,6 +195,35 @@ export function processPrediction(gameState: GameState, playerId: number, predic
 
     return true;
 }
+
+export function getForbiddenBid(gameState: GameState, playerId: number): number | null {
+    // Only applies to the last bidder (dealer)
+    const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    const startingPlayer = (gameState.dealer + 1) % gameState.players.length;
+    const isLastBidder = nextPlayerIndex === startingPlayer;
+
+    if (!isLastBidder) {
+        return null; // No restriction for non-last bidders
+    }
+
+    // Calculate total of all other players' bids
+    let totalBids = 0;
+    for (let i = 0; i < gameState.players.length; i++) {
+        if (i !== playerId && gameState.players[i].prediction >= 0) {
+            totalBids += gameState.players[i].prediction;
+        }
+    }
+
+    const totalTricks = gameState.currentRound;
+    const forbiddenBid = totalTricks - totalBids;
+
+    // Return forbidden bid if it's within valid range
+    return (forbiddenBid >= 0 && forbiddenBid <= totalTricks) ? forbiddenBid : null;
+}
+
+// ===========================================
+// CARD PLAY & TRICKS
+// ===========================================
 export function playCard(gameState: GameState, playerId: number, cardIndex: number): boolean {
     if (gameState.phase !== 'playing' || gameState.currentPlayerIndex !== playerId || gameState.paused) {
         return false;
@@ -204,17 +260,6 @@ export function playCard(gameState: GameState, playerId: number, cardIndex: numb
         gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     }
     return true;
-}
-
-export function calculateScore(prediction: number, tricksWon: number): number {
-    if (prediction === tricksWon) {
-        // Correct prediction: 10 points per trick + 20 bonus
-        return (tricksWon * 10) + 20;
-    } else {
-        // Incorrect prediction: -10 points per difference
-        const difference = Math.abs(prediction - tricksWon);
-        return -(difference * 10);
-    }
 }
 
 export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): number {
@@ -262,6 +307,23 @@ export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): numb
     return winner.playerId;
 }
 
+// ===========================================
+// SCORING
+// ===========================================
+export function calculateScore(prediction: number, tricksWon: number): number {
+    if (prediction === tricksWon) {
+        // Correct prediction: 10 points per trick + 20 bonus
+        return (tricksWon * 10) + 20;
+    } else {
+        // Incorrect prediction: -10 points per difference
+        const difference = Math.abs(prediction - tricksWon);
+        return -(difference * 10);
+    }
+}
+
+// ===========================================
+// GAME CONTROL
+// ===========================================
 export function pauseGame(gameState: GameState): void {
     gameState.paused = !gameState.paused;
     gameState = { ...gameState }; // trigger Svelte reactivity
