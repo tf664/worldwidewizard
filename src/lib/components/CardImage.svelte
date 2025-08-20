@@ -11,9 +11,4 @@
 	}
 </script>
 
-<img
-	src={imageSrc}
-	alt={alt}
-	class={className}
-	on:error={handleError}
-/>
+<img src={imageSrc} {alt} class={className} on:error={handleError} />

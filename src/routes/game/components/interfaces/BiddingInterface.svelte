@@ -5,8 +5,6 @@
 
 	export let gameState: GameState;
 	export let onPredictionMade: (playerId: number, prediction: number) => void;
-	export let arrowDir: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
-	$: shouldShowArrow = !isMobile && arrowDir;
 
 	let selectedPrediction = 0;
 	let showDetails = false;
@@ -81,28 +79,11 @@
 		selectedPrediction = 0;
 		showDetails = false;
 	}
-
-	function getArrowClasses() {
-		const baseClasses = 'absolute text-yellow-400 text-3xl drop-shadow-lg pointer-events-none z-10';
-		const positions = {
-			top: '-top-3 left-1/2 -translate-x-1/2 rotate-180',
-			bottom: '-bottom-3 left-1/2 -translate-x-1/2',
-			left: '-left-3 top-1/2 -translate-y-1/2 -rotate-90',
-			right: '-right-3 top-1/2 -translate-y-1/2 rotate-90'
-		};
-
-		return `${baseClasses} ${positions[arrowDir]}`;
-	}
 </script>
 
 <div
 	class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6 md:w-96"
 >
-	<!-- Dynamic Arrow -->
-	{#if shouldShowArrow}
-		<div class={getArrowClasses()}>▲</div>
-	{/if}
-
 	<!-- Responsive content with consistent spacing -->
 	<div class="space-y-4">
 		<!-- Header -->

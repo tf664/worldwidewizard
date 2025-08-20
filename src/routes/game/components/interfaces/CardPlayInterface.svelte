@@ -6,12 +6,10 @@
 
 	export let gameState: GameState;
 	export let onCardPlayed: (playerId: number, cardIndex: number) => void;
-	export let arrowDir: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
 
 	// Track window size for consistent mobile detection
 	let windowWidth = 0;
 	$: isMobile = windowWidth < 768;
-	$: shouldShowArrow = !isMobile && arrowDir;
 
 	interface TrickCard {
 		card: Card;
@@ -99,27 +97,11 @@
 				return 'bg-gray-500';
 		}
 	}
-
-	function getArrowClasses() {
-		const baseClasses = 'absolute text-yellow-400 text-3xl drop-shadow-lg pointer-events-none z-10';
-		const positions = {
-			top: '-top-3 left-1/2 -translate-x-1/2 rotate-180',
-			bottom: '-bottom-3 left-1/2 -translate-x-1/2',
-			left: '-left-3 top-1/2 -translate-y-1/2 -rotate-90',
-			right: '-right-3 top-1/2 -translate-y-1/2 rotate-90'
-		};
-
-		return `${baseClasses} ${positions[arrowDir]}`;
-	}
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} />
 
 <div class="relative w-96 rounded-2xl border-4 border-green-500 bg-white p-6 shadow-2xl">
-	<!-- Dynamic Arrow - only show when not mobile -->
-	{#if shouldShowArrow}
-		<div class={getArrowClasses()}>▲</div>
-	{/if}
 	<div class="mb-6 text-center">
 		<h3 class="text-2xl font-bold text-gray-800">{currentPlayer.name}'s Turn</h3>
 		{#if gameState.trumpSuit}

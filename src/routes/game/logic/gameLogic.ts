@@ -158,7 +158,7 @@ export function processPrediction(gameState: GameState, playerId: number, predic
     const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     const startingPlayer = (gameState.dealer + 1) % gameState.players.length;
 
-    // If we've cycled back to the starting player, all bids are in
+    // If cycled back to the starting player, all bids are in
     if (nextPlayerIndex === startingPlayer) {
         gameState.phase = 'playing';
         gameState.currentPlayerIndex = startingPlayer;
@@ -206,20 +206,17 @@ export function playCard(gameState: GameState, playerId: number, cardIndex: numb
     return true;
 }
 
-export function calculateRoundScores(gameState: GameState): void {
-    gameState.players.forEach(player => {
-        if (player.prediction === player.tricksWon) {
-            player.score += 20 + player.tricksWon;
-        } else {
-            player.score += Math.abs(player.prediction - player.tricksWon) * -10;
-        }
-
-        // Reset for next round
-        player.tricksWon = 0;
-        player.prediction = 0;
-        player.hand = [];
-    });
+export function calculateScore(prediction: number, tricksWon: number): number {
+    if (prediction === tricksWon) {
+        // Correct prediction: 10 points per trick + 20 bonus
+        return (tricksWon * 10) + 20;
+    } else {
+        // Incorrect prediction: -10 points per difference
+        const difference = Math.abs(prediction - tricksWon);
+        return -(difference * 10);
+    }
 }
+
 export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): number {
     if (trick.cards.length === 0) return -1;
 

@@ -44,15 +44,15 @@
 </svelte:head>
 
 <div
-	class="max-w-6xl mx-auto px-4 pb-32 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8 rounded-lg shadow-md"
+	class="mx-auto max-w-6xl rounded-lg bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-8 px-4 pb-32 shadow-md"
 >
 	<!-- Header with Back Button -->
-	<div class="flex items-center justify-between mb-8">
+	<div class="mb-8 flex items-center justify-between">
 		<button
 			on:click={goBack}
-			class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20
-				       text-white rounded-lg transition-all duration-300 backdrop-blur-sm
-				       border border-white/20 hover:border-white/30"
+			class="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10
+				       px-4 py-2 text-white backdrop-blur-sm transition-all
+				       duration-300 hover:border-white/30 hover:bg-white/20"
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -67,7 +67,7 @@
 		</button>
 
 		<div class="text-center">
-			<h1 class="text-4xl font-bold text-white mb-2">{cardData.name}</h1>
+			<h1 class="mb-2 text-4xl font-bold text-white">{cardData.name}</h1>
 			<p class="text-xl text-white/80 capitalize">{cardData.suit} Suit</p>
 		</div>
 
@@ -75,7 +75,7 @@
 		<!-- Spacer for center alignment -->
 	</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+	<div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
 		<!-- 3D Rotating Card -->
 		<div class="flex justify-center">
 			<RotatingCard
@@ -87,30 +87,30 @@
 		</div>
 
 		<!-- Card Information -->
-		<div class="space-y-2 bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+		<div class="space-y-2 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-lg">
 			<div class="space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-white/70 mb-2">Description</label>
-					<p class="text-lg text-white/90">{cardData.description}</p>
+					<label for="description" class="mb-2 block text-sm font-medium text-white/70">Description</label>
+					<p id="description" class="text-lg text-white/90">{cardData.description}</p>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-white/70 mb-2">Card ID</label>
-					<p class="text-white/80">#{cardData.id}</p>
+					<label for="card-id" class="mb-2 block text-sm font-medium text-white/70">Card ID</label>
+					<p id="card-id" class="text-white/80">#{cardData.id}</p>
 				</div>
 			</div>
 
 			<!-- Game Rules for this card type -->
 			{#if rulesVisible}
 				<br />
-				<div class="bg-white/5 backdrop-blur-lg rounded-2xl p-5 border border-white/10">
-					<h3 class="text-xl font-bold text-white mb-4">Special card</h3>
-					<div class="text-white/80 space-y-2">
+				<div class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-lg">
+					<h3 class="mb-4 text-xl font-bold text-white">Special card</h3>
+					<div class="space-y-2 text-white/80">
 						{#if cardData.suit === 'zoro'}
 							<p><strong>Wizard cards</strong> always win tricks, regardless of the trump suit.</p>
 						{:else if cardData.suit === 'fool'}
 							<p><strong>Fool cards</strong> always lose tricks, cannot win any trick.</p>
 						{/if}
-						<p class="text-sm text-white/60 mt-4">
+						<p class="mt-4 text-sm text-white/60">
 							Make sure to keep track of the special traits when planning your moves!
 						</p>
 					</div>
