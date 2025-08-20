@@ -278,7 +278,20 @@
 					<div
 						class="mb-6 rounded-xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 p-4 text-center text-white shadow-lg"
 					>
-						<div class="mb-2 text-3xl">👑</div>
+						<div class="mb-2 flex justify-center">
+							<svg
+								class="h-8 w-8 text-white"
+								fill="currentColor"
+								viewBox="0 0 20 20"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+									clip-rule="evenodd"
+								></path>
+							</svg>
+						</div>
 						<h3 class="text-xl font-bold">{winner.name} Wins!</h3>
 						<p class="text-lg font-semibold">{winner.score} points</p>
 					</div>
@@ -323,11 +336,49 @@
 										>{player.score}</span
 									>
 									{#if index === 0}
-										<span class="text-xl">👑</span>
+										<svg
+											class="h-5 w-5 text-yellow-500"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+												clip-rule="evenodd"
+											></path>
+										</svg>
 									{:else if index === 1}
-										<span class="text-xl">🥈</span>
+										<svg
+											class="h-5 w-5 text-gray-500"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M10 12a2 2 0 100-4 2 2 0 000 4z"
+												clip-rule="evenodd"
+											></path>
+											<path
+												fill-rule="evenodd"
+												d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+												clip-rule="evenodd"
+											></path>
+										</svg>
 									{:else if index === 2}
-										<span class="text-xl">🥉</span>
+										<svg
+											class="h-5 w-5 text-orange-500"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+												clip-rule="evenodd"
+											></path>
+										</svg>
 									{/if}
 								</div>
 							</div>
@@ -338,11 +389,7 @@
 				<!-- Game Statistics -->
 				<div class="mb-6 rounded-lg bg-gray-50 p-4">
 					<h4 class="mb-3 text-center font-semibold text-gray-700">Game Statistics</h4>
-					<div class="grid grid-cols-2 gap-4 text-sm">
-						<div class="text-center">
-							<div class="font-bold text-gray-800">{gameState.currentRound}</div>
-							<div class="text-gray-600">Rounds Played</div>
-						</div>
+					<div class="gap-4 text-sm">
 						<div class="text-center">
 							<div class="font-bold text-gray-800">{formatTime(elapsed)}</div>
 							<div class="text-gray-600">Total Time</div>
@@ -353,17 +400,39 @@
 				<!-- Action Buttons -->
 				<div class="flex gap-3">
 					<button
-						class="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+						class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
 						on:click={handleRestart}
 						disabled={gameState.paused}
 					>
-						🎮 Play Again
+						<svg
+							class="h-5 w-5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+								clip-rule="evenodd"
+							></path>
+						</svg>
+						Play Again
 					</button>
 					<button
-						class="flex-1 rounded-xl bg-gray-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-gray-700"
+						class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-gray-700"
 						on:click={() => (window.location.href = '/')}
 					>
-						🏠 Main Menu
+						<svg
+							class="h-5 w-5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+							></path>
+						</svg>
+						Main Menu
 					</button>
 				</div>
 			</div>
