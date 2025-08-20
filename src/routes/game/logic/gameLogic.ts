@@ -4,6 +4,7 @@ import { createPlayers } from '../types/player.js';
 import { createDeck } from './cards.js';
 import { isValidCardPlay } from './gameRules.js';
 
+// TYPE DEFINITIONS
 export interface GameState {
     players: Player[];
     currentRound: number;
@@ -35,6 +36,9 @@ export interface Trick {
     winner: number;
 }
 
+// ===========================================
+// GAME INITIALIZATION & SETUP
+// ===========================================
 export function initializeGame(playerNames: string[]): GameState {
     const players = createPlayers(playerNames);
 
@@ -134,6 +138,9 @@ export function determineTrumpSuit(gameState: GameState): void {
     }
 }
 
+// ===========================================
+// TRUMP SELECTION
+// ===========================================
 export function chooseTrumpSuit(gameState: GameState, playerId: number, suit: Suit): boolean {
     if (gameState.phase !== 'choosing-trump' || gameState.trumpChooser !== playerId) {
         return false;
@@ -147,6 +154,9 @@ export function chooseTrumpSuit(gameState: GameState, playerId: number, suit: Su
     return true;
 }
 
+// ===========================================
+// BIDDING PHASE
+// ===========================================
 export function processPrediction(gameState: GameState, playerId: number, prediction: number): boolean {
     if (gameState.phase !== 'bidding' || gameState.currentPlayerIndex !== playerId) {
         return false;
@@ -211,6 +221,9 @@ export function getForbiddenBid(gameState: GameState, playerId: number): number 
     return (forbiddenBid >= 0 && forbiddenBid <= totalTricks) ? forbiddenBid : null;
 }
 
+// ===========================================
+// CARD PLAY & TRICKS
+// ===========================================
 export function playCard(gameState: GameState, playerId: number, cardIndex: number): boolean {
     if (gameState.phase !== 'playing' || gameState.currentPlayerIndex !== playerId || gameState.paused) {
         return false;
@@ -247,17 +260,6 @@ export function playCard(gameState: GameState, playerId: number, cardIndex: numb
         gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
     }
     return true;
-}
-
-export function calculateScore(prediction: number, tricksWon: number): number {
-    if (prediction === tricksWon) {
-        // Correct prediction: 10 points per trick + 20 bonus
-        return (tricksWon * 10) + 20;
-    } else {
-        // Incorrect prediction: -10 points per difference
-        const difference = Math.abs(prediction - tricksWon);
-        return -(difference * 10);
-    }
 }
 
 export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): number {
@@ -305,6 +307,23 @@ export function calculateTrickWinner(trick: Trick, trumpSuit: Suit | null): numb
     return winner.playerId;
 }
 
+// ===========================================
+// SCORING
+// ===========================================
+export function calculateScore(prediction: number, tricksWon: number): number {
+    if (prediction === tricksWon) {
+        // Correct prediction: 10 points per trick + 20 bonus
+        return (tricksWon * 10) + 20;
+    } else {
+        // Incorrect prediction: -10 points per difference
+        const difference = Math.abs(prediction - tricksWon);
+        return -(difference * 10);
+    }
+}
+
+// ===========================================
+// GAME CONTROL
+// ===========================================
 export function pauseGame(gameState: GameState): void {
     gameState.paused = !gameState.paused;
     gameState = { ...gameState }; // trigger Svelte reactivity

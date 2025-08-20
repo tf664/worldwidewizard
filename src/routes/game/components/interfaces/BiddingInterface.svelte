@@ -9,16 +9,16 @@
 
 	let selectedPrediction = 0;
 	let showDetails = false;
+	let windowWidth = 0;
+
+	// ===== REACTIVE STATEMENTS =====
 	$: currentPlayer = gameState.players[gameState.currentPlayerIndex];
 	$: forbiddenBid = getForbiddenBid(gameState, gameState.currentPlayerIndex);
 	$: isLastBidder = forbiddenBid !== null;
 	$: isForbiddenBid = selectedPrediction === forbiddenBid;
-
-	// Track window size for responsive behavior
-	let windowWidth = 0;
 	$: isMobile = windowWidth < 768;
 
-	// --- Card Utilities ---
+	// ===== CARD UTILITIES =====
 	function getCardDisplay(card: Card): string {
 		if (card.rank === 'Zoro') return 'Z';
 		if (card.rank === 'Fool') return 'F';
@@ -78,6 +78,7 @@
 		}
 	}
 
+	// ===== EVENT HANDLERS =====
 	function confirmBid() {
 		if (isForbiddenBid) return; // Prevent forbidden bid
 		onPredictionMade(gameState.currentPlayerIndex, selectedPrediction);
@@ -86,12 +87,12 @@
 	}
 </script>
 
+<svelte:window bind:innerWidth={windowWidth} />
+
 <div
 	class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6 md:w-96"
 >
-	<!-- Responsive content with consistent spacing -->
 	<div class="space-y-4">
-		<!-- Header -->
 		<div class="text-center">
 			<h3 class="truncate text-lg font-bold text-gray-800 sm:text-xl md:text-2xl">
 				{currentPlayer.name}'s Bid
@@ -105,7 +106,8 @@
 				Round {gameState.currentRound} • {currentPlayer.hand.length} cards
 			</div>
 		</div>
-		<!-- Prediction input -->
+
+		<!-- ===== PREDICTION INPUT SECTION ===== -->
 		<div class="mb-4 text-center">
 			<p class={`${isMobile ? 'text-base' : 'text-lg'} mb-2 font-medium text-gray-700`}>
 				Predict tricks to win:
@@ -121,8 +123,10 @@
 				<button
 					class={`flex items-center justify-center rounded-lg bg-gray-200 font-bold transition-all hover:scale-105 hover:bg-gray-300 
                 ${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
-					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}>-</button
+					onclick={() => (selectedPrediction = Math.max(0, selectedPrediction - 1))}
 				>
+					-
+				</button>
 
 				<div class="flex flex-col items-center">
 					<span
@@ -140,12 +144,13 @@
                 ${isMobile ? 'h-10 w-10 text-lg' : 'h-12 w-12 text-xl'}`}
 					onclick={() =>
 						(selectedPrediction = Math.min(gameState.currentRound, selectedPrediction + 1))}
-					>+</button
 				>
+					+
+				</button>
 			</div>
 		</div>
 
-		<!-- Action buttons -->
+		<!-- ===== ACTION BUTTONS SECTION ===== -->
 		<div class="mb-4 flex gap-3">
 			<button
 				class={`flex-1 rounded-xl font-semibold text-white transition-all hover:scale-105
@@ -157,7 +162,8 @@
 				{isForbiddenBid ? 'Invalid Bid' : `Confirm: ${selectedPrediction}`}
 			</button>
 		</div>
-		<!-- Player's hand -->
+
+		<!-- ===== PLAYER'S HAND SECTION ===== -->
 		<div>
 			<p class="mb-2 text-sm font-medium text-gray-700">Your cards:</p>
 			<div class="flex flex-wrap justify-center gap-2">
@@ -177,19 +183,20 @@
 				{/each}
 			</div>
 		</div>
-		<!-- Other players' bids -->
+
+		<!-- ===== OTHER PLAYERS' BIDS SECTION ===== -->
 		<div>
 			<p class="mb-2 text-sm font-medium text-gray-700">Other players' bids:</p>
 			<div class="flex flex-wrap justify-center gap-2">
 				{#each gameState.players as player, index}
 					{#if index !== gameState.currentPlayerIndex}
 						<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm">
-							<span class="font-medium text-gray-800"
-								>{isMobile ? player.name.substring(0, 6) : player.name}</span
-							>:
-							<span class="font-bold text-blue-600"
-								>{player.prediction >= 0 ? player.prediction : '?'}</span
-							>
+							<span class="font-medium text-gray-800">
+								{isMobile ? player.name.substring(0, 6) : player.name}
+							</span>:
+							<span class="font-bold text-blue-600">
+								{player.prediction >= 0 ? player.prediction : '?'}
+							</span>
 						</div>
 					{/if}
 				{/each}
