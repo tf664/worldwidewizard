@@ -37,10 +37,30 @@ export interface Trick {
 export function initializeGame(playerNames: string[]): GameState {
     const players = createPlayers(playerNames);
 
+    // Determine max rounds based on player count
+    let maxRounds: number;
+    switch (players.length) {
+        case 3:
+            maxRounds = 20;
+            break;
+        case 4:
+            maxRounds = 15;
+            break;
+        case 5:
+            maxRounds = 12;
+            break;
+        case 6:
+            maxRounds = 10;
+            break;
+        default:
+            maxRounds = 5; // safety fallback
+            break;
+    }
+
     return {
         players,
         currentRound: 1,
-        maxRounds: 10, // TODO: !!!! Adjust based on player count
+        maxRounds,
         deck: [],
         currentTrick: [],
         currentPlayerIndex: 0,
