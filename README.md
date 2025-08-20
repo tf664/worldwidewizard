@@ -16,13 +16,10 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 
 ## Current Features
 
-- **Beautiful card graphics** with custom artwork for all 60 cards
 - **Responsive design** that works on desktop and mobile devices
 - **Interactive gameplay** with drag-and-drop card playing
 - **Real-time scoring** and round management
-- **Game state persistence** using localStorage
 - **Automated game flow** with bidding, playing, and scoring phases
-- **Winner celebration** with final leaderboard
 
 ## How to Play
 
@@ -151,72 +148,22 @@ static/
 └── favicon.svg
 ```
 
-## 🎨 Card Assets
+## Deployment
 
-The game includes 60 beautifully designed cards:
-- **4 suits**: Red, Blue, Green, Yellow (13 cards each: 1-13)
-- **Special cards**: 4 Wizard cards, 4 Fool cards  
-- **Optimized formats**: Both original JPG and optimized WebP versions
-- **Responsive images**: Automatically served based on browser support
+Vercel
 
-## 🚀 Deployment
 
-### Build for Production
+## Card Assets
 
-```bash
-npm run build
-```
+AMIGO 
 
-The built application will be in the `build/` directory and can be deployed to any static hosting service.
 
-### Deployment Options
+## Acknowledgments
 
-- **Vercel**: Automatic deployment with SvelteKit adapter
-- **Netlify**: Static site hosting with build optimization
-- **GitHub Pages**: Free hosting for open source projects
-- **Self-hosted**: Deploy to your own server or VPS
+@TebbeTom
+AMIGO
 
-> **Note**: You may need to install a [SvelteKit adapter](https://kit.svelte.dev/docs/adapters) specific to your deployment target.
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** and test thoroughly
-4. **Commit your changes**: `git commit -m 'Add amazing feature'`
-5. **Push to the branch**: `git push origin feature/amazing-feature`
-6. **Open a Pull Request**
-
-### Development Guidelines
-
-- Follow the existing code style (Prettier/ESLint configs)
-- Add tests for new features
-- Update documentation as needed
-- Ensure all tests pass before submitting PR
-
-## 📜 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
-
-- **Wizard Card Game**: Originally designed by Ken Fisher
-- **Card Artwork**: Custom illustrations created for this digital version
-- **Svelte Community**: For the excellent framework and ecosystem
-- **Contributors**: Thanks to all who have contributed to this project
-
-## 🐛 Issues & Support
-
-If you encounter any bugs or have feature requests:
-
-1. Check existing [Issues](https://github.com/tf664/worldwidewizard/issues)
-2. Create a new issue with detailed information
-3. Include steps to reproduce bugs
-4. Suggest enhancements with clear use cases
-
-## 📈 Roadmap
+## Roadmap
 
 - [ ] **Online multiplayer** support with WebSockets
 - [ ] **AI opponents** for single-player mode  
@@ -225,7 +172,3 @@ If you encounter any bugs or have feature requests:
 - [ ] **Mobile app** versions (iOS/Android)
 - [ ] **Additional card themes** and customizations
 - [ ] **Spectator mode** for watching games
-
----
-
-**Enjoy playing World Wide Wizard! 🧙‍♂️✨**
