@@ -22,6 +22,8 @@ const lobbyAdmins = {};
 const socketToUser = {};
 const games = {};
 const activeConnections = new Map();
+const connectionHeartbeats = new Map();
+
 
 function debugLog(message, data = null) {
   const timestamp = new Date().toISOString();
@@ -85,9 +87,7 @@ function initializeGame(playerNames) {
   
   try {
     const deck = createDeck();
-    const gameId = Date.now();
-    //const maxRounds = Math.min(Math.floor(60 / playerNames.length), 15);
-    const maxRounds = 2;
+    const gameTimestamp = Date.now();
     
     const players = playerNames.map((name, index) => ({
       id: name,
@@ -99,9 +99,29 @@ function initializeGame(playerNames) {
       prediction: null,
       isActive: true
     }));
+
+    let maxRounds;
+    switch (players.length) {
+        case 3:
+            maxRounds = 20;
+            break;
+        case 4:
+            maxRounds = 15;
+            break;
+        case 5:
+            maxRounds = 12;
+            break;
+        case 6:
+            maxRounds = 10;
+            break;
+        default:
+            maxRounds = 5; // safety fallback
+            break;
+    }
     
     const game = {
-      id: gameId,
+      id: gameTimestamp, 
+      startedAt: gameTimestamp,
       players: players,
       currentRound: 1,
       maxRounds: maxRounds,
@@ -121,6 +141,7 @@ function initializeGame(playerNames) {
     
     debugLog('Game initialized successfully', {
       gameId: game.id,
+      startedAt: game.startedAt,
       playersCount: game.players.length,
       maxRounds: game.maxRounds,
       cardsInDeck: game.deck.length
@@ -154,10 +175,22 @@ function dealCards(game) {
       }
     }
     
-    // Set trump card
+    // FIXED: Set trump card and suit consistently with fresh deck each round
     if (game.deck.length > 0) {
-      game.trumpCard = game.deck.pop();
-      game.trumpSuit = game.trumpCard.type === 'regular' ? game.trumpCard.suit : null;
+      // Get the trump card (last card in deck)
+      game.trumpCard = { ...game.deck[game.deck.length - 1] }; // Deep copy to prevent reference issues
+      
+      // Set trump suit based on card type
+      if (game.trumpCard.type === 'wizard') {
+        // For Wizard cards, no trump suit (all suits are trump or dealer chooses)
+        game.trumpSuit = null;
+      } else if (game.trumpCard.type === 'jester') {
+        // For Jester cards, no trump
+        game.trumpSuit = null;
+      } else {
+        // For regular cards, trump suit is the card's suit
+        game.trumpSuit = game.trumpCard.suit;
+      }
     } else {
       game.trumpCard = null;
       game.trumpSuit = null;
@@ -169,11 +202,45 @@ function dealCards(game) {
     debugLog(`Dealt ${cardsPerPlayer} cards to each player`, {
       trumpCard: game.trumpCard,
       trumpSuit: game.trumpSuit,
-      startingPlayer: game.players[game.currentPlayerIndex].name
+      startingPlayer: game.players[game.currentPlayerIndex].name,
+      deckRemaining: game.deck.length
     });
     
   } catch (error) {
     debugLog('Error dealing cards', { error: error.message });
+    throw error;
+  }
+}
+
+function startNewRound(game) {
+  try {
+    game.currentRound++;
+    
+    if (game.currentRound > game.maxRounds) {
+      game.phase = 'finished';
+      debugLog('Game finished', { 
+        finalScores: game.players.map(p => ({ name: p.name, score: p.score }))
+      });
+      return;
+    }
+    
+    // Reset for new round
+    game.currentTrick = [];
+    game.phase = 'prediction';
+    game.dealer = (game.dealer + 1) % game.players.length;
+    
+    // FIXED: Create new deck and shuffle it properly for each round
+    game.deck = createDeck(); // This creates a fresh, shuffled deck
+    dealCards(game); // This will set new trump card and suit
+    
+    debugLog('New round started', { 
+      round: game.currentRound,
+      dealer: game.players[game.dealer].name,
+      newTrumpCard: game.trumpCard,
+      newTrumpSuit: game.trumpSuit
+    });
+  } catch (error) {
+    debugLog('Error starting new round', { error: error.message });
     throw error;
   }
 }
@@ -430,41 +497,27 @@ function calculateRoundScores(game) {
   game.roundScores.push(roundScore);
 }
 
-function startNewRound(game) {
-  try {
-    game.currentRound++;
-    
-    if (game.currentRound > game.maxRounds) {
-      game.phase = 'finished';
-      debugLog('Game finished', { 
-        finalScores: game.players.map(p => ({ name: p.name, score: p.score }))
-      });
-      return;
-    }
-    
-    // Reset for new round
-    game.currentTrick = [];
-    game.phase = 'prediction';
-    game.dealer = (game.dealer + 1) % game.players.length;
-    
-    // Create new deck and deal cards
-    game.deck = createDeck();
-    dealCards(game);
-    
-    debugLog('New round started', { 
-      round: game.currentRound,
-      dealer: game.players[game.dealer].name 
-    });
-  } catch (error) {
-    debugLog('Error starting new round', { error: error.message });
-    throw error;
-  }
-}
+
 
 // ========================================
 // SOCKET CONNECTION HANDLING
 // ========================================
 io.on('connection', (socket) => {
+
+  socket.on('heartbeat', ({ timestamp }) => {
+    connectionHeartbeats.set(socket.id, {
+      timestamp,
+      lastSeen: Date.now(),
+      userInfo: socketToUser[socket.id]
+    });
+    
+    // Respond with server timestamp for sync
+    socket.emit('heartbeat_response', { 
+      serverTime: Date.now(),
+      clientTime: timestamp 
+    });
+  });
+
   // Track connection with better deduplication
   const existingConnection = Array.from(activeConnections.values())
     .find(conn => conn.userInfo && conn.userInfo.timestamp && 
@@ -677,64 +730,53 @@ io.on('connection', (socket) => {
     });
     
     try {
-      if (!lobbyCode || !username) {
-        socket.emit('error', 'Invalid lobby code or username');
-        return;
-      }
-
       if (!lobbyUsers[lobbyCode]) {
+        debugLog('Lobby not found for game start', { lobbyCode });
         socket.emit('error', 'Lobby not found');
         return;
       }
 
+      if (lobbyUsers[lobbyCode].length < 3) {
+        debugLog('Not enough players to start game', { 
+          lobbyCode, 
+          playerCount: lobbyUsers[lobbyCode].length 
+        });
+        socket.emit('error', 'Need at least 3 players to start the game');
+        return;
+      }
+
+      const isAdmin = lobbyAdmins[lobbyCode] === username;
+      if (!isAdmin) {
+        debugLog('Non-admin tried to start game', { lobbyCode, username, admin: lobbyAdmins[lobbyCode] });
+        socket.emit('error', 'Only the lobby admin can start the game');
+        return;
+      }
+
       const players = lobbyUsers[lobbyCode];
-      debugLog('Lobby players found', { lobbyCode, players });
       
-      if (players.length < 3) {
-        socket.emit('error', 'Not enough players to start the game.');
-        return;
-      }
-
-      if (!players.includes(username)) {
-        socket.emit('error', 'You must be in the lobby to start the game.');
-        return;
-      }
-
-      // Update socket mapping for game start
-      socketToUser[socket.id] = { lobbyCode, user: username };
-      debugLog('Updated socket mapping for game start', { 
-        socketId: socket.id, 
-        mapping: socketToUser[socket.id] 
-      });
-
-      if (games[lobbyCode]) {
-        debugLog('Game already exists, sending current state', { lobbyCode });
-        io.to(lobbyCode).emit('game update', games[lobbyCode]);
-        return;
-      }
-
-      debugLog('Creating new game', { lobbyCode, players });
+      const gameTimestamp = Date.now();
       games[lobbyCode] = initializeGame(players);
       
-      const gameState = games[lobbyCode];
-      if (gameState) {
-        debugLog('Game created successfully', { 
-          lobbyCode, 
-          gameId: gameState.id,
-          gamePlayers: gameState.players.map(p => p.name)
-        });
-        
-        debugLog('Emitting game started and game update', { lobbyCode });
-        io.to(lobbyCode).emit('game started', gameState);
-        io.to(lobbyCode).emit('game update', gameState);
-        
-        debugLog('Game started successfully', { lobbyCode });
-      } else {
-        socket.emit('error', 'Failed to create game state.');
-      }
+      games[lobbyCode].id = gameTimestamp;
+      games[lobbyCode].startedAt = gameTimestamp;
+      
+      debugLog('Game created and started', { 
+        lobbyCode, 
+        gameId: games[lobbyCode].id,
+        startedAt: games[lobbyCode].startedAt,
+        players: players.length,
+        timestamp: gameTimestamp
+      });
+
+      io.to(lobbyCode).emit('game started', games[lobbyCode]);
+      
     } catch (error) {
-      debugLog('Error starting game', { error: error.message });
-      socket.emit('error', 'Failed to start game. Please try again.');
+      debugLog('Error starting game', { 
+        error: error.message, 
+        lobbyCode, 
+        username 
+      });
+      socket.emit('error', 'Failed to start game: ' + error.message);
     }
   });
 
@@ -950,6 +992,7 @@ io.on('connection', (socket) => {
     
     const info = socketToUser[socket.id];
     activeConnections.delete(socket.id);
+    connectionHeartbeats.delete(socket.id); // ADDED: Clean up heartbeat
     
     debugLog('Socket disconnected', { 
       socketId: socket.id, 
@@ -959,41 +1002,29 @@ io.on('connection', (socket) => {
       wasInGame: info && games[info.lobbyCode] ? true : false
     });
     
-    if (info) {
-      const isGameActive = games[info.lobbyCode] && games[info.lobbyCode].phase !== 'finished';
-      
-      debugLog('Disconnect analysis', {
-        lobbyCode: info.lobbyCode,
-        user: info.user,
-        isGameActive,
-        gamePhase: games[info.lobbyCode]?.phase
-      });
-      
-      // Only remove from lobby if game is not active (prevents removal during active games)
-      if (lobbyUsers[info.lobbyCode] && !isGameActive) {
-        lobbyUsers[info.lobbyCode] = lobbyUsers[info.lobbyCode].filter(u => u !== info.user);
+    // FIXED: Only remove from lobby if it's a permanent disconnect
+    if (info && reason !== 'client namespace disconnect') {
+      // Give the client time to reconnect before removing from lobby
+      setTimeout(() => {
+        // Check if they've reconnected
+        const stillDisconnected = !Object.values(socketToUser).some(
+          mapping => mapping.lobbyCode === info.lobbyCode && mapping.user === info.user
+        );
         
-        if (lobbyUsers[info.lobbyCode].length === 0) {
-          delete lobbyUsers[info.lobbyCode];
-          delete lobbyAdmins[info.lobbyCode];
-          if (games[info.lobbyCode]) {
+        if (stillDisconnected && lobbyUsers[info.lobbyCode]) {
+          debugLog('Removing disconnected user from lobby after timeout', info);
+          lobbyUsers[info.lobbyCode] = lobbyUsers[info.lobbyCode].filter(u => u !== info.user);
+          
+          if (lobbyUsers[info.lobbyCode].length === 0) {
+            delete lobbyUsers[info.lobbyCode];
+            delete lobbyAdmins[info.lobbyCode];
             delete games[info.lobbyCode];
+            debugLog('Deleted empty lobby', { lobbyCode: info.lobbyCode });
+          } else {
+            sendLobbyUsers(info.lobbyCode);
           }
-          debugLog('Lobby cleaned up (empty)', { lobbyCode: info.lobbyCode });
-        } else if (lobbyAdmins[info.lobbyCode] === info.user) {
-          lobbyAdmins[info.lobbyCode] = lobbyUsers[info.lobbyCode][0];
-          debugLog('Admin transferred', { 
-            lobbyCode: info.lobbyCode, 
-            newAdmin: lobbyAdmins[info.lobbyCode] 
-          });
         }
-        sendLobbyUsers(info.lobbyCode);
-      } else {
-        debugLog('User not removed from lobby (game active or lobby not found)', {
-          lobbyExists: !!lobbyUsers[info.lobbyCode],
-          isGameActive
-        });
-      }
+      }, 10000); // 10 second grace period for reconnection
     }
     
     delete socketToUser[socket.id];
@@ -1021,24 +1052,32 @@ function sendLobbyUsers(lobbyCode) {
 // ========================================
 
 setInterval(() => {
+  const now = Date.now();
   const stats = {
     activeConnections: activeConnections.size,
     activeLobbies: Object.keys(lobbyUsers).length,
     activeGames: Object.keys(games).length,
-    socketMappings: Object.keys(socketToUser).length
+    socketMappings: Object.keys(socketToUser).length,
+    heartbeats: connectionHeartbeats.size
   };
   
   debugLog('Server statistics', stats);
   
-  // Clean up stale connections
-  const now = Date.now();
+  // Clean up stale connections and heartbeats
   for (const [socketId, connection] of activeConnections.entries()) {
-    if (now - connection.connectedAt > 300000) { // 5 minutes
+    if (now - connection.connectedAt > 600000) { // 10 minutes
       debugLog('Cleaning up stale connection', { socketId, age: now - connection.connectedAt });
       activeConnections.delete(socketId);
-      if (socketToUser[socketId]) {
-        delete socketToUser[socketId];
-      }
+      connectionHeartbeats.delete(socketId);
+      delete socketToUser[socketId];
+    }
+  }
+  
+  // Clean up old heartbeats
+  for (const [socketId, heartbeat] of connectionHeartbeats.entries()) {
+    if (now - heartbeat.lastSeen > 120000) { // 2 minutes
+      debugLog('Cleaning up old heartbeat', { socketId, age: now - heartbeat.lastSeen });
+      connectionHeartbeats.delete(socketId);
     }
   }
 }, 60000); // Run every minute

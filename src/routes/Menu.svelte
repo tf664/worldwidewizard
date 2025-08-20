@@ -34,10 +34,5 @@
 			on:click|preventDefault={() => navigate('/cards')}
 			class="hover:underline hover:text-yellow-300">Cards</a
 		>
-		<a
-			href="/profile"
-			on:click|preventDefault={() => navigate('/profile')}
-			class="hover:underline hover:text-yellow-300">Profile</a
-		>
 	</div>
 </div>

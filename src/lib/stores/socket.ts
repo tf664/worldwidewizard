@@ -15,6 +15,7 @@ const CHAT_READ_TIMESTAMP_KEY = 'wizard_chat_read_timestamp';
 
 export interface GameState {
   id: number;
+  startedAt?: number;
   players: Player[];
   currentRound: number;
   maxRounds: number;
@@ -210,6 +211,9 @@ class SocketService {
   private hasJoinedLobby = false;
   private connectionPromise: Promise<void> | null = null;
   private isDestroyed = false;
+  private isInitializing = false;
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  private lastHeartbeat: number = 0; 
   
   // Chat-related properties
   private messageCallbacks: ((message: LobbyMessage) => void)[] = [];
@@ -236,29 +240,40 @@ class SocketService {
       username, 
       isConnected: this.socket?.connected,
       isConnecting: this.isConnecting,
-      isDestroyed: this.isDestroyed
+      isDestroyed: this.isDestroyed,
+      isInitializing: this.isInitializing // Add this
     });
 
-    if (this.isDestroyed) {
-      return Promise.reject(new Error('Service is destroyed'));
+    if (this.isDestroyed || this.isInitializing) {
+      return Promise.reject(new Error('Service is destroyed or initializing'));
     }
 
+    // FIXED: Better connection state checking
     if (this.socket?.connected && 
         this.currentLobbyCode === lobbyCode && 
-        this.currentUsername === username) {
+        this.currentUsername === username &&
+        !this.connectionPromise) {
       this.debugLog('Already connected to same lobby/username');
       return Promise.resolve();
+    }
+
+    // FIXED: Cancel existing connection attempts before starting new one
+    if (this.connectionPromise) {
+      this.debugLog('Canceling existing connection attempt');
+      this.cleanup();
     }
 
     if (this.socket?.connected && 
         (this.currentLobbyCode !== lobbyCode || this.currentUsername !== username)) {
       this.debugLog('Connected to different lobby/username, disconnecting first');
       this.disconnect();
-    }
-
-    if (this.connectionPromise) {
-      this.debugLog('Connection already in progress');
-      return this.connectionPromise;
+      // Add delay to ensure cleanup is complete
+      return new Promise(resolve => {
+        setTimeout(() => {
+          this.connectionPromise = this.createConnection(lobbyCode, username);
+          this.connectionPromise.then(resolve).catch(resolve);
+        }, 500);
+      });
     }
 
     this.connectionPromise = this.createConnection(lobbyCode, username);
@@ -267,12 +282,13 @@ class SocketService {
 
   private createConnection(lobbyCode?: string, username?: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.isConnecting) {
-        reject(new Error('Already connecting'));
+      if (this.isConnecting || this.isInitializing) {
+        reject(new Error('Already connecting or initializing'));
         return;
       }
 
       this.isConnecting = true;
+      this.isInitializing = true;
       connectionStatus.set('connecting');
       
       if (this.socket) {
@@ -284,15 +300,20 @@ class SocketService {
       this.debugLog('Creating new socket connection');
       this.socket = io('http://localhost:3001', {
         forceNew: true,
-        timeout: 5000,
-        autoConnect: true
+        timeout: 15000, // Increased timeout
+        autoConnect: true,
+        // FIXED: Better connection options to prevent random disconnects
+        reconnection: false, // We handle reconnection manually
+        transports: ['websocket', 'polling'],
+        upgrade: true,
+        rememberUpgrade: true
       });
 
       const connectionTimeout = setTimeout(() => {
         this.debugLog('Connection timeout');
         this.cleanup();
         reject(new Error('Connection timeout'));
-      }, 10000);
+      }, 20000); // Increased timeout
 
       this.socket.on('connect', () => {
         clearTimeout(connectionTimeout);
@@ -301,10 +322,14 @@ class SocketService {
         isReconnecting.set(false);
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+        this.isInitializing = false;
         this.connectionPromise = null;
         
         if (lobbyCode) this.currentLobbyCode = lobbyCode;
         if (username) this.currentUsername = username;
+        
+        // ADDED: Start heartbeat to maintain connection
+        this.startHeartbeat();
         
         resolve();
       });
@@ -312,6 +337,7 @@ class SocketService {
       this.socket.on('connect_error', (error) => {
         clearTimeout(connectionTimeout);
         this.debugLog('Connection error', error);
+        this.isInitializing = false;
         this.cleanup();
         reject(error);
       });
@@ -320,40 +346,104 @@ class SocketService {
         this.debugLog('Disconnected from server', { reason, isDestroyed: this.isDestroyed });
         connectionStatus.set('disconnected');
         this.isConnecting = false;
+        this.isInitializing = false;
         this.hasJoinedLobby = false;
         
-        if (reason !== 'io client disconnect' && !this.isDestroyed) {
-          this.handleReconnection();
+        // ADDED: Stop heartbeat on disconnect
+        this.stopHeartbeat();
+        
+        // FIXED: Better disconnect reason handling
+        if (reason !== 'io client disconnect' && 
+            !this.isDestroyed) {
+          // Only auto-reconnect for certain disconnect reasons
+          if (reason === 'transport close' || 
+              reason === 'transport error' || 
+              reason === 'ping timeout') {
+            setTimeout(() => {
+              if (!this.isDestroyed) {
+                this.handleReconnection();
+              }
+            }, 2000); // Increased delay
+          }
         }
+      });
+
+      // ADDED: Handle ping/pong for connection health
+      this.socket.on('ping', () => {
+        this.lastHeartbeat = Date.now();
+      });
+
+      this.socket.on('pong', () => {
+        this.lastHeartbeat = Date.now();
       });
 
       this.setupEventListeners(lobbyCode);
     });
   }
 
-  private cleanup() {
-    this.isConnecting = false;
-    this.connectionPromise = null;
-    connectionStatus.set('disconnected');
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
+
+  private startHeartbeat() {
+      this.stopHeartbeat(); // Clear any existing heartbeat
+      
+      this.heartbeatInterval = setInterval(() => {
+        if (this.socket?.connected) {
+          this.socket.emit('heartbeat', { timestamp: Date.now() });
+          this.lastHeartbeat = Date.now();
+        } else {
+          this.stopHeartbeat();
+        }
+      }, 30000); // Send heartbeat every 30 seconds
     }
-  }
+
+    private stopHeartbeat() {
+      if (this.heartbeatInterval) {
+        clearInterval(this.heartbeatInterval);
+        this.heartbeatInterval = null;
+      }
+    }
+
+    // FIXED: Improved cleanup method
+    private cleanup() {
+      this.isConnecting = false;
+      this.isInitializing = false;
+      this.connectionPromise = null;
+      connectionStatus.set('disconnected');
+      this.stopHeartbeat(); // ADDED: Stop heartbeat
+      
+      if (this.socket) {
+        this.socket.removeAllListeners();
+        this.socket.disconnect();
+        this.socket = null;
+      }
+    }
 
   private handleReconnection() {
     const saved = loadGameData();
-    if (saved.gameState && this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (saved.gameState && saved.lobbyCode && saved.username && 
+        this.reconnectAttempts < this.maxReconnectAttempts) {
       isReconnecting.set(true);
       this.reconnectAttempts++;
       this.debugLog(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      
+      const delay = Math.min(2000 * Math.pow(2, this.reconnectAttempts - 1), 10000);
+      
       setTimeout(() => {
-        if (!this.isDestroyed) {
-          this.connect(saved.lobbyCode || undefined, saved.username || undefined);
+        if (!this.isDestroyed && !this.isConnecting) {
+          this.connect(saved.lobbyCode || undefined, saved.username || undefined)
+            .catch(err => {
+              this.debugLog('Reconnection failed', err);
+              if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                isReconnecting.set(false);
+                error.set('Connection lost. Please refresh the page or try again.');
+              }
+            });
         }
-      }, 2000);
+      }, delay);
     } else {
       isReconnecting.set(false);
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        error.set('Connection lost. Please refresh the page or try again.');
+      }
     }
   }
 
@@ -498,12 +588,34 @@ class SocketService {
 
   reset() {
     this.debugLog('Resetting socket service');
-    this.disconnect();
+    this.isDestroyed = true;
+    this.isInitializing = false;
+    
+    this.stopHeartbeat(); // ADDED: Stop heartbeat
+    
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    
+    this.isConnecting = false;
+    this.connectionPromise = null;
+    this.hasJoinedLobby = false;
+    this.reconnectAttempts = 0;
+    connectionStatus.set('disconnected');
+    isReconnecting.set(false);
+    
+    this.messageCallbacks = [];
+    this.lobbyUsersCallbacks = [];
+    this.storedMessages.clear();
+    chatMessages.set([]);
+    unreadMessageCount.set(0);
+
     setTimeout(() => {
       this.isDestroyed = false;
-    }, 100);
+    }, 500); // Increased delay
   }
-
   // ========================================
   // INITIALIZATION METHODS
   // ========================================

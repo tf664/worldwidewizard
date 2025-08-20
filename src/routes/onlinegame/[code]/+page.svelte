@@ -28,6 +28,11 @@
   let hasJoinedThisSession = false;
   let isPaused = false;
   let isAdmin = false;
+  let showDebugInfo = false;
+
+  let windowWidth = 0;
+  $: isMobile = windowWidth < 768;
+  
 
   // ========================================
   // DEBUG LOGGING
@@ -127,8 +132,8 @@
       savedGameData = socketService.initializeWithSavedData();
       debugLog('Saved data loaded', savedGameData);
 
-      // Step 2: Wait for stores to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // FIXED: Longer wait for stores to settle
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Step 3: Resolve username
       actualUsername = resolveUsername();
@@ -150,12 +155,30 @@
         isReconnecting.set(true);
       }
 
-      // Step 7: Reset and connect
+      // FIXED: Better connection handling
       debugLog('Initiating socket connection', { lobbyCode, actualUsername });
-      socketService.reset();
-      await new Promise(resolve => setTimeout(resolve, 200));
       
-      await socketService.connect(lobbyCode, actualUsername);
+      // Always reset first, but wait for it to complete
+      socketService.reset();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Connect with retry logic
+      let connectAttempts = 0;
+      const maxConnectAttempts = 3;
+      
+      while (connectAttempts < maxConnectAttempts) {
+        try {
+          await socketService.connect(lobbyCode, actualUsername);
+          break; // Success, exit retry loop
+        } catch (err) {
+          connectAttempts++;
+          debugLog(`Connection attempt ${connectAttempts} failed`, err);
+          if (connectAttempts >= maxConnectAttempts) {
+            throw err;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
       
       // Step 8: Join lobby and game
       if (socketService.isConnected()) {
@@ -163,21 +186,24 @@
         
         socketService.joinLobby(lobbyCode, actualUsername);
         
+        // FIXED: Better timing for joining game
         setTimeout(() => {
-          socketService.joinGame(lobbyCode);
-          socketService.saveSession(lobbyCode, actualUsername);
-          debugLog('Joined lobby and game');
-          
-          // Initialize chat
-          setTimeout(() => {
-            socketService.initializeChatData(lobbyCode);
-          }, 500);
-        }, 1000);
+          if (socketService.isConnected()) {
+            socketService.joinGame(lobbyCode);
+            socketService.saveSession(lobbyCode, actualUsername);
+            debugLog('Joined lobby and game');
+            
+            // Initialize chat
+            setTimeout(() => {
+              socketService.initializeChatData(lobbyCode);
+            }, 500);
+          }
+        }, 1500); // Increased delay
       }
 
     } catch (err) {
       debugLog('Initialization error', err);
-      error.set('Failed to initialize connection');
+      error.set('Failed to initialize connection. Please refresh the page.');
     } finally {
       initializationInProgress = false;
     }
@@ -213,6 +239,14 @@
     debugLog('Ending game');
     socketService.clearSession();
     goto('/');
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      showDebugInfo = !showDebugInfo;
+      console.log('Debug info visibility toggled:', showDebugInfo);
+    }
   }
 
   function startGame() {
@@ -257,6 +291,10 @@
     error.set(null);
   }
 </script>
+
+<svelte:window bind:innerWidth={windowWidth} on:keydown={handleKeydown} />
+
+
 
 <!-- ========================================
      LOADING STATES
@@ -331,76 +369,119 @@
      MAIN GAME INTERFACE
      ======================================== -->
 {:else}
-  <!-- Game Container -->
-  <div class="game-container">
-    <!-- Scoreboard -->
-    <div class="scoreboard-section">
-      <OnlineScoreBoard players={$gameState.players} {currentPlayer} />
-    </div>
-    
-    <!-- Game Table -->
+  <!-- FIXED: Apply show-chat class conditionally -->
+  <div class="game-container" class:show-chat={showChat}>
+    <!-- Game Table Area -->
     <div class="game-area">
       <OnlineGameTable gameState={$gameState} {currentPlayer} />
     </div>
 
+    <!-- Fixed Chat Panel (Desktop) -->
+    {#if showChat && !isMobile}
+      <div class="chat-area">
+        <OnlineGameChat {lobbyCode} username={actualUsername} isVisible={showChat} />
+      </div>
+    {/if}
+
     <!-- Control Panel -->
     <div class="control-panel">
-      <!-- Timer -->
-      <OnlineGameTimer gameState={$gameState} {isPaused} />
-      
-      <!-- Game Controls -->
-      <OnlineGameControls 
-        gameState={$gameState}
-        {lobbyCode}
-        currentUsername={actualUsername}
-        {isAdmin}
-        onReturnToLobby={handleReturnToLobby}
-      />
+      <!-- Timer and Game Controls with Offline Styling -->
+      <div class="controls-section">
+        <OnlineGameTimer gameState={$gameState} {isPaused} />
+        <OnlineGameControls 
+          gameState={$gameState}
+          {lobbyCode}
+          currentUsername={actualUsername}
+          {isAdmin}
+          onReturnToLobby={handleReturnToLobby}
+        />
+      </div>
 
       <!-- Chat Toggle -->
-      <button class="btn btn-chat relative" on:click={toggleChat}>
-        {showChat ? 'Hide' : 'Show'} Chat
+      <button class="btn-chat" on:click={toggleChat}>
+        <span class="chat-icon">💬</span>
+        {showChat ? 'Hide Chat' : 'Show Chat'}
         
         {#if !showChat && $unreadMessageCount > 0}
-          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-pulse">
+          <span class="chat-badge">
             {$unreadMessageCount > 9 ? '9+' : $unreadMessageCount}
           </span>
         {/if}
       </button>
+
+      <!-- Mini Scoreboard -->
+      <div class="mini-scoreboard">
+        <h4>Round {$gameState.currentRound} Scores</h4>
+        <div class="scoreboard-content">
+          {#each $gameState.players as player}
+            <div class="score-row {currentPlayer?.id === player.id ? 'current-player' : ''}">
+              <span class="player-name">{player.name}</span>
+              <div class="score-details">
+                <span class="score">{player.score}</span>
+                <span class="prediction">{player.prediction !== null ? player.prediction : '?'}/{player.tricksWon}</span>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Floating Chat Panel -->
-  {#if showChat}
-    <div class="chat-panel">
+  <!-- Mobile Chat Panel -->
+  {#if showChat && isMobile}
+    <div class="mobile-chat-area">
       <OnlineGameChat {lobbyCode} username={actualUsername} isVisible={showChat} />
     </div>
   {/if}
 
   <!-- Debug Information -->
-  <div class="debug-info">
-    <div class="debug-section">
-      <strong>Username Sources:</strong>
-      <div class="debug-grid">
-        <span>Stored: {$userStore?.username || 'null'}</span>
-        <span>Lobby: {$lobby?.username || 'null'}</span>
-        <span>Saved: {savedGameData?.username || 'null'}</span>
-        <span>Socket: {socketService.getCurrentUserInfo()?.username || 'null'}</span>
+  {#if showDebugInfo}
+    <div class="debug-info">
+      <div class="debug-header">
+        <strong>🐛 Debug Info</strong>
+        <span class="debug-toggle-hint">(Press Tab to toggle)</span>
+      </div>
+      <div class="debug-section">
+        <strong>Username Sources:</strong>
+        <div class="debug-grid">
+          <span>Stored: {$userStore?.username || 'null'}</span>
+          <span>Lobby: {$lobby?.username || 'null'}</span>
+          <span>Saved: {savedGameData?.username || 'null'}</span>
+          <span>Socket: {socketService.getCurrentUserInfo()?.username || 'null'}</span>
+        </div>
+      </div>
+      <div class="debug-section">
+        <strong>State:</strong>
+        <div class="debug-grid">
+          <span>Actual Username: {actualUsername}</span>
+          <span>Connection: {$connectionStatus}</span>
+          <span>Phase: {$gameState?.phase || 'null'}</span>
+          <span>My Player: {currentPlayer?.id || 'null'}</span>
+          <span>Is My Turn: {$gameState?.players?.[$gameState?.currentPlayerIndex]?.id === actualUsername ? 'YES' : 'NO'}</span>
+          <span>Is Admin: {isAdmin ? 'YES' : 'NO'}</span>
+          <span>Is Paused: {isPaused ? 'YES' : 'NO'}</span>
+          <span>Show Chat: {showChat ? 'YES' : 'NO'}</span>
+          <span>Is Mobile: {isMobile ? 'YES' : 'NO'}</span>
+        </div>
+      </div>
+      <div class="debug-section">
+        <strong>Game Data:</strong>
+        <div class="debug-grid">
+          <span>Game ID: {$gameState?.id || 'null'}</span>
+          <span>Round: {$gameState?.currentRound || 'null'}/{$gameState?.maxRounds || 'null'}</span>
+          <span>Current Trick: {$gameState?.currentTrick?.length || 0} cards</span>
+          <span>Trump: {$gameState?.trumpSuit || 'none'}</span>
+          <span>Players: {$gameState?.players?.length || 0}</span>
+          <span>Deck: {$gameState?.deck?.length || 0} cards</span>
+        </div>
       </div>
     </div>
-    <div class="debug-section">
-      <strong>State:</strong>
-      <div class="debug-grid">
-        <span>Actual Username: {actualUsername}</span>
-        <span>Connection: {$connectionStatus}</span>
-        <span>Phase: {$gameState.phase}</span>
-        <span>My Player: {currentPlayer?.id || 'null'}</span>
-        <span>Is My Turn: {$gameState.players[$gameState.currentPlayerIndex]?.id === actualUsername ? 'YES' : 'NO'}</span>
-        <span>Is Admin: {isAdmin ? 'YES' : 'NO'}</span>
-        <span>Is Paused: {isPaused ? 'YES' : 'NO'}</span>
-      </div>
+  {:else}
+    <!-- ADDED: Hidden debug indicator -->
+    <div class="debug-indicator">
+      <span class="debug-hint">Press Tab for debug info</span>
     </div>
-  </div>
+  {/if}
 
   <!-- Game Phase Interfaces -->
   {#if $gameState.phase === 'prediction'}
@@ -437,134 +518,366 @@
 <style>
   .game-container {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    grid-template-rows: auto 1fr;
-    grid-template-areas: 
-      "scoreboard control"
-      "game control";
-    height: calc(100vh - 120px);
+    height: 100vh;
     gap: 1rem;
     padding: 1rem;
+    transition: grid-template-columns 0.3s ease;
   }
 
-  .scoreboard-section {
-    grid-area: scoreboard;
+  /* Desktop Layout */
+  @media (min-width: 1024px) {
+    .game-container {
+      grid-template-columns: 1fr 300px; /* Default: game | controls */
+      grid-template-areas: "game control";
+    }
+
+    /* FIXED: When chat is shown, add chat column */
+    .game-container.show-chat {
+      grid-template-columns: 1fr 300px 250px; /* game | controls | chat */
+      grid-template-areas: "game control chat";
+    }
+  }
+
+  /* Tablet Layout */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .game-container {
+      grid-template-columns: 1fr 280px;
+      grid-template-areas: "game control";
+    }
+  }
+
+  /* Mobile Layout */
+  @media (max-width: 767px) {
+    .game-container {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+      grid-template-areas: 
+        "game"
+        "control";
+      height: auto;
+      min-height: 100vh;
+    }
   }
 
   .game-area {
     grid-area: game;
     position: relative;
-    min-height: 600px;
+    min-height: 500px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #065f46, #047857, #059669);
+    border-radius: 1rem;
+  }
+
+  .chat-area {
+    grid-area: chat;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
   }
 
   .control-panel {
     grid-area: control;
-    background: #f8fafc;
-    border-radius: 0.5rem;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 1rem;
     padding: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 2rem);
     overflow-y: auto;
   }
 
+  .controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-chat {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-chat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2);
+  }
+
+  .chat-icon {
+    font-size: 1.25rem;
+  }
+
+  .chat-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+  }
+
+  .mini-scoreboard {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .mini-scoreboard h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.75rem 0;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .scoreboard-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .score-row:hover {
+    background: #f3f4f6;
+  }
+
+  .score-row.current-player {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border: 2px solid #3b82f6;
+    font-weight: 600;
+  }
+
+  .player-name {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .score-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+  }
+
+  .score {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .prediction {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .mobile-chat-area {
+    margin: 1rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow: hidden;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .control-panel {
+      max-height: none;
+      padding: 0.75rem;
+    }
+    
+    .controls-section {
+      gap: 0.75rem;
+    }
+    
+    .mini-scoreboard {
+      padding: 0.75rem;
+    }
+    
+    .scoreboard-content {
+      max-height: 150px;
+    }
+  }
+
+  /* Animations */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Debug info styling update */
+  .debug-info {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    max-width: 400px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    animation: debugSlideIn 0.3s ease-out;
+  }
+
+  .debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+    font-size: 0.875rem;
+  }
+
+  .debug-toggle-hint {
+    font-size: 0.625rem;
+    color: #93c5fd;
+    font-weight: normal;
+  }
+
+  .debug-section {
+    margin-bottom: 0.75rem;
+  }
+
+  .debug-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .debug-section strong {
+    color: #60a5fa;
+    font-size: 0.8125rem;
+  }
+
+  .debug-grid {
+    display: grid;
+    gap: 0.375rem;
+    margin-top: 0.375rem;
+    font-size: 0.6875rem;
+    opacity: 0.9;
+    line-height: 1.3;
+  }
+
+  .debug-grid span {
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+
+  /* ADDED: Debug indicator when hidden */
+  .debug-indicator {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1000;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .debug-indicator:hover {
+    opacity: 1;
+  }
+
+  .debug-hint {
+    background: rgba(0, 0, 0, 0.8);
+    color: #93c5fd;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  /* ADDED: Debug slide-in animation */
+  @keyframes debugSlideIn {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Loading screen styles */
   .state-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
+    min-height: 100vh;
     padding: 2rem;
-    margin: 2rem auto;
-    max-width: 500px;
+    text-align: center;
   }
 
-  .error-screen {
-    background: #fef2f2;
-    border: 2px solid #fca5a5;
-    border-radius: 0.5rem;
+  .state-screen h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1f2937;
   }
 
-  .error-message {
-    color: #dc2626;
-    font-weight: 600;
-    margin: 1rem 0;
-  }
-
-  .game-info {
-    background: #f8fafc;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin: 1rem 0;
-    border: 1px solid #e2e8f0;
-  }
-
-  .game-info p {
-    margin: 0.5rem 0;
-  }
-
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    font-size: 1rem;
-  }
-
-  .btn-primary {
-    background-color: #3b82f6;
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background-color: #2563eb;
-  }
-
-  .btn-secondary {
-    background-color: #6b7280;
-    color: white;
-  }
-
-  .btn-secondary:hover {
-    background-color: #4b5563;
-  }
-
-  .btn-chat {
-    background-color: #3b82f6;
-    color: white;
-    position: relative;
-  }
-
-  .btn-chat:hover {
-    background-color: #2563eb;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .chat-panel {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 400px;
-    height: 500px;
-    z-index: 40;
-    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-    border-radius: 0.5rem;
+  .state-screen p {
+    font-size: 1.125rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
   }
 
   .spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #3b82f6;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 1rem auto;
@@ -575,63 +888,63 @@
     100% { transform: rotate(360deg); }
   }
 
-  .debug-info {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.9);
+  .error-screen {
+    background: #fef2f2;
+  }
+
+  .error-message {
+    color: #dc2626 !important;
+    font-weight: 600;
+  }
+
+  .game-info {
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .game-info p {
+    margin: 0.5rem 0;
+    color: #374151;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: #3b82f6;
     color: white;
-    padding: 0.75rem;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
-    max-width: 350px;
-    z-index: 1000;
   }
 
-  .debug-section {
-    margin-bottom: 0.5rem;
+  .btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
   }
 
-  .debug-section:last-child {
-    margin-bottom: 0;
+  .btn-secondary {
+    background: #6b7280;
+    color: white;
   }
 
-  .debug-grid {
-    display: grid;
-    gap: 0.25rem;
-    margin-top: 0.25rem;
-    font-size: 0.625rem;
-    opacity: 0.8;
-  }
-
-  @media (max-width: 768px) {
-    .game-container {
-      grid-template-columns: 1fr;
-      grid-template-areas: 
-        "scoreboard"
-        "control"
-        "game";
-      height: auto;
-      min-height: calc(100vh - 120px);
-    }
-    
-    .chat-panel {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      left: 10px;
-      width: auto;
-      height: 300px;
-    }
-
-    .button-group {
-      flex-direction: column;
-    }
-
-    .debug-info {
-      position: relative;
-      margin: 1rem 0;
-      max-width: none;
-    }
+  .btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
   }
 </style>

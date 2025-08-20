@@ -154,7 +154,7 @@
       socket.on('disconnect', (reason) => {
         debugLog('Disconnected from server', { reason });
         if (reason !== 'io client disconnect') {
-          error = 'Connection lost. Please refresh the page.';
+          error = 'Connection lost. Please refresh the page or try again.';
         }
       });
 
