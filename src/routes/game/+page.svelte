@@ -268,33 +268,104 @@
 
 	<!-- GAME FINISHED -->
 	{#if gameState.phase === 'finished'}
-		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-			<div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 text-center">
-				<h2 class="mb-4 text-2xl font-bold">Game Finished!</h2>
+		<div class="fixed inset-0 z-50 flex items-center justify-center">
+			<div
+				class="mx-4 w-full max-w-md rounded-2xl border-4 border-yellow-500 bg-white p-6 shadow-2xl"
+			>
+				<!-- Winner spotlight -->
+				{#if gameState.players.length > 0}
+					{@const winner = gameState.players.sort((a, b) => b.score - a.score)[0]}
+					<div
+						class="mb-6 rounded-xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 p-4 text-center text-white shadow-lg"
+					>
+						<div class="mb-2 text-3xl">👑</div>
+						<h3 class="text-xl font-bold">{winner.name} Wins!</h3>
+						<p class="text-lg font-semibold">{winner.score} points</p>
+					</div>
+				{/if}
 
+				<!-- Final Scores -->
 				<div class="mb-6">
-					<h3 class="mb-2 font-bold">Final Scores:</h3>
-					{#each gameState.players.sort((a, b) => b.score - a.score) as player, index}
-						<div
-							class="flex items-center justify-between py-1
-                                   {index === 0 ? 'font-bold text-yellow-600' : ''}"
-						>
-							<span>{index + 1}. {player.name}</span>
-							<span>{player.score}</span>
-							{#if index === 0}
-								<span class="text-yellow-500">👑</span>
-							{/if}
-						</div>
-					{/each}
+					<h3 class="mb-4 text-center text-lg font-bold text-gray-800">Final Scores</h3>
+					<div class="space-y-2">
+						{#each gameState.players.sort((a, b) => b.score - a.score) as player, index}
+							<div
+								class="flex items-center justify-between rounded-lg p-3 transition-colors
+                            {index === 0
+									? 'border-2 border-yellow-300 bg-gradient-to-r from-yellow-50 to-yellow-100'
+									: index === 1
+										? 'border-2 border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100'
+										: index === 2
+											? 'border-2 border-orange-300 bg-gradient-to-r from-orange-50 to-orange-100'
+											: 'border border-gray-200 bg-gray-50'}"
+							>
+								<div class="flex items-center gap-3">
+									<div
+										class="flex h-8 w-8 items-center justify-center rounded-full font-bold text-white
+                                    {index === 0
+											? 'bg-yellow-500'
+											: index === 1
+												? 'bg-gray-500'
+												: index === 2
+													? 'bg-orange-500'
+													: 'bg-gray-400'}"
+									>
+										{index + 1}
+									</div>
+									<span class="font-semibold text-gray-800 {index === 0 ? 'text-yellow-800' : ''}"
+										>{player.name}</span
+									>
+								</div>
+
+								<div class="flex items-center gap-2">
+									<span
+										class="text-lg font-bold {index === 0 ? 'text-yellow-700' : 'text-gray-700'}"
+										>{player.score}</span
+									>
+									{#if index === 0}
+										<span class="text-xl">👑</span>
+									{:else if index === 1}
+										<span class="text-xl">🥈</span>
+									{:else if index === 2}
+										<span class="text-xl">🥉</span>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
 				</div>
 
-				<button
-					class="rounded bg-blue-600 px-6 py-2 font-bold text-white hover:bg-blue-700"
-					on:click={handleRestart}
-					disabled={gameState.paused}
-				>
-					Play Again
-				</button>
+				<!-- Game Statistics -->
+				<div class="mb-6 rounded-lg bg-gray-50 p-4">
+					<h4 class="mb-3 text-center font-semibold text-gray-700">Game Statistics</h4>
+					<div class="grid grid-cols-2 gap-4 text-sm">
+						<div class="text-center">
+							<div class="font-bold text-gray-800">{gameState.currentRound}</div>
+							<div class="text-gray-600">Rounds Played</div>
+						</div>
+						<div class="text-center">
+							<div class="font-bold text-gray-800">{formatTime(elapsed)}</div>
+							<div class="text-gray-600">Total Time</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Action Buttons -->
+				<div class="flex gap-3">
+					<button
+						class="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+						on:click={handleRestart}
+						disabled={gameState.paused}
+					>
+						🎮 Play Again
+					</button>
+					<button
+						class="flex-1 rounded-xl bg-gray-600 px-4 py-3 font-semibold text-white transition-all hover:scale-105 hover:bg-gray-700"
+						on:click={() => (window.location.href = '/')}
+					>
+						🏠 Main Menu
+					</button>
+				</div>
 			</div>
 		</div>
 	{/if}
