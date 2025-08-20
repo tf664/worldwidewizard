@@ -1,17 +1,9 @@
 <script lang="ts">
 	import type { GameState } from '../../logic/gameLogic.js';
-	import type { Player } from '../../types/player.js';
+	import { calculateScore } from '../../logic/gameLogic.js';
 
 	export let gameState: GameState;
 	export let onNextRound: () => void;
-
-	function calculateRoundScore(player: Player): number {
-		if (player.prediction === player.tricksWon) {
-			return 20 + player.tricksWon;
-		} else {
-			return Math.abs(player.prediction - player.tricksWon) * -10;
-		}
-	}
 
 	function getScoreColor(score: number): string {
 		return score >= 0 ? 'text-green-600' : 'text-red-600';
@@ -30,8 +22,9 @@
 						<p>Predicted: <span class="font-semibold">{player.prediction}</span></p>
 						<p>Actual: <span class="font-semibold">{player.tricksWon}</span></p>
 						<p>
-							Round Score: <span class="font-semibold {getScoreColor(calculateRoundScore(player))}"
-								>{calculateRoundScore(player)}</span
+							Round Score: <span
+								class={getScoreColor(calculateScore(player.prediction || 0, player.tricksWon || 0))}
+								>{calculateScore(player.prediction || 0, player.tricksWon || 0)}</span
 							>
 						</p>
 						<p>Total Score: <span class="font-semibold">{player.score}</span></p>

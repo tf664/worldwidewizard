@@ -12,7 +12,8 @@
 		processPrediction,
 		playCard,
 		undoMove,
-		chooseTrumpSuit
+		chooseTrumpSuit,
+		calculateScore
 	} from './logic/gameLogic.js';
 	import { PanelPositionManager } from './components/ui/interfacePosition.js';
 
@@ -152,13 +153,10 @@
 
 	function handleNextRound() {
 		if (gameState.phase === 'scoring') {
+			// Apply correct German Wizard scoring rules
 			gameState.players.forEach((player) => {
-				if (player.prediction === player.tricksWon) {
-					// TODO ? adjust scoring
-					player.score += 20 + player.tricksWon;
-				} else {
-					player.score -= Math.abs(player.prediction - player.tricksWon) * 10;
-				}
+				const roundScore = calculateScore(player.prediction || 0, player.tricksWon || 0);
+				player.score += roundScore;
 			});
 		}
 
