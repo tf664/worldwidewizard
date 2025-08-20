@@ -126,7 +126,7 @@
 	function handleNextRound() {
 		if (gameState.phase === 'scoring') {
 			gameState.players.forEach((player) => {
-				if (player.prediction === player.tricksWon) {
+				if (player.prediction === player.tricksWon) { // TODO ? adjust scoring
 					player.score += 20 + player.tricksWon;
 				} else {
 					player.score -= Math.abs(player.prediction - player.tricksWon) * 10;

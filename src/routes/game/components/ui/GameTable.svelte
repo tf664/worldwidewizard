@@ -13,6 +13,10 @@
 	$: responsiveConfig = getResponsiveConfig(windowWidth, windowHeight);
 	$: isMobile = responsiveConfig.breakpoint === 'mobile';
 
+	$: trumpCard = gameState?.deck?.length > 0 ? gameState.deck[gameState.deck.length - 1] : null;
+	$: hasTrumpCard = trumpCard !== null;
+	$: trumpSuitDisplay = gameState?.trumpSuit || 'No trump';
+
 	// Initialize array with correct length
 	$: if (gameState && playerElements.length !== gameState.players.length) {
 		playerElements = new Array(gameState.players.length);
@@ -64,8 +68,6 @@
 
 		return `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
 	}
-
-	$: currentPlayerIndex = gameState.currentPlayerIndex;
 
 	function isCurrentPlayer(player: Player): boolean {
 		// Compare player objects directly using index
@@ -212,21 +214,15 @@
 		</div>
 	{/each}
 
-	<!-- Central game area with responsive sizing -->
+	<!-- Central Game Area -->
 	<div
-		class="relative flex {responsiveConfig.centralSize} flex-col items-center justify-center rounded-full bg-green-600 text-white shadow-inner"
+		class="relative flex h-80 w-80 flex-col items-center justify-center rounded-full bg-green-600 text-white"
 	>
 		<!-- Game Info -->
 		<div class="mb-4 text-center">
-			<h2 class="{isMobile ? 'text-xl' : 'text-2xl'} font-bold">Round {gameState.currentRound}</h2>
-			<p class="{isMobile ? 'text-base' : 'text-lg'} capitalize">{gameState.phase} Phase</p>
-			{#if gameState.trumpSuit}
-				<p class="mt-1 text-sm">
-					Trump: <span class="font-semibold capitalize">{gameState.trumpSuit}</span>
-				</p>
-			{:else}
-				<p class="mt-1 text-sm">No Trump</p>
-			{/if}
+			<div class="text-lg font-bold">Round {gameState.currentRound}</div>
+			<div class="text-sm">Trump: {trumpSuitDisplay}</div>
+			<div class="text-sm">Phase: {gameState.phase}</div>
 		</div>
 
 		<!-- Current Trick -->
@@ -259,20 +255,21 @@
 			</div>
 		</div>
 
-		<!-- Trump Card (if exists) -->
-		{#if gameState.deck.length > 0}
-			{@const trumpCard = gameState.deck[gameState.deck.length - 1]}
+		<!-- Trump Card Display with key to force re-render -->
+		{#if hasTrumpCard && trumpCard}
 			<div class="absolute -right-2 -bottom-2">
 				<div
 					class="relative {isMobile
 						? 'h-12 w-8'
 						: 'h-16 w-12'} overflow-hidden rounded border border-white"
 				>
-					<CardImage
-						src={getCardImagePath(trumpCard)}
-						alt={getCardDisplay(trumpCard)}
-						className="w-full h-full object-cover"
-					/>
+					{#key `${trumpCard.suit}-${trumpCard.rank}`}
+						<CardImage
+							src={getCardImagePath(trumpCard)}
+							alt={getCardDisplay(trumpCard)}
+							className="w-full h-full object-cover"
+						/>
+					{/key}
 					<div
 						class="absolute -bottom-3 left-1/2 -translate-x-1/2 transform rounded bg-yellow-600 px-1 text-xs font-bold text-black"
 					>

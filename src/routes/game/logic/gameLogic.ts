@@ -80,7 +80,7 @@ export function startNewRound(gameState: GameState): void {
     // Reset player stats for round
     gameState.players.forEach(player => {
         player.hand = [];
-        player.prediction = -1;  // Use -1 to indicate no prediction made yet
+        player.prediction = -1;  // -1 to indicate no prediction made yet
         player.tricksWon = 0;
     });
 
@@ -117,7 +117,7 @@ export function determineTrumpSuit(gameState: GameState): void {
     const trumpCard = gameState.deck[gameState.deck.length - 1];
 
     if (trumpCard.rank === 'Zoro') {
-        // Zoro - player chooses trump (for now, random)
+        // Zoro - player chooses trump (for now, random) // TODO!
         const suits: Suit[] = ['red', 'blue', 'green', 'yellow'];
         gameState.trumpSuit = suits[Math.floor(Math.random() * suits.length)];
     } else if (trumpCard.rank === 'Fool') {
