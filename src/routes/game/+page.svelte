@@ -11,6 +11,7 @@
 	import { PanelPositionManager, type PanelPosition } from './components/ui/interfacePosition.js';
 	import TrumpChoosingInterface from './components/interfaces/TrumpChoosingInterface.svelte';
 	import { chooseTrumpSuit } from './logic/gameLogic.js';
+	import type { Suit } from './logic/cards.js';
 
 	let gameState: GameState;
 	let positionManager = new PanelPositionManager();
@@ -19,7 +20,6 @@
 		y: '50%',
 		transformX: '-50%',
 		transformY: '-50%',
-		arrowDir: 'bottom',
 		position: 'bottom'
 	};
 
@@ -216,23 +216,11 @@
 				bind:this={interfaceRef}
 			>
 				{#if gameState.phase === 'choosing-trump'}
-					<TrumpChoosingInterface
-						{gameState}
-						onTrumpChosen={handleTrumpChoice}
-						arrowDir={currentPanelPosition.arrowDir}
-					/>
+					<TrumpChoosingInterface {gameState} onTrumpChosen={handleTrumpChoice} />
 				{:else if gameState.phase === 'bidding'}
-					<BiddingInterface
-						{gameState}
-						onPredictionMade={handlePrediction}
-						arrowDir={currentPanelPosition.arrowDir}
-					/>
+					<BiddingInterface {gameState} onPredictionMade={handlePrediction} />
 				{:else if gameState.phase === 'playing'}
-					<CardPlayInterface
-						{gameState}
-						onCardPlayed={handleCardPlay}
-						arrowDir={currentPanelPosition.arrowDir}
-					/>
+					<CardPlayInterface {gameState} onCardPlayed={handleCardPlay} />
 				{/if}
 			</div>
 		</div>

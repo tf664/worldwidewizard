@@ -1,12 +1,10 @@
 export type Position = 'top' | 'bottom' | 'left' | 'right';
-export type ArrowDirection = 'top' | 'bottom' | 'left' | 'right';
 
 export interface PanelPosition {
     x: string;
     y: string;
     transformX: string;
     transformY: string;
-    arrowDir: ArrowDirection;
     position: Position;
 }
 
@@ -138,7 +136,6 @@ export class PanelPositionManager {
                 return {
                     ...candidate,
                     position: targetPosition,
-                    arrowDir: this.getArrowDirection(targetPosition)
                 };
             }
         }
@@ -209,16 +206,6 @@ export class PanelPositionManager {
             finalY + this.panelDimensions.height <= windowHeight - safeZone;
     }
 
-    private getArrowDirection(position: Position): ArrowDirection {
-        const opposites: Record<Position, ArrowDirection> = {
-            'right': 'left',
-            'left': 'right',
-            'bottom': 'top',
-            'top': 'bottom'
-        };
-        return opposites[position];
-    }
-
     private isMobileScreen(width: number, height: number): boolean {
         return width < this.minMobileWidth || height < 600 ||
             (Math.min(width, height) < 500);
@@ -230,7 +217,6 @@ export class PanelPositionManager {
             y: '85%',
             transformX: '-50%',
             transformY: '-100%',
-            arrowDir: 'top',
             position: 'bottom'
         };
     }
@@ -243,7 +229,6 @@ export class PanelPositionManager {
             y: centerY,
             transformX: '-50%',
             transformY: '-50%',
-            arrowDir: 'bottom',
             position: 'bottom'
         };
     }
