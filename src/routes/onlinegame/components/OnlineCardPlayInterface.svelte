@@ -8,10 +8,37 @@
 
     let showInterface = false;
 
-    // Show interface only if it's the current player's turn in playing phase
-    $: showInterface = !!(currentPlayer && 
-                      gameState.phase === 'playing' && 
-                      gameState.players[gameState.currentPlayerIndex]?.id === currentPlayer.id);
+    $: if (gameState && currentPlayer) {
+        const currentTurnPlayer = gameState.players[gameState.currentPlayerIndex];
+        const isMyTurn = currentTurnPlayer?.id === currentPlayer.id;
+        const isInPlayingPhase = gameState.phase === 'playing';
+        
+        showInterface = !!(
+            currentPlayer && 
+            isInPlayingPhase && 
+            isMyTurn &&
+            currentTurnPlayer // Ensure current turn player exists
+        );
+
+        console.log('Card play interface visibility detailed check:', {
+            hasCurrentPlayer: !!currentPlayer,
+            currentPlayerName: currentPlayer?.name,
+            currentPlayerId: currentPlayer?.id,
+            gamePhase: gameState?.phase,
+            currentTurnPlayerIndex: gameState?.currentPlayerIndex,
+            currentTurnPlayerName: currentTurnPlayer?.name,
+            currentTurnPlayerId: currentTurnPlayer?.id,
+            isMyTurn,
+            isInPlayingPhase,
+            showInterface
+        });
+    } else {
+        showInterface = false;
+        console.log('Card play interface - missing required data:', {
+            hasGameState: !!gameState,
+            hasCurrentPlayer: !!currentPlayer
+        });
+    }
 
     $: hand = currentPlayer?.hand || [];
     $: trumpSuit = gameState.trumpSuit || null;
@@ -29,8 +56,14 @@
             return `/rcs/cards-optimized/fool_${randomFool}.webp`;
         }
 
+        if (!card.suit) {
+            console.warn('Card missing suit:', card);
+            return '/rcs/cards-optimized/card_back.webp'; // Fallback image
+        }
+
         const suitName = card.suit?.toLowerCase() || 'unknown';
         let rankName: string;
+
         if (typeof card.rank === 'number') {
             const rankNames = [
                 '', 'one', 'two', 'three', 'four', 'five', 'six', 
@@ -41,8 +74,11 @@
             rankName = String(card.rank).toLowerCase();
         }
 
-        return `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
-    }
+        const imagePath = `/rcs/cards-optimized/${suitName}_${rankName}.webp`;
+        console.log('Generated image path:', imagePath, 'for card:', card); // Debug log
+        
+
+        return imagePath;}
 
     function getCardDisplay(card: Card): string {
         if (card.rank === 'Zoro') return 'Wizard';

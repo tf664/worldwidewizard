@@ -14,44 +14,594 @@ const io = new Server(server, {
   }
 });
 
-// Simple state management
+// ========================================
+// STATE MANAGEMENT
+// ========================================
 const lobbyUsers = {};
 const lobbyAdmins = {};
 const socketToUser = {};
 const games = {};
+const activeConnections = new Map();
 
-io.on('connection', (socket) => {
+function debugLog(message, data = null) {
+  const timestamp = new Date().toISOString();
+  if (data) {
+    console.log(`[${timestamp}] ${message}:`, JSON.stringify(data, null, 2));
+  } else {
+    console.log(`[${timestamp}] ${message}`);
+  }
+}
+
+// ========================================
+// GAME LOGIC FUNCTIONS
+// ========================================
+
+function createDeck() {
+  const deck = [];
+  const suits = ['blue', 'red', 'green', 'yellow']; // Changed from hearts/diamonds/clubs/spades
   
-  // Join lobby
+  // Add numbered cards (1-13 for each suit)
+  for (let suit of suits) {
+    for (let rank = 1; rank <= 13; rank++) {
+      deck.push({
+        suit: suit,
+        rank: rank,
+        value: rank,
+        type: 'regular'
+      });
+    }
+  }
+  
+  // Add special cards (4 Wizards and 4 Jesters)
+  for (let i = 0; i < 4; i++) {
+    deck.push({
+      suit: null,
+      rank: 'Zoro',
+      value: 15,
+      type: 'wizard'
+    });
+    deck.push({
+      suit: null,
+      rank: 'Fool',
+      value: 0,
+      type: 'jester'
+    });
+  }
+  
+  return shuffleDeck(deck);
+}
+
+function shuffleDeck(deck) {
+  const shuffled = [...deck];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function initializeGame(playerNames) {
+  debugLog('Initializing new game', { players: playerNames });
+  
+  try {
+    const deck = createDeck();
+    const gameId = Date.now();
+    //const maxRounds = Math.min(Math.floor(60 / playerNames.length), 15);
+    const maxRounds = 2;
+    
+    const players = playerNames.map((name, index) => ({
+      id: name,
+      name: name,
+      hand: [],
+      tricks: 0,
+      tricksWon: 0,
+      score: 0,
+      prediction: null,
+      isActive: true
+    }));
+    
+    const game = {
+      id: gameId,
+      players: players,
+      currentRound: 1,
+      maxRounds: maxRounds,
+      currentTrick: [],
+      currentPlayerIndex: 0,
+      trumpCard: null,
+      trumpSuit: null,
+      phase: 'prediction',
+      roundScores: [],
+      deck: deck,
+      dealer: 0,
+      isPaused: false
+    };
+    
+    // Deal cards for first round
+    dealCards(game);
+    
+    debugLog('Game initialized successfully', {
+      gameId: game.id,
+      playersCount: game.players.length,
+      maxRounds: game.maxRounds,
+      cardsInDeck: game.deck.length
+    });
+    
+    return game;
+  } catch (error) {
+    debugLog('Error initializing game', { error: error.message });
+    throw error;
+  }
+}
+
+function dealCards(game) {
+  try {
+    const cardsPerPlayer = game.currentRound;
+    debugLog(`Dealing ${cardsPerPlayer} cards to each of ${game.players.length} players`);
+    
+    // Reset hands
+    game.players.forEach(player => {
+      player.hand = [];
+      player.prediction = null;
+      player.tricksWon = 0;
+    });
+    
+    // Deal cards
+    for (let i = 0; i < cardsPerPlayer; i++) {
+      for (let player of game.players) {
+        if (game.deck.length > 0) {
+          player.hand.push(game.deck.pop());
+        }
+      }
+    }
+    
+    // Set trump card
+    if (game.deck.length > 0) {
+      game.trumpCard = game.deck.pop();
+      game.trumpSuit = game.trumpCard.type === 'regular' ? game.trumpCard.suit : null;
+    } else {
+      game.trumpCard = null;
+      game.trumpSuit = null;
+    }
+    
+    // Set starting player (rotates each round)
+    game.currentPlayerIndex = (game.dealer + 1) % game.players.length;
+    
+    debugLog(`Dealt ${cardsPerPlayer} cards to each player`, {
+      trumpCard: game.trumpCard,
+      trumpSuit: game.trumpSuit,
+      startingPlayer: game.players[game.currentPlayerIndex].name
+    });
+    
+  } catch (error) {
+    debugLog('Error dealing cards', { error: error.message });
+    throw error;
+  }
+}
+
+function processPrediction(game, playerId, prediction) {
+  try {
+    debugLog('Processing prediction', { playerId, prediction, phase: game.phase });
+    
+    if (game.phase !== 'prediction') {
+      debugLog('Invalid phase for prediction', { currentPhase: game.phase });
+      return false;
+    }
+    
+    const player = game.players.find(p => p.id === playerId);
+    if (!player) {
+      debugLog('Player not found', { playerId });
+      return false;
+    }
+    
+    if (player.prediction !== null) {
+      debugLog('Player already made prediction', { playerId, existingPrediction: player.prediction });
+      return false;
+    }
+    
+    if (prediction < 0 || prediction > game.currentRound) {
+      debugLog('Invalid prediction value', { prediction, maxAllowed: game.currentRound });
+      return false;
+    }
+    
+    player.prediction = prediction;
+    debugLog('Prediction recorded', { playerId, prediction });
+    
+    // Check if all players have made predictions
+    const allPredictionsMade = game.players.every(p => p.prediction !== null);
+    if (allPredictionsMade) {
+      game.phase = 'playing';
+      game.currentPlayerIndex = (game.dealer + 1) % game.players.length;
+      debugLog('All predictions made, moving to playing phase');
+    } else {
+      // Move to next player
+      do {
+        game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+      } while (game.players[game.currentPlayerIndex].prediction !== null);
+    }
+    
+    return true;
+  } catch (error) {
+    debugLog('Error processing prediction', { error: error.message });
+    return false;
+  }
+}
+
+function playCard(game, playerId, cardIndex) {
+  try {
+    debugLog('Processing card play', { playerId, cardIndex, phase: game.phase });
+    
+    if (game.phase !== 'playing') {
+      debugLog('Invalid phase for card play', { currentPhase: game.phase });
+      return false;
+    }
+    
+    const player = game.players.find(p => p.id === playerId);
+    if (!player) {
+      debugLog('Player not found', { playerId });
+      return false;
+    }
+    
+    if (game.players[game.currentPlayerIndex].id !== playerId) {
+      debugLog('Not player turn', { 
+        currentPlayer: game.players[game.currentPlayerIndex].id,
+        attemptingPlayer: playerId 
+      });
+      return false;
+    }
+    
+    if (cardIndex < 0 || cardIndex >= player.hand.length) {
+      debugLog('Invalid card index', { cardIndex, handSize: player.hand.length });
+      return false;
+    }
+    
+    const card = player.hand[cardIndex];
+    
+    // Validate card play according to game rules
+    if (!isValidCardPlay(game, player, card)) {
+      debugLog('Invalid card play according to rules');
+      return false;
+    }
+    
+    // Remove card from hand and add to trick
+    player.hand.splice(cardIndex, 1);
+    const playerIndex = game.players.findIndex(p => p.id === playerId);
+    game.currentTrick.push({
+      player: playerId,
+      playerId: playerIndex,
+      card: card
+    });
+    
+    debugLog('Card played successfully', { 
+      playerId, 
+      card, 
+      trickSize: game.currentTrick.length 
+    });
+    
+    // Check if trick is complete
+    if (game.currentTrick.length === game.players.length) {
+      // Evaluate trick
+      const winner = evaluateTrick(game);
+      game.players[winner].tricksWon++;
+      
+      debugLog('Trick completed', { 
+        winner: game.players[winner].name,
+        tricksWon: game.players[winner].tricksWon 
+      });
+      
+      // Clear trick and set winner as next starter
+      game.currentTrick = [];
+      game.currentPlayerIndex = winner;
+      
+      // Check if round is complete
+      if (game.players[0].hand.length === 0) {
+        calculateRoundScores(game);
+        game.phase = 'scoring';
+        debugLog('Round completed, moving to scoring phase');
+      }
+    } else {
+      // Move to next player
+      game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+    }
+    
+    return true;
+  } catch (error) {
+    debugLog('Error processing card play', { error: error.message });
+    return false;
+  }
+}
+
+function isValidCardPlay(game, player, card) {
+  // First card of trick can be anything
+  if (game.currentTrick.length === 0) {
+    return true;
+  }
+  
+  const leadCard = game.currentTrick[0].card;
+  const leadSuit = leadCard.suit;
+  
+  // Jester can be played anytime
+  if (card.type === 'jester') {
+    return true;
+  }
+  
+  // Wizard can be played anytime
+  if (card.type === 'wizard') {
+    return true;
+  }
+  
+  // If lead card is jester, any card can be played
+  if (leadCard.type === 'jester') {
+    return true;
+  }
+  
+  // If lead card is wizard, any card can be played
+  if (leadCard.type === 'wizard') {
+    return true;
+  }
+  
+  // Must follow suit if possible
+  if (card.suit === leadSuit) {
+    return true;
+  }
+  
+  // Check if player has any cards of the lead suit
+  const hasLeadSuit = player.hand.some(c => c.suit === leadSuit && c.type === 'regular');
+  
+  // If player doesn't have lead suit, any card is valid
+  return !hasLeadSuit;
+}
+
+function evaluateTrick(game) {
+  let winningPlay = game.currentTrick[0];
+  let winnerIndex = 0;
+  
+  for (let i = 1; i < game.currentTrick.length; i++) {
+    const currentPlay = game.currentTrick[i];
+    
+    if (beatsCard(currentPlay.card, winningPlay.card, game.trumpSuit)) {
+      winningPlay = currentPlay;
+      winnerIndex = i;
+    }
+  }
+  
+  return winningPlay.playerId;
+}
+
+function beatsCard(card1, card2, trumpSuit) {
+  // Wizard beats everything
+  if (card1.type === 'wizard') return true;
+  if (card2.type === 'wizard') return false;
+  
+  // Everything beats jester
+  if (card2.type === 'jester') return true;
+  if (card1.type === 'jester') return false;
+  
+  // Trump beats non-trump
+  const card1IsTrump = card1.suit === trumpSuit;
+  const card2IsTrump = card2.suit === trumpSuit;
+  
+  if (card1IsTrump && !card2IsTrump) return true;
+  if (!card1IsTrump && card2IsTrump) return false;
+  
+  // Same suit, higher value wins
+  if (card1.suit === card2.suit) {
+    return card1.value > card2.value;
+  }
+  
+  // Different suits, card2 wins (was played first)
+  return false;
+}
+
+function calculateRoundScores(game) {
+  const roundScore = {
+    round: game.currentRound,
+    scores: []
+  };
+  
+  for (let player of game.players) {
+    let roundPoints = 0;
+    
+    if (player.prediction === player.tricksWon) {
+      // Correct prediction: 20 + 10 per trick
+      roundPoints = 20 + (player.prediction * 10);
+    } else {
+      // Wrong prediction: -10 per trick difference
+      roundPoints = -10 * Math.abs(player.prediction - player.tricksWon);
+    }
+    
+    player.score += roundPoints;
+    
+    roundScore.scores.push({
+      player: player.name,
+      score: roundPoints,
+      tricks: player.tricksWon,
+      prediction: player.prediction
+    });
+    
+    debugLog('Round score calculated', {
+      player: player.name,
+      prediction: player.prediction,
+      tricksWon: player.tricksWon,
+      roundPoints: roundPoints,
+      totalScore: player.score
+    });
+  }
+  
+  game.roundScores.push(roundScore);
+}
+
+function startNewRound(game) {
+  try {
+    game.currentRound++;
+    
+    if (game.currentRound > game.maxRounds) {
+      game.phase = 'finished';
+      debugLog('Game finished', { 
+        finalScores: game.players.map(p => ({ name: p.name, score: p.score }))
+      });
+      return;
+    }
+    
+    // Reset for new round
+    game.currentTrick = [];
+    game.phase = 'prediction';
+    game.dealer = (game.dealer + 1) % game.players.length;
+    
+    // Create new deck and deal cards
+    game.deck = createDeck();
+    dealCards(game);
+    
+    debugLog('New round started', { 
+      round: game.currentRound,
+      dealer: game.players[game.dealer].name 
+    });
+  } catch (error) {
+    debugLog('Error starting new round', { error: error.message });
+    throw error;
+  }
+}
+
+// ========================================
+// SOCKET CONNECTION HANDLING
+// ========================================
+io.on('connection', (socket) => {
+  // Track connection with better deduplication
+  const existingConnection = Array.from(activeConnections.values())
+    .find(conn => conn.userInfo && conn.userInfo.timestamp && 
+          Date.now() - conn.userInfo.timestamp < 5000);
+  
+  if (existingConnection) {
+    debugLog('Potential duplicate connection detected, closing', { 
+      socketId: socket.id,
+      existingSocketId: existingConnection.socketId 
+    });
+    socket.disconnect();
+    return;
+  }
+  
+  activeConnections.set(socket.id, {
+    connectedAt: Date.now(),
+    userInfo: null,
+    socketId: socket.id
+  });
+  
+  debugLog('New socket connection', { 
+    socketId: socket.id,
+    totalConnections: activeConnections.size
+  });
+
+  // Connection timeout for idle connections
+  const connectionTimeout = setTimeout(() => {
+    if (!socketToUser[socket.id]) {
+      debugLog('Disconnecting idle connection', { socketId: socket.id });
+      socket.disconnect();
+    }
+  }, 30000); // 30 seconds timeout
+
+  // ========================================
+  // LOBBY MANAGEMENT
+  // ========================================
+  
   socket.on('join lobby', ({ lobbyCode, user }) => {
-    socket.join(lobbyCode);
-
-    if (!lobbyUsers[lobbyCode]) {
-      lobbyUsers[lobbyCode] = [];
-      lobbyAdmins[lobbyCode] = user;
+    clearTimeout(connectionTimeout);
+    
+    debugLog('Join lobby request', { socketId: socket.id, lobbyCode, user });
+    
+    // Validate input parameters
+    if (!lobbyCode || !user) {
+      debugLog('Invalid lobby join parameters', { lobbyCode, user });
+      socket.emit('error', 'Invalid lobby code or username');
+      return;
     }
-    if (!lobbyUsers[lobbyCode].includes(user)) {
-      lobbyUsers[lobbyCode].push(user);
+
+    if (user.length < 1 || user.length > 20) {
+      debugLog('Invalid username length', { user, length: user.length });
+      socket.emit('error', 'Username must be between 1 and 20 characters');
+      return;
     }
 
-    socketToUser[socket.id] = { lobbyCode, user };
-    sendLobbyUsers(lobbyCode);
+    // Check existing mapping - allow reconnection
+    const existingMapping = socketToUser[socket.id];
+    if (existingMapping && 
+        existingMapping.lobbyCode === lobbyCode && 
+        existingMapping.user === user) {
+      debugLog('Socket already correctly mapped', { socketId: socket.id });
+      sendLobbyUsers(lobbyCode);
+      return;
+    }
+    
+    try {
+      socket.join(lobbyCode);
+
+      if (!lobbyUsers[lobbyCode]) {
+        // Create new lobby
+        lobbyUsers[lobbyCode] = [];
+        lobbyAdmins[lobbyCode] = user;
+        debugLog('Created new lobby', { lobbyCode, admin: user });
+      }
+      
+      // Check for maximum lobby size
+      const MAX_LOBBY_SIZE = 6;
+      if (lobbyUsers[lobbyCode].length >= MAX_LOBBY_SIZE && !lobbyUsers[lobbyCode].includes(user)) {
+        debugLog('Lobby is full', { lobbyCode, currentSize: lobbyUsers[lobbyCode].length });
+        socket.emit('error', 'Lobby is full (maximum 6 players)');
+        return;
+      }
+      
+      // FIXED: Check if username is already taken in this lobby (but allow reconnection)
+      if (lobbyUsers[lobbyCode].includes(user)) {
+        // Check if this is a reconnection (same user, different socket)
+        const existingUserSocket = Object.keys(socketToUser).find(id => 
+          socketToUser[id].lobbyCode === lobbyCode && socketToUser[id].user === user
+        );
+        
+        if (existingUserSocket && existingUserSocket !== socket.id) {
+          debugLog('Username already taken by active user', { lobbyCode, user, existingSocket: existingUserSocket });
+          socket.emit('error', 'Username already taken in this lobby');
+          return;
+        }
+        
+        debugLog('User rejoining lobby', { lobbyCode, user });
+      } else {
+        // Add new user to lobby
+        lobbyUsers[lobbyCode].push(user);
+        debugLog('Added new user to lobby', { lobbyCode, user, totalUsers: lobbyUsers[lobbyCode].length });
+      }
+
+      socketToUser[socket.id] = { lobbyCode, user };
+      
+      if (activeConnections.has(socket.id)) {
+        activeConnections.get(socket.id).userInfo = { 
+          lobbyCode, 
+          user, 
+          timestamp: Date.now() 
+        };
+      }
+      
+      debugLog('Successfully joined lobby', { 
+        socketId: socket.id, 
+        lobbyCode, 
+        user,
+        totalUsers: lobbyUsers[lobbyCode].length 
+      });
+      
+      sendLobbyUsers(lobbyCode);
+      
+    } catch (err) {
+      debugLog('Error joining lobby', { error: err.message, lobbyCode, user });
+      socket.emit('error', 'Failed to join lobby. Please try again.');
+    }
   });
 
-  // Lobby message
-  socket.on('lobby message', ({ lobbyCode, user, text }) => {
-    io.to(lobbyCode).emit('lobby message', { user, text });
-  });
-
-  // Leave lobby - SIMPLIFIED
   socket.on('leave lobby', ({ lobbyCode, user }) => {
+    debugLog('Leave lobby request', { socketId: socket.id, lobbyCode, user });
+    
     if (lobbyUsers[lobbyCode]) {
       lobbyUsers[lobbyCode] = lobbyUsers[lobbyCode].filter(u => u !== user);
       
       if (lobbyUsers[lobbyCode].length === 0) {
         delete lobbyUsers[lobbyCode];
         delete lobbyAdmins[lobbyCode];
-        // Only delete game if it exists and is finished
         if (games[lobbyCode] && games[lobbyCode].phase === 'finished') {
           delete games[lobbyCode];
         }
@@ -64,29 +614,9 @@ io.on('connection', (socket) => {
     socket.leave(lobbyCode);
   });
 
-  // Disconnect - SIMPLIFIED
-  socket.on('disconnect', () => {
-    const info = socketToUser[socket.id];
-    if (info) {
-      // Don't modify lobby users on disconnect during game
-      if (lobbyUsers[info.lobbyCode] && (!games[info.lobbyCode] || games[info.lobbyCode].phase === 'finished')) {
-        lobbyUsers[info.lobbyCode] = lobbyUsers[info.lobbyCode].filter(u => u !== info.user);
-        
-        if (lobbyUsers[info.lobbyCode].length === 0) {
-          delete lobbyUsers[info.lobbyCode];
-          delete lobbyAdmins[info.lobbyCode];
-          if (games[info.lobbyCode]) {
-            delete games[info.lobbyCode];
-          }
-        }
-        sendLobbyUsers(info.lobbyCode);
-      }
-    }
-    delete socketToUser[socket.id];
-  });
-
-  // Remove user
   socket.on('remove user', ({ lobbyCode, user }) => {
+    debugLog('Remove user request', { socketId: socket.id, lobbyCode, user });
+    
     if (lobbyUsers[lobbyCode]) {
       lobbyUsers[lobbyCode] = lobbyUsers[lobbyCode].filter(u => u !== user);
       
@@ -108,387 +638,416 @@ io.on('connection', (socket) => {
     }
   });
 
-  // START GAME - SIMPLIFIED
-  socket.on('start game', ({ lobbyCode }) => {
-    console.log(`Starting game for lobby: ${lobbyCode}`);
+  // ========================================
+  // CHAT SYSTEM
+  // ========================================
+  
+  socket.on('lobby message', ({ lobbyCode, user, text }) => {
+    debugLog('Lobby message received', { lobbyCode, user, text });
     
-    // Just create the game - don't check lobby users
-    if (!games[lobbyCode]) {
-      // Get players from either lobby or existing game
-      const players = lobbyUsers[lobbyCode] || ['Player1', 'Player2', 'Player3']; // Fallback
-      
-      if (players.length < 3) {
-        socket.emit('error', { message: 'Not enough players to start the game.' });
+    const messageData = {
+      user,
+      text,
+      timestamp: Date.now(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2)
+    };
+    
+    io.to(lobbyCode).emit('lobby message', messageData);
+    
+    debugLog('Lobby message broadcasted', { 
+      lobbyCode, 
+      messageId: messageData.id,
+      user: messageData.user 
+    });
+  });
+
+  // ========================================
+  // GAME MANAGEMENT
+  // ========================================
+
+  socket.on('start game', ({ lobbyCode, username }) => {
+    debugLog('START GAME REQUEST', { 
+      socketId: socket.id, 
+      lobbyCode, 
+      username,
+      socketMapping: socketToUser[socket.id],
+      lobbyExists: !!lobbyUsers[lobbyCode],
+      lobbyPlayers: lobbyUsers[lobbyCode],
+      gameExists: !!games[lobbyCode]
+    });
+    
+    try {
+      if (!lobbyCode || !username) {
+        socket.emit('error', 'Invalid lobby code or username');
         return;
       }
 
+      if (!lobbyUsers[lobbyCode]) {
+        socket.emit('error', 'Lobby not found');
+        return;
+      }
+
+      const players = lobbyUsers[lobbyCode];
+      debugLog('Lobby players found', { lobbyCode, players });
+      
+      if (players.length < 3) {
+        socket.emit('error', 'Not enough players to start the game.');
+        return;
+      }
+
+      if (!players.includes(username)) {
+        socket.emit('error', 'You must be in the lobby to start the game.');
+        return;
+      }
+
+      // Update socket mapping for game start
+      socketToUser[socket.id] = { lobbyCode, user: username };
+      debugLog('Updated socket mapping for game start', { 
+        socketId: socket.id, 
+        mapping: socketToUser[socket.id] 
+      });
+
+      if (games[lobbyCode]) {
+        debugLog('Game already exists, sending current state', { lobbyCode });
+        io.to(lobbyCode).emit('game update', games[lobbyCode]);
+        return;
+      }
+
+      debugLog('Creating new game', { lobbyCode, players });
       games[lobbyCode] = initializeGame(players);
-      console.log(`Game created for lobby ${lobbyCode}`);
-    }
-
-    // Send to all sockets in the room
-    io.to(lobbyCode).emit('game started', games[lobbyCode]);
-    io.to(lobbyCode).emit('game update', games[lobbyCode]);
-    
-    console.log(`Game started successfully for lobby ${lobbyCode}`);
-  });
-
-  // JOIN GAME - SIMPLIFIED
-  socket.on('join game', ({ lobbyCode }) => {
-    console.log(`Player attempting to join game in lobby: ${lobbyCode}`);
-    
-    // Just join if game exists, create if it doesn't but lobby has users
-    if (games[lobbyCode]) {
-      socket.join(lobbyCode);
-      console.log(`Player joined existing game: ${lobbyCode}`);
-      socket.emit('game update', games[lobbyCode]);
-    } else {
-      console.log(`No game found for lobby: ${lobbyCode}`);
-      socket.emit('error', { message: 'Game not found. Please start a new game from the lobby.' });
+      
+      const gameState = games[lobbyCode];
+      if (gameState) {
+        debugLog('Game created successfully', { 
+          lobbyCode, 
+          gameId: gameState.id,
+          gamePlayers: gameState.players.map(p => p.name)
+        });
+        
+        debugLog('Emitting game started and game update', { lobbyCode });
+        io.to(lobbyCode).emit('game started', gameState);
+        io.to(lobbyCode).emit('game update', gameState);
+        
+        debugLog('Game started successfully', { lobbyCode });
+      } else {
+        socket.emit('error', 'Failed to create game state.');
+      }
+    } catch (error) {
+      debugLog('Error starting game', { error: error.message });
+      socket.emit('error', 'Failed to start game. Please try again.');
     }
   });
 
-  // MAKE PREDICTION - SIMPLIFIED
-  socket.on('make prediction', ({ lobbyCode, prediction }) => {
-    console.log(`Make prediction: ${prediction} for lobby: ${lobbyCode}`);
+  socket.on('join game', ({ lobbyCode, username }) => {
+    debugLog('JOIN GAME REQUEST', {
+      socketId: socket.id,
+      lobbyCode,
+      username,
+      currentMapping: socketToUser[socket.id],
+      gameExists: !!games[lobbyCode]
+    });
+    
+    try {
+      if (!lobbyCode) {
+        socket.emit('error', 'Invalid lobby code');
+        return;
+      }
+
+      const currentMapping = socketToUser[socket.id];
+      if (currentMapping && 
+          currentMapping.lobbyCode === lobbyCode && 
+          currentMapping.user === username) {
+        
+        debugLog('Socket already correctly mapped, checking game state', {
+          socketId: socket.id,
+          mapping: currentMapping,
+          gameExists: !!games[lobbyCode]
+        });
+        
+        if (games[lobbyCode]) {
+          debugLog('Sending existing game state', { lobbyCode });
+          socket.emit('game update', games[lobbyCode]);
+        }
+        return;
+      }
+      
+      if (games[lobbyCode]) {
+        const game = games[lobbyCode];
+        if (!game.players || !Array.isArray(game.players) || game.players.length === 0) {
+          socket.emit('error', 'Game state is corrupted');
+          return;
+        }
+        
+        socket.join(lobbyCode);
+        
+        if (username) {
+          socketToUser[socket.id] = { lobbyCode, user: username };
+        }
+        
+        socket.emit('game update', game);
+        socket.to(lobbyCode).emit('player rejoined', { 
+          player: username,
+          gameState: game 
+        });
+        
+        debugLog('Player successfully joined game', { lobbyCode, username });
+      } else {
+        socket.emit('error', 'Game not found. Please start a new game from the lobby.');
+      }
+    } catch (error) {
+      debugLog('Error joining game', { error: error.message });
+      socket.emit('error', 'Failed to join game');
+    }
+  });
+
+  // ========================================
+  // GAME ACTIONS
+  // ========================================
+
+  socket.on('make prediction', ({ lobbyCode, prediction, username }) => {
+    debugLog('Make prediction request', { lobbyCode, prediction, username });
     
     if (!games[lobbyCode]) {
-      socket.emit('error', { message: 'Game not found.' });
+      socket.emit('error', 'Game not found.');
       return;
     }
 
-    const userInfo = socketToUser[socket.id];
-    if (!userInfo) {
-      socket.emit('error', { message: 'User not found.' });
+    const playerId = username || socketToUser[socket.id]?.user;
+    if (!playerId) {
+      socket.emit('error', 'User identification failed.');
       return;
     }
 
-    if (processPrediction(games[lobbyCode], userInfo.user, prediction)) {
+    if (username) {
+      socketToUser[socket.id] = { lobbyCode, user: username };
+    }
+
+    if (processPrediction(games[lobbyCode], playerId, prediction)) {
       io.to(lobbyCode).emit('game update', games[lobbyCode]);
     } else {
-      socket.emit('error', { message: 'Invalid prediction.' });
+      socket.emit('error', 'Invalid prediction.');
     }
   });
 
-  // PLAY CARD - SIMPLIFIED
-  socket.on('play card', ({ lobbyCode, cardIndex }) => {
+  socket.on('play card', ({ lobbyCode, cardIndex, username }) => {
+    debugLog('Play card request', { lobbyCode, cardIndex, username });
+    
     if (!games[lobbyCode]) {
-      socket.emit('error', { message: 'Game not found.' });
+      socket.emit('error', 'Game not found.');
       return;
     }
 
-    const userInfo = socketToUser[socket.id];
-    if (!userInfo) {
-      socket.emit('error', { message: 'User not found.' });
+    const playerId = username || socketToUser[socket.id]?.user;
+    if (!playerId) {
+      socket.emit('error', 'User identification failed.');
       return;
     }
 
-    if (playCard(games[lobbyCode], userInfo.user, cardIndex)) {
+    if (username) {
+      socketToUser[socket.id] = { lobbyCode, user: username };
+    }
+
+    if (playCard(games[lobbyCode], playerId, cardIndex)) {
       io.to(lobbyCode).emit('game update', games[lobbyCode]);
     } else {
-      socket.emit('error', { message: 'Invalid card play.' });
+      socket.emit('error', 'Invalid card play.');
     }
   });
 
-  // NEXT ROUND - SIMPLIFIED
-  socket.on('next round', ({ lobbyCode }) => {
+  socket.on('next round', ({ lobbyCode, username }) => {
+    debugLog('Next round request', { lobbyCode, username });
+    
     if (games[lobbyCode] && games[lobbyCode].phase === 'scoring') {
+      if (username) {
+        socketToUser[socket.id] = { lobbyCode, user: username };
+      }
+      
       startNewRound(games[lobbyCode]);
       io.to(lobbyCode).emit('game update', games[lobbyCode]);
     } else {
-      socket.emit('error', { message: 'Cannot start next round.' });
+      socket.emit('error', 'Cannot start next round.');
     }
+  });
+
+  // ========================================
+  // ADMIN ACTIONS
+  // ========================================
+
+  socket.on('pause game', ({ lobbyCode, username, isPaused }) => {
+    debugLog('Pause game request', { lobbyCode, username, isPaused });
+    
+    if (!games[lobbyCode]) {
+      socket.emit('error', 'Game not found.');
+      return;
+    }
+
+    const isAdmin = lobbyAdmins[lobbyCode] === username;
+    if (!isAdmin) {
+      socket.emit('error', 'Only admin can pause the game.');
+      return;
+    }
+
+    games[lobbyCode].isPaused = isPaused;
+    io.to(lobbyCode).emit('game paused', { isPaused, pausedBy: username });
+    io.to(lobbyCode).emit('game update', games[lobbyCode]);
+    
+    debugLog('Game pause state updated', { lobbyCode, isPaused, pausedBy: username });
+  });
+
+  socket.on('restart game', ({ lobbyCode, username }) => {
+    debugLog('Restart game request', { lobbyCode, username });
+    
+    if (!lobbyUsers[lobbyCode]) {
+      socket.emit('error', 'Lobby not found.');
+      return;
+    }
+
+    const isAdmin = lobbyAdmins[lobbyCode] === username;
+    if (!isAdmin) {
+      socket.emit('error', 'Only admin can restart the game.');
+      return;
+    }
+
+    const players = lobbyUsers[lobbyCode];
+    
+    try {
+      games[lobbyCode] = initializeGame(players);
+      
+      const gameState = games[lobbyCode];
+      io.to(lobbyCode).emit('game restarted', { restartedBy: username });
+      io.to(lobbyCode).emit('game started', gameState);
+      io.to(lobbyCode).emit('game update', gameState);
+      
+      debugLog('Game restarted successfully', { lobbyCode, restartedBy: username });
+    } catch (error) {
+      debugLog('Error restarting game', { error: error.message });
+      socket.emit('error', 'Failed to restart game.');
+    }
+  });
+
+  socket.on('end game', ({ lobbyCode, username }) => {
+    debugLog('End game request', { lobbyCode, username });
+    
+    if (!games[lobbyCode]) {
+      socket.emit('error', 'Game not found.');
+      return;
+    }
+
+    games[lobbyCode].phase = 'finished';
+    
+    io.to(lobbyCode).emit('game ended', { endedBy: username });
+    io.to(lobbyCode).emit('game update', games[lobbyCode]);
+    
+    debugLog('Game ended', { lobbyCode, endedBy: username });
+  });
+
+  // ========================================
+  // DISCONNECT HANDLING
+  // ========================================
+
+  socket.on('disconnect', (reason) => {
+    clearTimeout(connectionTimeout);
+    
+    const info = socketToUser[socket.id];
+    activeConnections.delete(socket.id);
+    
+    debugLog('Socket disconnected', { 
+      socketId: socket.id, 
+      userInfo: info,
+      reason: reason,
+      remainingConnections: activeConnections.size,
+      wasInGame: info && games[info.lobbyCode] ? true : false
+    });
+    
+    if (info) {
+      const isGameActive = games[info.lobbyCode] && games[info.lobbyCode].phase !== 'finished';
+      
+      debugLog('Disconnect analysis', {
+        lobbyCode: info.lobbyCode,
+        user: info.user,
+        isGameActive,
+        gamePhase: games[info.lobbyCode]?.phase
+      });
+      
+      // Only remove from lobby if game is not active (prevents removal during active games)
+      if (lobbyUsers[info.lobbyCode] && !isGameActive) {
+        lobbyUsers[info.lobbyCode] = lobbyUsers[info.lobbyCode].filter(u => u !== info.user);
+        
+        if (lobbyUsers[info.lobbyCode].length === 0) {
+          delete lobbyUsers[info.lobbyCode];
+          delete lobbyAdmins[info.lobbyCode];
+          if (games[info.lobbyCode]) {
+            delete games[info.lobbyCode];
+          }
+          debugLog('Lobby cleaned up (empty)', { lobbyCode: info.lobbyCode });
+        } else if (lobbyAdmins[info.lobbyCode] === info.user) {
+          lobbyAdmins[info.lobbyCode] = lobbyUsers[info.lobbyCode][0];
+          debugLog('Admin transferred', { 
+            lobbyCode: info.lobbyCode, 
+            newAdmin: lobbyAdmins[info.lobbyCode] 
+          });
+        }
+        sendLobbyUsers(info.lobbyCode);
+      } else {
+        debugLog('User not removed from lobby (game active or lobby not found)', {
+          lobbyExists: !!lobbyUsers[info.lobbyCode],
+          isGameActive
+        });
+      }
+    }
+    
+    delete socketToUser[socket.id];
+    debugLog('Cleaned up socket mapping', { socketId: socket.id });
   });
 });
 
-// Helper functions
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
 function sendLobbyUsers(lobbyCode) {
   if (lobbyUsers[lobbyCode]) {
-    io.to(lobbyCode).emit('lobby users', {
+    const data = {
       users: lobbyUsers[lobbyCode],
       admin: lobbyAdmins[lobbyCode]
-    });
+    };
+    debugLog('Sending lobby users update', { lobbyCode, data });
+    io.to(lobbyCode).emit('lobby users', data);
   }
 }
 
-// Game logic functions - SIMPLIFIED
-function initializeGame(players) {
-  const game = {
-    id: Date.now(),
-    players: players.map((name, index) => ({
-      id: name,
-      name: name,
-      hand: [],
-      tricks: 0,
-      tricksWon: 0,
-      score: 0,
-      prediction: null,
-      isActive: index === 0
-    })),
-    currentRound: 1,
-    maxRounds: 20,
-    currentTrick: [],
-    currentPlayerIndex: 0,
-    trumpCard: null,
-    trumpSuit: null,
-    deck: [],
-    phase: 'prediction',
-    roundScores: [],
-    dealer: 0
+// ========================================
+// PERIODIC CLEANUP
+// ========================================
+
+setInterval(() => {
+  const stats = {
+    activeConnections: activeConnections.size,
+    activeLobbies: Object.keys(lobbyUsers).length,
+    activeGames: Object.keys(games).length,
+    socketMappings: Object.keys(socketToUser).length
   };
   
-  dealCards(game);
-  return game;
-}
-
-function dealCards(game) {
-  const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-  const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  debugLog('Server statistics', stats);
   
-  game.deck = [];
-  
-  // Regular cards
-  suits.forEach(suit => {
-    values.forEach(value => {
-      game.deck.push({ 
-        suit, 
-        value, 
-        type: 'regular',
-        rank: value
-      });
-    });
-  });
-  
-  // Special cards
-  for (let i = 0; i < 4; i++) {
-    game.deck.push({ 
-      type: 'wizard', 
-      suit: null, 
-      value: 15,
-      rank: 'Zoro'
-    });
-    game.deck.push({ 
-      type: 'jester', 
-      suit: null, 
-      value: 0,
-      rank: 'Fool'
-    });
-  }
-  
-  // Shuffle deck
-  for (let i = game.deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [game.deck[i], game.deck[j]] = [game.deck[j], game.deck[i]];
-  }
-  
-  // Deal cards to players
-  game.players.forEach(player => {
-    player.hand = game.deck.splice(0, game.currentRound);
-    player.prediction = null;
-    player.tricks = 0;
-    player.tricksWon = 0;
-  });
-  
-  // Set trump card
-  if (game.deck.length > 0) {
-    game.trumpCard = game.deck.pop();
-    game.trumpSuit = game.trumpCard.type === 'regular' ? game.trumpCard.suit : null;
-  } else {
-    game.trumpCard = null;
-    game.trumpSuit = null;
-  }
-}
-
-function processPrediction(game, playerId, prediction) {
-  console.log(`Processing prediction for ${playerId}: ${prediction}`);
-  
-  const player = game.players.find(p => p.id === playerId);
-  const currentPlayer = game.players[game.currentPlayerIndex];
-  
-  if (!player || game.phase !== 'prediction') {
-    console.log(`Invalid game state - phase: ${game.phase}, player found: ${!!player}`);
-    return false;
-  }
-  
-  // Check if it's actually this player's turn
-  if (currentPlayer.id !== playerId) {
-    console.log(`Not player's turn. Current: ${currentPlayer.id}, Requesting: ${playerId}`);
-    return false;
-  }
-  
-  if (player.prediction !== null) {
-    console.log(`Player ${playerId} already made prediction: ${player.prediction}`);
-    return false;
-  }
-
-  // Validate prediction range
-  if (prediction < 0 || prediction > game.currentRound) {
-    console.log(`Invalid prediction range: ${prediction}, max: ${game.currentRound}`);
-    return false;
-  }
-  
-  player.prediction = prediction;
-  console.log(`Prediction set for ${playerId}: ${prediction}`);
-  
-  // Move to next player for prediction
-  game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-  console.log(`Next player index: ${game.currentPlayerIndex}`);
-  
-  // Check if all predictions are made
-  const allPredicted = game.players.every(p => p.prediction !== null);
-  console.log(`All predictions made: ${allPredicted}`);
-  
-  if (allPredicted) {
-    // Add delay before moving to playing phase
-    setTimeout(() => {
-      game.phase = 'playing';
-      game.currentPlayerIndex = (game.dealer + 1) % game.players.length; // Start playing after dealer
-      console.log(`Moving to playing phase, starting with player index: ${game.currentPlayerIndex}`);
-      
-      // Broadcast the updated game state
-      const lobbyCode = Object.keys(games).find(key => games[key] === game);
-      if (lobbyCode) {
-        io.to(lobbyCode).emit('game update', game);
+  // Clean up stale connections
+  const now = Date.now();
+  for (const [socketId, connection] of activeConnections.entries()) {
+    if (now - connection.connectedAt > 300000) { // 5 minutes
+      debugLog('Cleaning up stale connection', { socketId, age: now - connection.connectedAt });
+      activeConnections.delete(socketId);
+      if (socketToUser[socketId]) {
+        delete socketToUser[socketId];
       }
-    }, 2000); // 2 second delay
-  }
-  
-  return true;
-}
-
-function playCard(game, playerId, cardIndex) {
-  const player = game.players.find(p => p.id === playerId);
-  
-  if (!player || game.phase !== 'playing' || 
-      game.players[game.currentPlayerIndex].id !== playerId ||
-      cardIndex < 0 || cardIndex >= player.hand.length) {
-    return false;
-  }
-  
-  const card = player.hand.splice(cardIndex, 1)[0];
-  const playerIndex = game.players.findIndex(p => p.id === playerId);
-
-  game.currentTrick.push({ 
-    player: playerId, 
-    playerId: playerIndex,
-    card 
-  });
-  
-  // Move to next player
-  game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-  
-  // Check if trick is complete
-  if (game.currentTrick.length === game.players.length) {
-    // Add delay before finishing trick
-    setTimeout(() => {
-      finishTrick(game);
-      
-      // Broadcast the updated game state
-      const lobbyCode = Object.keys(games).find(key => games[key] === game);
-      if (lobbyCode) {
-        io.to(lobbyCode).emit('game update', game);
-      }
-    }, 2000); // 2 second delay to see the completed trick
-  }
-  
-  return true;
-}
-
-function finishTrick(game) {
-  const winner = determineTrickWinner(game.currentTrick, game.trumpSuit);
-  const winnerIndex = game.players.findIndex(p => p.id === winner);
-  
-  game.players[winnerIndex].tricks++;
-  game.players[winnerIndex].tricksWon++;
-  
-  game.currentTrick = [];
-  game.currentPlayerIndex = winnerIndex;
-  
-  // Check if round is complete
-  if (game.players[0].hand.length === 0) {
-    // Add delay before showing scoring
-    setTimeout(() => {
-      finishRound(game);
-      
-      // Broadcast the updated game state
-      const lobbyCode = Object.keys(games).find(key => games[key] === game);
-      if (lobbyCode) {
-        io.to(lobbyCode).emit('game update', game);
-      }
-    }, 1500); // 1.5 second delay
-  }
-}
-
-function determineTrickWinner(trick, trumpSuit) {
-  // Wizard wins
-  const wizards = trick.filter(play => play.card.type === 'wizard');
-  if (wizards.length > 0) return wizards[0].player;
-  
-  // Filter out jesters
-  const validPlays = trick.filter(play => play.card.type !== 'jester');
-  if (validPlays.length === 0) return trick[0].player;
-  
-  // Trump cards win
-  const trumpPlays = validPlays.filter(play => play.card.suit === trumpSuit);
-  if (trumpPlays.length > 0) {
-    return trumpPlays.reduce((winner, play) => 
-      play.card.value > winner.card.value ? play : winner
-    ).player;
-  }
-  
-  // Highest card of led suit wins
-  const ledSuit = validPlays[0].card.suit;
-  const sameSuitPlays = validPlays.filter(play => play.card.suit === ledSuit);
-  
-  return sameSuitPlays.reduce((winner, play) => 
-    play.card.value > winner.card.value ? play : winner
-  ).player;
-}
-
-function finishRound(game) {
-  // Calculate scores
-  game.players.forEach(player => {
-    if (player.tricks === player.prediction) {
-      player.score += 20 + (10 * player.prediction);
-    } else {
-      player.score -= 10 * Math.abs(player.tricks - player.prediction);
     }
-  });
-  
-  if (game.currentRound >= game.maxRounds) {
-    game.phase = 'finished';
-  } else {
-    game.phase = 'scoring';
   }
-}
+}, 60000); // Run every minute
 
-function startNewRound(game) {
-  game.currentRound++;
-  game.phase = 'prediction';
-  game.currentPlayerIndex = (game.dealer + 1) % game.players.length;
-  game.dealer = (game.dealer + 1) % game.players.length;
-
-  // Reset player round stats
-  game.players.forEach(player => {
-    player.tricks = 0;
-    player.tricksWon = 0;
-    player.prediction = null;
-  });
-
-  dealCards(game);
-}
-
-// API endpoint
-app.get('/lobby/:lobbyCode', (req, res) => {
-  const { lobbyCode } = req.params;
-  if (lobbyUsers[lobbyCode]) {
-    res.json({ users: lobbyUsers[lobbyCode], admin: lobbyAdmins[lobbyCode] });
-  } else {
-    res.status(404).json({ error: 'Lobby not found' });
-  }
-});
+// ========================================
+// SERVER STARTUP
+// ========================================
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log('Socket.IO server running on port', PORT);
+  console.log(`Socket.IO server running on port ${PORT}`);
 });

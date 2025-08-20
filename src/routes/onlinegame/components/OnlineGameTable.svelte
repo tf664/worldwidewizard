@@ -43,8 +43,10 @@
         return positions[index] || 'bottom';
     }
 
-    function isCurrentPlayer(index: number): boolean {
-        return gameState.currentPlayerIndex === index;
+    function isCurrentPlayer(player: Player): boolean {
+        // Check if this specific player is the current turn player
+        const currentTurnPlayer = gameState.players[gameState.currentPlayerIndex];
+        return currentTurnPlayer?.id === player.id;
     }
 
     function isCurrentUser(player: Player): boolean {
@@ -66,7 +68,7 @@
     <!-- Player Areas arranged around the table -->
     {#each gameState.players as player, index}
         {@const position = getPlayerPosition(index)}
-        {@const isCurrent = isCurrentPlayer(index)}
+        {@const isCurrent = isCurrentPlayer(player)} <!-- Updated to use player instead of index -->
         {@const isMe = isCurrentUser(player)}
 
         <!-- Player Info Card -->
