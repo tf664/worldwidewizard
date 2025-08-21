@@ -27,7 +27,7 @@
 
     const MAX_PLAYERS = 6;
     const MIN_PLAYERS = 3;
-    const SOCKET_URL = 'http://7.32.38.105:3001';
+    const SOCKET_URL = 'http://localhost:3001';
 
     let lobbyInfo: LobbyInfo | null = get(lobby);
 

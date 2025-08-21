@@ -298,7 +298,7 @@ class SocketService {
       }
 
       this.debugLog('Creating new socket connection');
-      this.socket = io('http://7.32.38.105:3001', {
+      this.socket = io('http://localhost:3001', {
         forceNew: true,
         timeout: 15000, // Increased timeout
         autoConnect: true,
