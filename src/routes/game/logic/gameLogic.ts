@@ -46,7 +46,7 @@ export function initializeGame(playerNames: string[]): GameState {
     let maxRounds: number;
     switch (players.length) {
         case 3:
-            maxRounds = 20;
+            maxRounds = 3; // DEBUG. Should be 20
             break;
         case 4:
             maxRounds = 15;
