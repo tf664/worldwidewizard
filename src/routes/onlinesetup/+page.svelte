@@ -14,7 +14,7 @@
 	let isCreating = false;
 	let isJoining = false;
 
-	const SOCKET_URL = 'http://10.244.144.199:3001';
+	const SOCKET_URL = 'http://7.32.38.105:3001';
 
 	function generateLobbyCode() {
 		return Math.random().toString(36).substring(2, 8).toUpperCase();
