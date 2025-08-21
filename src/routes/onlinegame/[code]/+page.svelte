@@ -6,13 +6,13 @@
   import { lobby } from '$lib/stores/lobby';
   import { goto } from '$app/navigation';
   import OnlineGameTable from '../components/OnlineGameTable.svelte';
-  import OnlineBiddingInterface from '../components/OnlineBiddingInterface.svelte';
-  import OnlineCardPlayInterface from '../components/OnlineCardPlayInterface.svelte';
-  import OnlineScoringInterface from '../components/OnlineScoringInterface.svelte';
-  import OnlineScoreBoard from '../components/OnlineScoreBoard.svelte';
-  import OnlineGameChat from '../components/OnlineGameChat.svelte';
-  import OnlineGameControls from '../components/OnlineGameControls.svelte';
-  import OnlineGameTimer from '../components/OnlineGameTimer.svelte';
+  import OnlineBiddingInterface from '../components/Interface/OnlineBiddingInterface.svelte';
+  import OnlineCardPlayInterface from '../components/Interface/OnlineCardPlayInterface.svelte';
+  import OnlineScoringInterface from '../components/Interface/OnlineScoringInterface.svelte';
+  import OnlineScoreBoard from '../components/GameFeatures/OnlineScoreBoard.svelte';
+  import OnlineGameChat from '../components/GameFeatures/OnlineGameChat.svelte';
+  import OnlineGameControls from '../components/GameFeatures/OnlineGameControls.svelte';
+  import OnlineGameTimer from '../components/GameFeatures/OnlineGameTimer.svelte';
 
   // ========================================
   // COMPONENT STATE

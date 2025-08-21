@@ -1,7 +1,7 @@
 <script lang="ts">
     import { socketService } from '$lib/stores/socket';
     import type { GameState } from '$lib/stores/socket';
-    import OnlineConfirmDialog from './OnlineConfirmDialog.svelte';
+    import OnlineConfirmDialog from '../OnlineConfirmDialog.svelte';
 
     export let gameState: GameState;
     export let lobbyCode: string;

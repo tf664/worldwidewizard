@@ -236,7 +236,7 @@
     <!-- Mobile: Fixed overlay, Desktop: Movable window -->
     {#if isMobile}
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-green-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6">
+            <div class="relative mx-auto w-full max-w-sm rounded-2xl border-4 border-blue-500 bg-white p-4 shadow-2xl sm:max-w-md sm:p-6">
                 <!-- Mobile content -->
                 <div class="space-y-4">
                     <!-- Header -->
@@ -347,14 +347,14 @@
         <div class="fixed inset-0 z-50 pointer-events-none">
             <div 
                 bind:this={interfaceElement}
-                class="absolute pointer-events-auto w-96 rounded-2xl border-4 border-green-500 bg-white shadow-2xl transition-transform duration-200 {isDragging ? 'cursor-grabbing' : ''}"
+                class="absolute pointer-events-auto w-96 rounded-2xl border-4 border-blue-500 bg-white shadow-2xl transition-transform duration-200 {isDragging ? 'cursor-grabbing' : ''}"
                 style="left: {windowX}px; top: {windowY}px; transform: {isDragging ? 'scale(1.02)' : 'scale(1)'};"
                 on:mousedown={handleMouseDown}
                 role="dialog"
                 tabindex="-1"
             >
                 <!-- Draggable Header -->
-                <div class="drag-handle cursor-grab bg-green-500 text-white px-4 py-2 rounded-t-xl flex items-center justify-between {isDragging ? 'cursor-grabbing' : 'cursor-grab'}">
+                <div class="drag-handle cursor-grab bg-blue-500 text-white px-4 py-2 rounded-t-xl flex items-center justify-between {isDragging ? 'cursor-grabbing' : 'cursor-grab'}">
                     <h3 class="font-bold text-lg">
                         {currentPlayer?.name || 'Unknown'}'s Turn
                     </h3>
