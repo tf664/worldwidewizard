@@ -298,7 +298,7 @@
 
 	<!-- Call to Action -->
 	<div class="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 p-8 text-center text-white">
-		<h2 class="mb-4 text-3xl font-bold">Ready to Begin Your Magical Journey?</h2>
+		<h2 class="mb-4 text-3xl font-bold text-amber-50">Ready to Begin Your Magical Journey?</h2>
 		<p class="mb-6 text-lg text-indigo-100">
 			Master the art of prophecy and become the greatest wizard apprentice!
 		</p>
