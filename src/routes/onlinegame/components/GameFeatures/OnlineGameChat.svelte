@@ -107,7 +107,7 @@
     .chat-container {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        max-height: 300px;
         background: white;
         border-radius: 1rem;
         overflow: hidden;
@@ -120,6 +120,8 @@
         padding: 1rem;
         background: #f8fafc;
         border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0; /* Prevent header from shrinking */
+        min-height: 60px; /* Set consistent header height */
     }
 
     .chat-header h3 {
@@ -161,6 +163,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        max-height: 120px; /* Reduced chat area height */
+        min-height: 80px;
     }
 
     .message {
@@ -222,6 +226,8 @@
         padding: 1rem;
         background: white;
         border-top: 1px solid #e5e7eb;
+        flex-shrink: 0; /* Prevent input area from shrinking */
+        min-height: 60px; /* Match header height for consistency */
     }
 
     .message-input {
@@ -281,11 +287,18 @@
 
     /* Mobile */
     @media (max-width: 768px) {
+        .chat-container {
+            max-height: 250px; /* ADDED: Smaller max height on mobile */
+        }
+
         .chat-header {
             padding: 0.75rem;
+            min-height: 50px; /* Smaller header on mobile */
         }
 
         .messages {
+            max-height: 100px; /* Smaller on mobile */
+            min-height: 60px;
             padding: 0.75rem;
             gap: 0.5rem;
         }
@@ -293,6 +306,7 @@
         .input-container {
             padding: 0.75rem;
             gap: 0.5rem;
+            min-height: 50px; /* Match mobile header height */
         }
 
         .send-btn {

@@ -12,7 +12,6 @@
   import OnlineScoreBoard from '../components/GameFeatures/OnlineScoreBoard.svelte';
   import OnlineGameChat from '../components/GameFeatures/OnlineGameChat.svelte';
   import OnlineGameControls from '../components/GameFeatures/OnlineGameControls.svelte';
-  import OnlineGameTimer from '../components/GameFeatures/OnlineGameTimer.svelte';
 
   // ========================================
   // COMPONENT STATE
@@ -387,7 +386,6 @@
     <div class="control-panel">
       <!-- Timer and Game Controls with Offline Styling -->
       <div class="controls-section">
-        <OnlineGameTimer gameState={$gameState} {isPaused} />
         <OnlineGameControls 
           gameState={$gameState}
           {lobbyCode}
@@ -524,17 +522,19 @@
     transition: grid-template-columns 0.3s ease;
   }
 
+
   /* Desktop Layout */
   @media (min-width: 1024px) {
     .game-container {
-      grid-template-columns: 1fr 300px; /* Default: game | controls */
+      grid-template-columns: 1fr 300px;
       grid-template-areas: "game control";
+      grid-template-rows: 1fr;
     }
 
-    /* FIXED: When chat is shown, add chat column */
     .game-container.show-chat {
-      grid-template-columns: 1fr 300px 250px; /* game | controls | chat */
+      grid-template-columns: 1fr 300px 250px;
       grid-template-areas: "game control chat";
+      grid-template-rows: 1fr;
     }
   }
 
@@ -574,6 +574,8 @@
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    align-self: start;
+    max-height: 400px;
   }
 
   .control-panel {
