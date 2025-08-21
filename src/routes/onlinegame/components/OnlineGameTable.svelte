@@ -276,7 +276,7 @@
         <!-- FIXED: Trump Card Display using gameState.trumpCard -->
         {#if hasTrumpCard && trumpCard}
             <div class="trump-card">
-                <div class="trump-card-container {isMobile ? 'w-6 h-10' : 'w-8 h-12'}">
+                <div class="trump-card-container {isMobile ? 'w-10 h-16' : 'w-24 h-36'}">
                     {#key `trump-${trumpCard.suit}-${trumpCard.rank}-${gameState.currentRound}`}
                         <CardImage
                             src={getCardImagePath(trumpCard)}
