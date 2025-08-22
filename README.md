@@ -105,47 +105,81 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 npm run dev          # Start development server
 npm run dev -- --open  # Start dev server and open browser
 
-# Building
-npm run build        # Build for production
-npm run preview      # Preview production build
-
-# Code Quality  
-npm run format       # Format code with Prettier
-npm run lint         # Lint code with ESLint
-npm run check        # Type-check with Svelte compiler
-npm run check:watch  # Type-check in watch mode
-
-# Testing
-npm run test         # Run end-to-end tests
-npm run test:e2e     # Run Playwright tests
+# Development regarding card ressources
+```bash
+node scripts/optimize-images.js 
 ```
+
 
 ### Project Structure
 
 ```
-src/
-├── lib/
-│   ├── components/
-│   │   └── CardImage.svelte    # Reusable card component
-│   └── stores/
-│       └── user.ts             # User state management
-├── routes/
-│   ├── +layout.svelte          # Root layout
-│   ├── +page.svelte            # Home page
-│   ├── about/                  # About page
-│   ├── cards/                  # Card gallery
-│   ├── game/                   # Main game logic and UI
-│   │   ├── components/         # Game-specific components
-│   │   ├── logic/              # Game state management
-│   │   └── types/              # TypeScript definitions
-│   ├── howtoplay/              # Game rules and instructions
-│   ├── profile/                # Player profiles
-│   └── setup/                  # Game setup
-static/
-├── rcs/
-│   ├── cards/                  # Original card images (JPG)
-│   └── cards-optimized/        # Optimized card images (WebP)
-└── favicon.svg
+worldwidewizard/
+├── e2e/
+│   └── demo.test.ts                # Not yet used: End-to-end tests (Playwright)
+├── scripts/
+│   └── optimize-images.js          # Image optimization script (Sharp)
+├── socket-server/
+│   ├── index.js                    # WebSocket server
+│   └── package.json                # Server dependencies
+├── src/
+│   ├── app.css                     # Global styles
+│   ├── app.d.ts                    # TypeScript declarations
+│   ├── app.html                    # HTML template
+│   ├── lib/
+│   │   ├── index.ts                # Library entry point
+│   │   ├── components/
+│   │   │   ├── CardImage.svelte        # Card image component
+│   │   │   ├── GameImagePreloader.svelte # Preloads card images
+│   │   │   └── Popup.svelte            # Popup/modal component
+│   │   ├── stores/
+│   │   │   ├── lobby.ts                # Lobby state
+│   │   │   ├── socket.ts               # Socket state
+│   │   │   └── user.ts                 # User state
+│   │   └── utils/
+│   │       └── cardImagePreloader.ts   # Card image preloading logic
+│   ├── routes/
+│   │   ├── +layout.svelte              # Root layout
+│   │   ├── +page.svelte                # Home page
+│   │   ├── Menu.svelte                 # Main menu
+│   │   ├── about/
+│   │   │   ├── +layout.svelte
+│   │   │   └── +page.svelte
+│   │   ├── cards/
+│   │   │   ├── +layout.svelte
+│   │   │   ├── +page.svelte
+│   │   │   ├── CardImage.svelte
+│   │   │   └── specificCard/
+│   │   ├── game/
+│   │   │   ├── +page.svelte
+│   │   │   ├── components/
+│   │   │   ├── logic/
+│   │   │   └── types/
+│   │   ├── howtoplay/
+│   │   │   ├── +layout.svelte
+│   │   │   └── +page.svelte
+│   │   ├── lobby/
+│   │   │   └── [code]/
+│   │   ├── onlinegame/
+│   │   │   ├── [code]/
+│   │   │   └── components/
+│   │   ├── onlinesetup/
+│   │   │   └── +page.svelte
+│   │   └── setup/
+│   │       └── +page.svelte
+├── static/
+│   ├── favicon.svg                  # App favicon
+│   ├── faviconSvelte.svg            # Svelte favicon
+│   └── rcs/
+│       ├── cards/                   # Original card images (JPG/PNG)
+│       └── cards-optimized/         # Optimized card images (WebP)
+├── eslint.config.js                 # ESLint configuration
+├── package.json                     # Project dependencies and scripts
+├── playwright.config.ts             # Playwright test config
+├── README.md                        # Project documentation
+├── svelte.config.js                 # Svelte config
+├── tsconfig.json                    # TypeScript config
+└── vite.config.ts                   # Vite config
 ```
 
 ## Deployment
