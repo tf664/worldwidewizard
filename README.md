@@ -1,6 +1,11 @@
 # World Wide Wizard
 
-**World Wide Wizard** is a digital implementation of the classic card game "Wizard" by Amigo. This web-based version allows players to enjoy the game online without needing physical cards or being in the same location.
+World Wide Wizard is a digital implementation of the classic card game "Wizard" by Amigo. This web-based version allows players to enjoy the game online without needing physical cards or being in the same location.
+
+---
+
+## Disclaimer & Copyright
+This is an unofficial digital implementation created for educational and entertainment purposes. All rights to the original Wizard card game belong to AMIGO Spiel + Freizeit GmbH and Ken Fisher. No commercial use intended.
 
 ## About the Game
 
@@ -9,34 +14,30 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 - **60 unique cards**: 4 suits (Red, Blue, Green, Yellow) with 13 cards each, plus 4 Wizard cards and 4 Fool cards
 - **Strategic bidding**: Players must predict their tricks before each round begins  
 - **Variable rounds**: The number of cards dealt increases each round
-- **Scoring system**: Exact predictions earn bonus points, while wrong predictions cost points
 - **Multiple players**: Supports 3-6 players (currently configured for 3+ players)
 
 ---
 
-## Current Features
-
-- **Responsive design** that works on desktop and mobile devices
-- **Interactive gameplay** with drag-and-drop card playing
-- **Real-time scoring** and round management
 - **Automated game flow** with bidding, playing, and scoring phases
 
 ## How to Play
 
-1. **Setup**: Enter player names on the setup screen
-2. **Bidding Phase**: Each player predicts how many tricks they will win
-3. **Playing Phase**: Players take turns playing cards, with the highest card winning the trick
 
-4. **Bedienen is missing**
-
-5. **Scoring**: Points are awarded based on prediction accuracy
-   - **Correct prediction**: 20 + number of tricks won
-   - **Wrong prediction**: -10 points per trick difference
-6. **Next Round**: The number of cards increases, and the process repeats
+1. **Setup**: Enter player names on the setup screen and start a new game.
+2. **Bidding Phase**: Each player predicts (bids) how many tricks they will win in the current round. Bids are made in turn order and are visible to all players.
+3. **Playing Phase**: Players take turns playing one card per trick. The first player leads, and all others must follow suit if possible (**Servning**) or play a Wizard or Fool. If a player cannot follow suit, they may play any card, including trumps.
+4. **Trick Resolution**:
+   - The highest trump wins the trick.
+   - If no trumps are played, the highest card of the led suit wins.
+   - Wizard cards always win the trick; Fool cards always lose.
+5. **Scoring**: After all tricks are played, points are awarded:
+   - **Exact prediction**: 20 points plus 10 points per trick won
+   - **Wrong prediction**: -10 points for each trick difference
+6. **Next Round**: The number of cards dealt increases by one each round. The game continues until all cards are dealt.
 
 ### Card Hierarchy
 - **Wizard cards**: Always win tricks (highest)
-- **Fool cards**: Always lose tricks (lowest)  
+- **Fool cards**: Always lose tricks (lowest)
 - **Numbered cards**: 1-13 in each suit, with 13 being highest
 - **Trump suit**: Changes each round, trump cards beat non-trump cards
 
@@ -47,29 +48,43 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 ### Prerequisites
 
 - Node.js (version 18 or higher)
-- npm or yarn package manager
+- npm
 
-### Installation
+### Installation & Start
+
+One can access the website under: 
+https://worldwidewizard.vercel.app/
+
+0. **To test and use online gaming, start the local socket server in a separate terminal:**
+   ```bash
+   cd socket-server
+   npm install
+   node index.js
+   ```
 
 1. **Clone the repository**
    ```bash
    git clone https://github.com/tf664/worldwidewizard.git
    cd worldwidewizard
    ```
-
 2. **Install dependencies**
    ```bash
    npm install
    ```
-
 3. **Start the development server**
    ```bash
    npm run dev
    # or open automatically in browser
    npm run dev -- --open
    ```
+4. **Open your browser** and navigate to the shown localhost address (z.B. http://localhost:5173)
 
-4. **Open your browser** and navigate to your localhost
+#### Image Optimization (optional)
+Um die Kartenbilder für die Web-App zu optimieren, führe folgendes Skript aus:
+```bash
+node scripts/optimize-images.js
+```
+Die optimierten Bilder werden im Ordner `static/rcs/cards-optimized` abgelegt.
 
 
 ## Development
@@ -186,23 +201,11 @@ worldwidewizard/
 
 Vercel
 
-
-## Card Assets
-
-AMIGO 
-
-
-## Acknowledgments
-
-@TebbeTom
-AMIGO
-
 ## Roadmap
 
-- [ ] **Online multiplayer** support with WebSockets
+- [x] **Online multiplayer** support with WebSockets
+- [ ] **Server hosting** 
 - [ ] **AI opponents** for single-player mode  
-- [ ] **Tournament mode** with multiple games
 - [ ] **Statistics tracking** and player profiles
-- [ ] **Mobile app** versions (iOS/Android)
 - [ ] **Additional card themes** and customizations
 - [ ] **Spectator mode** for watching games
