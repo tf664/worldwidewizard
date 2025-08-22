@@ -20,8 +20,15 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 
 - **Automated game flow** with bidding, playing, and scoring phases
 
-## How to Play
+## Gallery
+![Start page](image.png)
 
+![Card Overview](static/card_showcase.gif)
+
+![Local Gameplay Overview](static/local_gaming_showcase.gif)
+
+
+## How to Play
 
 1. **Setup**: Enter player names on the setup screen and start a new game.
 2. **Bidding Phase**: Each player predicts (bids) how many tricks they will win in the current round. Bids are made in turn order and are visible to all players.
