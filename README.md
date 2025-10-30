@@ -1,6 +1,6 @@
 # World Wide Wizard
 
-World Wide Wizard is a digital implementation of the classic card game "Wizard" by Amigo. This web-based version allows players to enjoy the game online without needing physical cards or being in the same location.
+[World Wide Wizard](https://worldwidewizard.vercel.app/) is a digital implementation of the classic card game "Wizard" by Amigo. This web-based version allows players to enjoy the game online without needing physical cards or being in the same location.
 
 ---
 
