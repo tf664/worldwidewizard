@@ -21,7 +21,7 @@ Wizard is a trick-taking card game where players must predict exactly how many t
 - **Automated game flow** with bidding, playing, and scoring phases
 
 ## Gallery
-![Start page](image.png)
+![Start page](main_page.png)
 
 ![Card Overview](static/card_showcase.gif)
 
